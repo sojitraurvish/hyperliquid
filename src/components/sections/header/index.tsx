@@ -141,30 +141,42 @@ export const Header = () => {
       </div>
 
       <div className="flex items-center gap-3">
-        {isConnected ? (
-          <>
-            <AppDropdown
-              variant={VARIANT_TYPES.PRIMARY}
-              options={walletDropdownOptions}
-              placeholder={address ? `${address.slice(0, 6)}...${address.slice(-4)}` : "Connect Wallet"}
-              onChange={handleWalletAction}
-              className="w-auto"
-              dropdownClassName="text-gray-300 hover:text-blue-400 bg-gray-900 hover:bg-gray-800 text-sm"
-              optionClassName="bg-gray-900 text-gray-300 hover:bg-gray-800 hover:text-white border-gray-700 hover:text-blue-400"
-            />
-            <AppButton variant={VARIANT_TYPES.PRIMARY}>
-              <Bell className="h-4 w-4 hover:text-blue-400" />
+        <HydrationGuard
+          fallback={
+            <AppButton 
+              variant={VARIANT_TYPES.NOT_SELECTED} 
+              className="bg-blue-600 text-white hover:bg-blue-700 px-4 py-2 text-sm font-medium rounded transition-colors"
+            >
+              Connect Wallet
             </AppButton>
-          </>
-        ) : (
-          <AppButton 
-            variant={VARIANT_TYPES.NOT_SELECTED} 
-            className="bg-blue-600 text-white hover:bg-blue-700 px-4 py-2 text-sm font-medium rounded transition-colors"
-            onClick={() => setIsWalletConnectModalOpen(true)}
-          >
-            Connect Wallet
-          </AppButton>
-        )}
+          }
+          className="flex items-center gap-3"
+        >
+          {isConnected ? (
+            <>
+              <AppDropdown
+                variant={VARIANT_TYPES.PRIMARY}
+                options={walletDropdownOptions}
+                placeholder={address ? `${address.slice(0, 6)}...${address.slice(-4)}` : "Connect Wallet"}
+                onChange={handleWalletAction}
+                className="w-auto"
+                dropdownClassName="text-gray-300 hover:text-blue-400 bg-gray-900 hover:bg-gray-800 text-sm"
+                optionClassName="bg-gray-900 text-gray-300 hover:bg-gray-800 hover:text-white border-gray-700 hover:text-blue-400"
+              />
+              <AppButton variant={VARIANT_TYPES.PRIMARY}>
+                <Bell className="h-4 w-4 hover:text-blue-400" />
+              </AppButton>
+            </>
+          ) : (
+            <AppButton 
+              variant={VARIANT_TYPES.NOT_SELECTED} 
+              className="bg-blue-600 text-white hover:bg-blue-700 px-4 py-2 text-sm font-medium rounded transition-colors"
+              onClick={() => setIsWalletConnectModalOpen(true)}
+            >
+              Connect Wallet
+            </AppButton>
+          )}
+        </HydrationGuard>
         <AppButton variant={VARIANT_TYPES.PRIMARY}>
           <Globe className="h-4 w-4 hover:text-blue-400" />
         </AppButton>
@@ -208,27 +220,27 @@ export const Header = () => {
           <div className="space-y-3">
             {availableConnectors.length > 0 ? (
               availableConnectors.map((connector) => (
-                <div key={connector.uid} className="space-y-2">
-                  <AppButton
-                    variant={VARIANT_TYPES.SECONDARY}
-                    onClick={() => handleConnect(connector)}
-                  >
-                    {connector.icon && (
-                      <img 
-                        src={connector.icon} 
-                        alt={connector.name}
-                        title={connector.name}
-                        className="w-5 h-5"
-                      />
-                    )}
-                    <span className="font-medium">{connector.name}</span>
-                  </AppButton>
-           
-                </div>
+                <AppButton
+                  key={connector.uid}
+                  variant={VARIANT_TYPES.SECONDARY}
+                  onClick={() => handleConnect(connector)}
+                >
+                  {connector.icon && (
+                    <img 
+                      src={connector.icon} 
+                      alt={connector.name}
+                      title={connector.name}
+                      className="w-5 h-5"
+                    />
+                  )}
+                  <span className="font-medium">{connector.name}</span>
+                </AppButton>
               ))
             ) : (
-              <div className="space-y-3">
-                <p className="text-gray-400 text-sm text-center mb-4">No wallet extensions detected. Please install a wallet to continue.</p>
+              <>
+                <p className="text-gray-400 text-sm text-center py-2">
+                  No wallet extensions detected. Please install a wallet to continue.
+                </p>
                 {WALLET_INSTALL_OPTIONS.map((wallet) => (
                   <AppButton
                     key={wallet.name}
@@ -247,7 +259,7 @@ export const Header = () => {
                     <span className="font-medium">{wallet.name}</span>
                   </AppButton>
                 ))}
-              </div>
+              </>
             )}
           </div>
         </HydrationGuard>
@@ -258,7 +270,7 @@ export const Header = () => {
             <div className="w-full border-t border-gray-700"></div>
           </div>
           <div className="relative flex justify-center text-sm">
-            <span className="px-2 bg-gray-900 text-gray-400">OR</span>
+            <span className="px-3 bg-gray-950 text-gray-400">OR</span>
           </div>
         </div>
 
@@ -270,7 +282,7 @@ export const Header = () => {
             // Handle email login logic here
           }}
         >
-          <Mail className="w-5 h-5" color="#9CA3AF" />
+          <Mail className="w-5 h-5 text-gray-400" />
           <span className="font-medium">Log in with Email</span>
         </AppButton>
       </AppModal>

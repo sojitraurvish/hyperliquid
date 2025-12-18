@@ -5,6 +5,8 @@ export const LOCAL_STORAGE_KEYS = {
   WALLET_ADDRESS: 'walletAddress',
   WALLET_CHAIN_ID: 'walletChainId',
   HYPERLIQUID_AGENT: 'hyperliquid_agent_' as `${'hyperliquid_agent_'}${string}`,
+  SELECTED_MARKET: 'selectedMarket',
+  FAVORITE_MARKETS: 'favoriteMarkets',
 } as const;
 
 
@@ -20,6 +22,10 @@ export type LocalStorageSchema = {
   } | null,
   [LOCAL_STORAGE_KEYS.WALLET_CHAIN_ID]: {
     chainId?: number;
+  } | null,
+  [LOCAL_STORAGE_KEYS.SELECTED_MARKET]: string | null,
+  [LOCAL_STORAGE_KEYS.FAVORITE_MARKETS]: {
+    symbols?: string[] | null;
   } | null,
 } & {
   // Support dynamic HYPERLIQUID_AGENT keys with user addresses

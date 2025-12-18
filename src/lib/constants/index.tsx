@@ -1,3 +1,7 @@
+
+
+export const DEFAULT_LANGUAGE = "en";
+
 // lib/constants.ts
 export const VARIANT_TYPES = {
     NOT_SELECTED: 'none',
@@ -27,10 +31,38 @@ export const VARIANT_TYPES = {
   export const ENVIRONMENT = process.env.NEXT_PUBLIC_NODE_ENV || "development";
   
 
-  // Utility function to fix floating point precision issues
-export const fixDecimals = (number: number, decimals: number = 8): number => {
-  return Number(number.toFixed(decimals));
-}
+  export const ORDER_BOOK_TABS = {
+    ORDERBOOK: "orderbook",
+    TRADES: "trades",
+  }
+
+  export type OrderBookTabs = typeof ORDER_BOOK_TABS[keyof typeof ORDER_BOOK_TABS]; 
+
+
+  export const DATE_TIME_FORMAT = {
+    DD_MMM: 'DD MMM',
+    HH_mm_ss: 'HH:mm:ss',
+    MMMM_D_YYYY: 'MMMM D, YYYY',
+    DD_MMM_YYYY: 'DD MMM YYYY',
+    DD_MMM_YYYY_HH_MM_A: 'DD MMM YYYY, hh:mm A',
+    DD_MM_YYYY: 'DD-MM-YYYY',
+    ddd_MM_DD_YYYY: 'ddd, MM/DD/YYYY',
+  };
+  export type DateTimeFormat = typeof DATE_TIME_FORMAT[keyof typeof DATE_TIME_FORMAT];
+
+
+  export const CURRENCY_NAMES = {
+    USDC: "USDC",
+    ETH: "ETH",
+    SOL: "SOL",
+  } as const;
+  export type CurrencyNames = typeof CURRENCY_NAMES[keyof typeof CURRENCY_NAMES];
+  export const CURRENCY_SYMBOLS = {
+    USDC: "$",
+    ETH: "ETH",
+    SOL: "SOL",
+  } as const;
+  export type CurrencySymbols = typeof CURRENCY_SYMBOLS[keyof typeof CURRENCY_SYMBOLS];
 
 // Utility function to format numbers with decimal places
 export const addDecimal = (value: number | string, decimals: number = 2): string => {
@@ -38,3 +70,4 @@ export const addDecimal = (value: number | string, decimals: number = 2): string
   if (isNaN(num)) return '0';
   return num.toFixed(decimals);
 }
+

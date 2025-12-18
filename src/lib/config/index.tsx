@@ -1,3 +1,5 @@
+import { ENVIRONMENT, ENVIRONMENT_TYPES } from "../constants";
+
 export const API_BASE_URL = `http://localhost:9000`
 
 export const jwtToken = "Bearer " + "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY4OGI1YmNiODE4ZDA5YTBjMWIwY2Y0ZSIsImlhdCI6MTc1NDA1MTIxOCwiZXhwIjoxNzU2NjQzMjE4fQ.GF3h2xAwvr-PegUXXbX7rLFrA4BTkbC4NKatt3vbScg";
@@ -8,8 +10,12 @@ export const OG_TITLE = "Hyper Trading | Advanced Hyperliquid Trading Platform";
 export const OG_DESC = `Professional trading platform for Hyperliquid. Execute trades, monitor positions, and manage your portfolio with advanced tools and real-time market data.`;
 export const KEYWORDS = `hyperliquid, crypto trading, perpetual futures, decentralized exchange, trading platform, crypto derivatives`;
 
-export const WEB_URL = "https://hypertrading.app";
+export const isTestnet =  ENVIRONMENT === ENVIRONMENT_TYPES.DEVELOPMENT
+export const WEB_URL = isTestnet ? "https://app.hyperliquid-testnet.xyz" : "https://app.hyperliquid.xyz";
 
+
+export const EXPLORER_URL =   `${WEB_URL}/explorer`;
+export const EXPLORER_TX_URL =   `${EXPLORER_URL}/tx`;
 // SEO image
 export const DESK_LOGO = "/images/logo.png";
 export const OG_IMAGE = DESK_LOGO;

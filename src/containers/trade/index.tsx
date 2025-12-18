@@ -12,12 +12,14 @@ import { Subscription } from '@nktkas/hyperliquid';
 import { OrderBook } from '@/components/sections/orderbook';
 import { TradingPanel } from '@/components/sections/trading-panel';
 import { BottomPanel } from '@/components/sections/bottom-panel';
+import { CURRENCY_NAMES } from '@/lib/constants';
+import { useMarketStore } from '@/store/market';
 
 
 
 export default function TradeContainer() {
 
-
+  const selectedMarket = useMarketStore().selectedMarket;
   const { address: userAddress } = useAccount()
   const { agentWallet, isApproved,checkApprovalStatus } = useApiWallet(userAddress as `0x${string}`)
   const { checkBuilderFeeStatus } = useBuilderFee({userPublicKey: userAddress as `0x${string}`,builderPublicKey:BUILDER_CONFIG.BUILDER_FEE_ADDRESS})
@@ -45,42 +47,7 @@ export default function TradeContainer() {
   const { data: walletClient } = useWalletClient()
 
 
-
-
-// async function main() {
-//   // Mainnet by defaul
-
-//     // Snapshot of the L2 order book for ETH
-//   // Optional aggregation: nSigFigs: 2|3|4|5 and mantissa: 2|5 (only if nSigFigs is 5)
-//   const book = await infoClient.l2Book({
-//     coin: "ETH",
-//     nSigFigs: 3,
-//     // mantissa: 2,
-//   });
-
-//   if (!book) {
-//     console.log("Market not found");
-//     return;
-//   }
-
-//   const [bids, asks] = book.levels; // bids = index 0, asks = index 1
-//   const bestBid = bids[0]; // { px: string, sz: string, n: number }
-//   const bestAsk = asks[0];
-
-//   // console.log("book", book)
-//   // console.log("Snapshot time:", new Date(book.time).toISOString());
-//   // console.log("Best bid:", bestBid?.px, "size:", bestBid?.sz);
-//   // console.log("Best ask:", bestAsk?.px, "size:", bestAsk?.sz);
-// }
-
-// main().catch(console.error);
-
-
-
-
-
-
-
+console.log("selectedMarket", selectedMarket)
 
   return (
     <div className="h-screen flex flex-col">
@@ -93,7 +60,7 @@ export default function TradeContainer() {
       <div className="flex-1 overflow-y-auto overflow-x-hidden">
         <div className="flex flex-col min-h-full">
           <div className="shrink-0">
-            <MarketHeader />
+            <MarketHeader currency={selectedMarket ?? "BTC"} />
           </div>
           
           {/* Main Layout: Left side (Chart + OrderBook + BottomPanel) | Right side (TradingPanel) */}
@@ -104,11 +71,11 @@ export default function TradeContainer() {
               <div className="flex flex-[1.2] sm:flex-[1.2] md:flex-[1.1] min-h-0 w-full flex-shrink-0 basis-auto">
                 {/* Chart takes remaining space - maximizes width */}
                 <div className="flex-1 flex flex-col min-h-0 w-full min-w-0">
-                  <TradingChart />
+                  <TradingChart currency={selectedMarket ?? "BTC"} />
                 </div>
                 {/* OrderBook keeps its fixed width */}
                 <div className="shrink-0 flex flex-col min-h-0">
-                  <OrderBook />
+                  <OrderBook currency={selectedMarket ?? "BTC"} />
                 </div>
               </div>
               

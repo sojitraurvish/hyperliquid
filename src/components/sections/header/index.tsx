@@ -2,10 +2,19 @@ import { Settings, Globe, Bell, Mail } from "lucide-react";
 import AppButton, { AppButton as Button } from "@/components/ui/button";
 import AppDropdown, { DropdownOption } from "@/components/ui/dropdown";
 import { VARIANT_TYPES } from "@/lib/constants";
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import AppModal from "@/components/ui/modal";
-import { useAccount, useConnect, useDisconnect, type Connector } from 'wagmi';
+import { useAccount, useConnect, useDisconnect, useWalletClient, type Connector } from 'wagmi';
 import HydrationGuard from "@/components/ui/hydration-guard";
+import { ExchangeClient } from "@nktkas/hyperliquid";
+import { getUserExchangeClient, infoClient } from "@/lib/config/hyperliquied/hyperliquid-client";
+import { AbstractWallet } from "@nktkas/hyperliquid/signing";
+import { appToast } from "@/components/ui/toast";
+import { DepositModal } from "./DepositModal";
+import { WithdrawModal } from "./WithdrawModal";
+import { useBottomPanelStore } from "@/store/bottom-panel";
+import { useApiWallet } from "@/hooks/useWallet";
+import { errorHandler } from "@/store/errorHandler";
 
 const MORE_MENU_ITEMS = [
   "Testnet",
@@ -46,8 +55,33 @@ export const Header = () => {
   const { address, isConnected } = useAccount();
   const { disconnect } = useDisconnect();
   const [isWalletConnectModalOpen, setIsWalletConnectModalOpen] = useState(false);
+  const [isDepositModalOpen, setIsDepositModalOpen] = useState(false);
+  const [isWithdrawModalOpen, setIsWithdrawModalOpen] = useState(false);
   const [connectionError, setConnectionError] = useState<string | null>(null);
   const { connectors, connect } = useConnect();
+
+  const { data: walletClient } = useWalletClient();
+
+  // Request agentWallet approval when wallet connects
+  // useEffect(() => {
+  //   if (!address || !isConnected || !agentWallet || !walletClient) {
+  //     return;
+  //   }
+
+  //   // Only check approval status if not already approved
+  //   if (!isApproved) {
+  //     checkApprovalStatus({
+  //       agentPublicKeyParam: agentWallet.address as `0x${string}`,
+  //       userPublicKeyParam: address as `0x${string}`
+  //     }).catch((error) => {
+  //       console.error('Failed to check/approve agent wallet:', error);
+  //       appToast.error({ message: errorHandler(error) });
+  //     });
+  //   }
+  // }, [address, isConnected, agentWallet, walletClient, isApproved, checkApprovalStatus]);
+  
+  // Use store for balances
+  const { balances, isBalancesLoading, getAllBalances: fetchBalancesFromStore } = useBottomPanelStore();
     // Filter out Injected connector and get available wallets
     const availableConnectors = useMemo(() => connectors.filter((connector) => connector.name !== 'Injected'), [connectors]);
   // Format wallet address for display
@@ -108,6 +142,35 @@ export const Header = () => {
     }
   }, [connect, disconnect]);
 
+  // Fetch balances function using store
+  const fetchBalances = useCallback(async () => {
+    if (!address || !isConnected) {
+      return;
+    }
+
+    await fetchBalancesFromStore({ publicKey: address });
+  }, [address, isConnected, fetchBalancesFromStore]);
+
+  // Fetch balances when address is connected
+  useEffect(() => {
+    fetchBalances();
+  }, [fetchBalances]);
+
+  // Extract numeric values from balance strings (format: "10.92 USDC")
+  const parseBalanceValue = (balanceStr: string | undefined): number => {
+    if (!balanceStr) return 0;
+    const match = balanceStr.match(/^([\d.]+)/);
+    return match ? parseFloat(match[1]) : 0;
+  };
+
+  // Get balance values from store
+  const balanceData = balances?.[0]; // Get first balance (USDC Perps)
+  const availableBalance = balanceData ? parseBalanceValue(balanceData.available_balance) : 0;
+  const totalBalance = balanceData ? parseBalanceValue(balanceData.total_balance) : 0;
+
+  // Format balances for display
+  const formattedAvailableBalance = availableBalance.toFixed(2);
+  const formattedTotalBalance = totalBalance.toFixed(2);
 
   
   return (
@@ -154,6 +217,53 @@ export const Header = () => {
         >
           {isConnected ? (
             <>
+              <AppButton 
+                variant={VARIANT_TYPES.NOT_SELECTED} 
+                className="bg-gray-800/80 border border-gray-700 text-white hover:bg-gray-700/80 px-4 py-2.5 text-xs font-normal rounded transition-all shadow-sm hover:shadow-md cursor-pointer relative overflow-hidden min-w-[200px]"
+                onClick={fetchBalances}
+                disabled={isBalancesLoading}
+              >
+                {isBalancesLoading ? (
+                  <>
+                    <div className="relative z-10 flex items-center gap-2 w-full">
+                      <div className="h-3 w-20 bg-gray-600/50 rounded animate-pulse" />
+                      <div className="h-3 w-16 bg-gray-600/50 rounded animate-pulse" />
+                    </div>
+                    <div className="absolute inset-0 w-full h-full bg-[linear-gradient(90deg,transparent,rgba(255,255,255,0.15),transparent)] animate-shimmer" />
+                  </>
+                ) : (
+                  <div className="flex items-center gap-2 relative z-10">
+                    <div className="flex items-center gap-1.5">
+                      <span className="text-gray-400 text-[10px]">Available:</span>
+                      <span className="text-white font-medium text-xs">{formattedAvailableBalance}</span>
+                    </div>
+                    <div className="w-px h-3 bg-gray-600" />
+                    <div className="flex items-center gap-1.5">
+                      <span className="text-gray-400 text-[10px]">Total:</span>
+                      <span className="text-gray-300 font-medium text-xs">{formattedTotalBalance}</span>
+                    </div>
+                  </div>
+                )}
+              </AppButton>
+              <AppButton 
+                variant={VARIANT_TYPES.NOT_SELECTED} 
+                className="bg-teal-500 text-white hover:bg-teal-600 px-4 py-2 text-sm font-medium rounded transition-colors shadow-sm hover:shadow-md"
+                onClick={() => {
+                  setIsDepositModalOpen(true);
+                }}
+              >
+                Deposit
+              </AppButton>
+              <AppButton 
+                variant={VARIANT_TYPES.NOT_SELECTED} 
+                className="bg-red-600 text-white hover:bg-red-700 px-4 py-2 text-sm font-medium rounded transition-colors shadow-sm hover:shadow-md disabled:bg-gray-700 disabled:cursor-not-allowed disabled:hover:bg-gray-700"
+                onClick={() => {
+                  setIsWithdrawModalOpen(true);
+                }}
+                disabled={availableBalance === 0}
+              >
+                Withdraw
+              </AppButton>
               <AppDropdown
                 variant={VARIANT_TYPES.PRIMARY}
                 options={walletDropdownOptions}
@@ -286,6 +396,18 @@ export const Header = () => {
           <span className="font-medium">Log in with Email</span>
         </AppButton>
       </AppModal>
+
+      <DepositModal
+        isOpen={isDepositModalOpen}
+        onClose={() => setIsDepositModalOpen(false)}
+        onSuccess={fetchBalances}
+      />
+
+      <WithdrawModal
+        isOpen={isWithdrawModalOpen}
+        onClose={() => setIsWithdrawModalOpen(false)}
+        onSuccess={fetchBalances}
+      />
     </>
   );
 };

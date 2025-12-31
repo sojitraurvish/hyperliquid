@@ -18,18 +18,21 @@ function bpsToPercentString(bps: number): string {
 }
 
 // Parse the API response from info.maxBuilderFee into bps
-// The docs say it returns a number "Maximum builder fee approval."
-// Some deployments return numbers (e.g. 0.05 for 0.05%), others may return "0.05%"
-// This handles both robustly, and returns bps (5 for 0.05%).
+// The API returns the value in tenths of basis points (e.g. 100 = 10 bps = 0.1%)
+// This converts tenths of bps to bps by dividing by 10
 function toBpsFromApi(val: unknown): number {
   if (typeof val === 'number' && isFinite(val)) {
-    // Treat as percent number, e.g. 0.05 → 5 bps
-    return Math.round(val * 100)
+    // API returns in tenths of bps, so divide by 10 to get bps
+    // e.g. 100 tenths of bps → 10 bps
+    return Math.round(val / 10)
   }
   if (typeof val === 'string') {
     const v = val.endsWith('%') ? val.slice(0, -1) : val
     const n = Number(v)
-    if (isFinite(n)) return Math.round(n * 100)
+    if (isFinite(n)) {
+      // If it's a string number, assume it's also in tenths of bps
+      return Math.round(n / 10)
+    }
   }
   return 0
 }
@@ -126,7 +129,6 @@ export function useBuilderFee({builderPublicKey = BUILDER_CONFIG.BUILDER_FEE_ADD
     setIsChecking(true)
     try {
       const approvedBps = await checkBuilderFeeApproval({userPublicKeyParam: userPublicKeyParam, builderPublicKeyParam: builderPublicKeyParam})
-
       if(!approvedBps && walletClient && !isWalletClientPending) {
         const approvalResult = await approveBuilderFee({userPublicKeyParam: userPublicKeyParam, builderPublicKeyParam: builderPublicKeyParam})
         

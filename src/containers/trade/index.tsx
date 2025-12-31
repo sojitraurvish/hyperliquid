@@ -20,26 +20,28 @@ import { useMarketStore } from '@/store/market';
 export default function TradeContainer() {
 
   const selectedMarket = useMarketStore().selectedMarket;
+  const selectedCoin = selectedMarket?.coin ?? "BTC";
+  const selectedLeverage = selectedMarket?.leverage ?? 0;
   const { address: userAddress } = useAccount()
-  const { agentWallet, isApproved,checkApprovalStatus } = useApiWallet(userAddress as `0x${string}`)
+  // const { agentWallet, isApproved,checkApprovalStatus } = useApiWallet({userPublicKey: userAddress as `0x${string}`})
   const { checkBuilderFeeStatus } = useBuilderFee({userPublicKey: userAddress as `0x${string}`,builderPublicKey:BUILDER_CONFIG.BUILDER_FEE_ADDRESS})
   const getAgents = async () => {
     const agents = await infoClient.extraAgents({ user: userAddress! })
     console.log("agents", agents)
   }
 
-  console.log("agentWallet", agentWallet, isApproved)
-  const handleCheckApprovalStatus = async () => {
-    if(await checkApprovalStatus({})){
-      console.log("approved bro")
-    }
-  }
+  // console.log("agentWallet", agentWallet, isApproved)
+  // const handleCheckApprovalStatus = async () => {
+  //   if(await checkApprovalStatus({})){
+  //     console.log("approved bro")
+  //   }
+  // }
 
-  const handleCheckBuilderFeeStatus = async () => {
-    if(await checkBuilderFeeStatus({})){
-      console.log("builder fee approved bro")
-    }
-  }
+  // const handleCheckBuilderFeeStatus = async () => {
+  //   if(await checkBuilderFeeStatus({})){
+  //     console.log("builder fee approved bro")
+  //   }
+  // }
 
  
 
@@ -57,10 +59,10 @@ console.log("selectedMarket", selectedMarket)
       </div>
       
       {/* Scrollable Content Area */}
-      <div className="flex-1 overflow-y-auto overflow-x-hidden">
+      <div className="flex-1 overflow-y-auto overflow-x-hidden scrollbar-hide">
         <div className="flex flex-col min-h-full">
           <div className="shrink-0">
-            <MarketHeader currency={selectedMarket ?? "BTC"} />
+            <MarketHeader currency={selectedCoin} />
           </div>
           
           {/* Main Layout: Left side (Chart + OrderBook + BottomPanel) | Right side (TradingPanel) */}
@@ -71,23 +73,23 @@ console.log("selectedMarket", selectedMarket)
               <div className="flex flex-[1.2] sm:flex-[1.2] md:flex-[1.1] min-h-0 w-full flex-shrink-0 basis-auto">
                 {/* Chart takes remaining space - maximizes width */}
                 <div className="flex-1 flex flex-col min-h-0 w-full min-w-0">
-                  <TradingChart currency={selectedMarket ?? "BTC"} />
+                  <TradingChart currency={selectedCoin} />
                 </div>
                 {/* OrderBook keeps its fixed width */}
                 <div className="shrink-0 flex flex-col min-h-0">
-                  <OrderBook currency={selectedMarket ?? "BTC"} />
+                  <OrderBook currency={selectedCoin} />
                 </div>
               </div>
               
               {/* BottomPanel below both Chart and OrderBook - Takes less space */}
-              <div className="shrink-0 border-t border-gray-800 flex-[0.8] sm:flex-[0.7] md:flex-[0.6] min-h-[200px] sm:min-h-[220px] md:min-h-[240px]">
+              <div className="shrink-0 border-t border-gray-800 flex-[0.8] sm:flex-[0.7] md:flex-[0.6] min-h-[200px] sm:min-h-[220px] md:min-h-[240px] max-h-[400px] sm:max-h-[450px] md:max-h-[350px]">
                 <BottomPanel />
               </div>
             </div>
             
             {/* Right Side: TradingPanel - Full height beside all */}
             <div className="shrink-0 border-l border-gray-800 flex flex-col min-h-full">
-              <TradingPanel />
+              <TradingPanel currentCurrency={selectedCoin} currentLeverage={selectedLeverage} />
             </div>
           </div>
         </div>

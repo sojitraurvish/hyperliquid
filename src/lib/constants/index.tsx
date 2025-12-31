@@ -47,6 +47,7 @@ export const VARIANT_TYPES = {
     DD_MMM_YYYY_HH_MM_A: 'DD MMM YYYY, hh:mm A',
     DD_MM_YYYY: 'DD-MM-YYYY',
     ddd_MM_DD_YYYY: 'ddd, MM/DD/YYYY',
+    DD_MM_YYYY_HH_MM_SS: 'DD/MM/YYYY - HH:mm:ss',
   };
   export type DateTimeFormat = typeof DATE_TIME_FORMAT[keyof typeof DATE_TIME_FORMAT];
 
@@ -65,7 +66,7 @@ export const VARIANT_TYPES = {
   export type CurrencySymbols = typeof CURRENCY_SYMBOLS[keyof typeof CURRENCY_SYMBOLS];
 
 // Utility function to format numbers with decimal places
-export const addDecimal = (value: number | string, decimals: number = 2): string => {
+export const addDecimals = (value: number | string, decimals: number = 2): string => {
   const num = typeof value === 'string' ? parseFloat(value) : value;
   if (isNaN(num)) return '0';
   return num.toFixed(decimals);

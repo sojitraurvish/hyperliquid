@@ -1,5 +1,5 @@
 import React from "react";
-import { addDecimal } from "@/lib/constants";
+import { addDecimals } from "@/lib/constants";
 import { OrderBookData } from "..";
 
 
@@ -40,13 +40,13 @@ export const OrderRow = ({ order, isAsk, maxTotal, currency, onClick, isHighligh
         />
       )}
       <span className={`${priceColor} relative z-10 flex-1 text-left font-medium`}>
-        {addDecimal(order.price)}
+        {addDecimals(order.price)}
       </span>
       <span className="text-gray-300 relative z-10 flex-1 text-center tabular-nums">
-        {addDecimal(displaySize)}
+        {addDecimals(displaySize)}
       </span>
       <span className="text-gray-300 relative z-10 flex-1 text-right tabular-nums">
-        {addDecimal(displayTotal)}
+        {addDecimals(displayTotal)}
       </span>
     </div>
   );

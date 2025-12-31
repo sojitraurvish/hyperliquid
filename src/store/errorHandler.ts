@@ -15,7 +15,7 @@ export const errorHandler = (error: unknown) => {
   
   appToast.error({
     title: "Error from errorHandler",
-    message: errorObj.response?.data?.message || errorObj.message || "An error occurred",
+    message: errorObj.message || "An error occurred",
   });
   
   return errorObj.response?.data?.message || errorObj.message || "An error occurred";

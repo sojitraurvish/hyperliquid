@@ -16,6 +16,10 @@ export const WEB_URL = isTestnet ? "https://app.hyperliquid-testnet.xyz" : "http
 
 export const EXPLORER_URL =   `${WEB_URL}/explorer`;
 export const EXPLORER_TX_URL =   `${EXPLORER_URL}/tx`;
+export const HISTORICAL_ORDERS_URL =   `${WEB_URL}/historicalOrders`;
+export const FUNDING_HISTORY_URL =   `${WEB_URL}/fundingHistory`;
+export const TRADE_HISTORY_URL =   `${WEB_URL}/tradeHistory`;
+
 // SEO image
 export const DESK_LOGO = "/images/logo.png";
 export const OG_IMAGE = DESK_LOGO;

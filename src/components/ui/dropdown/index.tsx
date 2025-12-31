@@ -172,8 +172,8 @@ export const AppDropdown = <T extends string | number>({
         {isOpen && !isLoading && (
           <div
             className={cn(
-              "absolute  z-50 w-full mt-2 bg-white border-2 border-gray-200 rounded-lg shadow-xl max-h-60 overflow-y-auto overflow-x-hidden",
-              dropdownClassName,
+              "absolute z-50 w-full mt-2 rounded-lg shadow-xl max-h-60 overflow-y-auto overflow-x-hidden",
+              optionClassName ? "bg-gray-800 border border-gray-700" : "bg-white border-2 border-gray-200",
               optionClassName
             )}
             role="listbox"

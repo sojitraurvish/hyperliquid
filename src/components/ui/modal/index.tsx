@@ -17,7 +17,7 @@ type Props = {
   isOpen: boolean;
   onClose: () => void;
   children?: ReactNode;
-  title?: string;
+  title?: ReactNode;
   showCloseButton?: boolean;
   closeOnOutsideClick?: boolean;
   closeOnEscape?: boolean;
@@ -101,9 +101,9 @@ export const AppModal: React.FC<Props> = ({
               )}
             >
               {title && (
-                <h2 className="text-xl font-semibold text-white">
+                <div className="text-xl font-semibold text-white">
                   {title}
-                </h2>
+                </div>
               )}
               {showCloseButton && (
                 <button

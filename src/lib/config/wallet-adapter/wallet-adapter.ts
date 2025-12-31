@@ -6,8 +6,8 @@ import { ENVIRONMENT, ENVIRONMENT_TYPES } from '@/lib/constants'
 
 
 // pick the chain(s) our app will support
-const chains = ENVIRONMENT === ENVIRONMENT_TYPES.DEVELOPMENT
-  ? [arbitrumSepolia]    // USDC on Arbitrum Sepolia for Hyperliquid testnet
+export const chains = ENVIRONMENT === ENVIRONMENT_TYPES.DEVELOPMENT
+  ? [arbitrumSepolia]    // Hyperliquid testnet and Arbitrum Sepolia for USDC
   : [arbitrum]           // USDC on Arbitrum One for Hyperliquid mainnet
 
 export const config = createConfig({
@@ -23,3 +23,5 @@ export const config = createConfig({
         [arbitrum.id]: http(),
       },
 });
+
+

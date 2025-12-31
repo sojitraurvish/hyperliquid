@@ -4,7 +4,7 @@ import React, { useState, useEffect, useMemo } from "react";
 import { MoreVertical } from "lucide-react";
 import { Subscription } from "@nktkas/hyperliquid";
 import { subscriptionClient } from "@/lib/config/hyperliquied/hyperliquid-client";
-import { addDecimal, CURRENCY_NAMES, DATE_TIME_FORMAT, ORDER_BOOK_TABS, OrderBookTabs, VARIANT_TYPES } from "@/lib/constants";
+import { addDecimals, CURRENCY_NAMES, DATE_TIME_FORMAT, ORDER_BOOK_TABS, OrderBookTabs, VARIANT_TYPES } from "@/lib/constants";
 import { formatDateTimeAccordingToFormat } from "@/lib/date-operation";
 import { L2BookParameters, TradesParameters } from "@nktkas/hyperliquid/api/subscription";
 import { AppButton } from "@/components/ui/button";
@@ -12,6 +12,7 @@ import { OrderList } from "./components/OrderList";
 import { SpreadIndicator } from "./components/SpreadIndicator";
 import { TradesList } from "./components/TradesList";
 import { Dropdown } from "../../ui/dropdown/Dropdown";
+import { useTradesStore, TradeData } from "@/store/trades";
 
 
 export interface OrderBookData {
@@ -20,14 +21,7 @@ export interface OrderBookData {
   total: string;
 }
 
-export interface TradeData {
-  price: number;
-  size: string;
-  time: string;
-  isBuy: boolean;
-  timestamp: number;
-  txnHash: string;
-}
+// TradeData is now exported from @/store/trades
 
 
 // Main OrderBook Component
@@ -51,7 +45,7 @@ export const OrderBook = ({ currency }: { currency: string }) => {
 
   const [viewMode, setViewMode] = useState<"Stacked" | "Large">("Stacked");
   const [isOptionsOpen, setIsOptionsOpen] = useState(false);
-  const [trades, setTrades] = useState<TradeData[]>([]);
+  const { trades, setTrades } = useTradesStore();
   
   const [spread, setSpread] = useState(0);
   const [spreadPercent, setSpreadPercent] = useState(0);
@@ -79,6 +73,9 @@ export const OrderBook = ({ currency }: { currency: string }) => {
   const precisionOptions = Object.keys(precisionConfig);
   
   const [currencyName, setCurrencyName] = useState<string>(currency);
+  useEffect(()=>{
+    setCurrencyName(currency)
+  },[currency])
   const currencies = useMemo(() => [
     {
       label: CURRENCY_NAMES.USDC,
@@ -119,11 +116,11 @@ export const OrderBook = ({ currency }: { currency: string }) => {
         (book) => {
           // Only update state if still subscribed to this market
           if (!isSubscribed) return;
-          console.log("book", book);
+          // console.log("book", book);
           const bestBid = book.levels[0];
           const bestAsk = book.levels[1];
-          const spread = parseFloat(bestAsk[0].px) - parseFloat(bestBid[0].px);
-          const spreadPercent = (spread / parseFloat(bestAsk[0].px)) * 100;
+          const spread = parseFloat(bestAsk[0]?.px) - parseFloat(bestBid[0]?.px);
+          const spreadPercent = (spread / parseFloat(bestAsk[0]?.px)) * 100;
           setSpread(spread);
           setSpreadPercent(spreadPercent)
           
@@ -191,7 +188,7 @@ export const OrderBook = ({ currency }: { currency: string }) => {
             cumulativeTotal += sizeNum;
             return {
               ...ask,
-              total: addDecimal(cumulativeTotal),
+              total: addDecimals(cumulativeTotal),
             };
           });
 
@@ -200,7 +197,7 @@ export const OrderBook = ({ currency }: { currency: string }) => {
             setHighlightedAskPrices(new Set(newOrUpdatedPrices));
           }
 
-          return currentAsks.slice(0, 11);
+          return currentAsks?.slice(0, 11);
         });
 
          setBids((prev: OrderBookData[]) => {
@@ -266,7 +263,7 @@ export const OrderBook = ({ currency }: { currency: string }) => {
               cumulativeTotal += sizeNum;
               return {
                 ...bid,
-                total: addDecimal(cumulativeTotal),
+                total: addDecimals(cumulativeTotal),
               };
             });
 
@@ -275,7 +272,7 @@ export const OrderBook = ({ currency }: { currency: string }) => {
               setHighlightedBidPrices(new Set(newOrUpdatedPrices));
             }
 
-            return currentBids.slice(0, 11);
+            return currentBids?.slice(0, 11);
           });
         });
         
@@ -319,7 +316,7 @@ export const OrderBook = ({ currency }: { currency: string }) => {
             const tradeTime = new Date(trade.time);
             return {
               price: parseFloat(trade.px),
-              size: addDecimal(trade.sz, 4),
+              size: addDecimals(trade.sz, 4),
               time: formatDateTimeAccordingToFormat({ timeStamp: tradeTime , format: DATE_TIME_FORMAT.HH_mm_ss}),
               isBuy: trade.side === "B", // "B" = buy, "A" = sell
               timestamp: tradeTime.getTime(), // Store timestamp for sorting
@@ -329,12 +326,11 @@ export const OrderBook = ({ currency }: { currency: string }) => {
           
       
           // Prepend new trades to existing trades, sort by date, and limit to 50 most recent
-          setTrades((prevTrades) => {
-            const updatedTrades = [...newTrades, ...prevTrades];
-            // Sort all trades by timestamp (newest first)
-            updatedTrades.sort((a, b) => b.timestamp - a.timestamp);
-            return updatedTrades.slice(0, 50);
-          });
+          const currentTrades = useTradesStore.getState().trades;
+          const updatedTrades = [...newTrades, ...currentTrades];
+          // Sort all trades by timestamp (newest first)
+          updatedTrades.sort((a, b) => b.timestamp - a.timestamp);
+          setTrades(updatedTrades?.slice(0, 50));
         }
       });
     };
@@ -354,7 +350,7 @@ export const OrderBook = ({ currency }: { currency: string }) => {
         tradeSubscription = null;
       }
     };
-  }, [currency]);
+  }, [currency, setTrades]);
 
   // Show loading state during SSR or initial mount
 
@@ -500,7 +496,7 @@ export const OrderBook = ({ currency }: { currency: string }) => {
           {/* Trades Tab Content */}
           {activeTab === ORDER_BOOK_TABS.TRADES && (
             <div className="absolute inset-0 m-0 p-0 flex flex-col min-h-0 w-full">
-              <TradesList trades={trades} />
+              <TradesList trades={trades} currency={currencyName} />
             </div>
           )}
         </div>

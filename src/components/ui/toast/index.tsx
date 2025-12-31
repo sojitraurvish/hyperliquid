@@ -43,6 +43,7 @@ export const AppToast = ({
       pauseOnFocusLoss
       draggable
       pauseOnHover
+      style={{ zIndex: 10000 }}
       toastClassName={() =>
         cn(
           "relative flex p-4 min-h-10 rounded-lg justify-between overflow-hidden cursor-pointer",

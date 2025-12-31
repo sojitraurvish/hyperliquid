@@ -10,7 +10,8 @@ import { errorHandler } from '@/store/errorHandler'
  * Hook to manage API wallet generation and storage
  * This creates a secondary wallet for trading that gets approved by the main wallet
  */
-export const useApiWallet = (userPublicKey: `0x${string}`) => {
+export const useApiWallet = ({userPublicKey}: {userPublicKey: `0x${string}`}) => {
+  console.log("userPublicKey", userPublicKey)
   const [agentWallet, setAgentWallet] = useState<Wallet | HDNodeWallet | null>(null)
   const [isApproved, setIsApproved] = useState(false)
   const [isApproving, setIsApproving] = useState(false)
@@ -47,11 +48,22 @@ export const useApiWallet = (userPublicKey: `0x${string}`) => {
   };
 
 
+  /**
+   * Check if an agent is still valid based on its validUntil timestamp
+   */
+  function isAgentValid(agent: { validUntil?: number } | undefined): boolean {
+    if (!agent?.validUntil) return false;
+    return Date.now() < agent.validUntil;
+  }
+
    const checkAgentApproval = async ({agentPublicKeyParam = agentWallet?.address as `0x${string}`, userPublicKeyParam = userPublicKey }: {agentPublicKeyParam?: `0x${string}`, userPublicKeyParam?: `0x${string}`}): Promise<boolean> => {
     const agents = await infoClient.extraAgents({ user: userPublicKeyParam });
-    return agents.some(
-      (a: { address: string }) => a.address.toLowerCase() === agentPublicKeyParam.toLowerCase()
+    const found = agents.find(
+      (a: { address: string; validUntil?: number }) =>
+        a.address.toLowerCase() === agentPublicKeyParam.toLowerCase()
     );
+    if(!found) return false;
+    return isAgentValid(found);
   };
 
   const checkApprovalStatus = async ({agentPublicKeyParam = agentWallet?.address as `0x${string}`, userPublicKeyParam = userPublicKey }: {agentPublicKeyParam?: `0x${string}`, userPublicKeyParam?: `0x${string}`}): Promise<boolean> => {
@@ -87,10 +99,13 @@ export const useApiWallet = (userPublicKey: `0x${string}`) => {
       setLocalStorage(`${LOCAL_STORAGE_KEYS.HYPERLIQUID_AGENT}${userPublicKeyParam}`, { agentPrivateKey: wallet.privateKey, userPublicKey: userPublicKeyParam })
       setAgentWallet(wallet)
       setIsApproved(false) // New wallet needs approval
+      // checkApprovalStatus({agentPublicKeyParam: wallet.address as `0x${string}`, userPublicKeyParam: userPublicKeyParam})
     } catch (error) {
       console.error('Error generating API wallet:', error)
     }
   }
+
+  
 
 
   const initializeApiWallet = ({userPublicKeyParam = userPublicKey}: {userPublicKeyParam?: `0x${string}`}) => {
@@ -124,5 +139,5 @@ export const useApiWallet = (userPublicKey: `0x${string}`) => {
     initializeApiWallet({userPublicKeyParam: userPublicKey})
   }, [userPublicKey, walletClient, isWalletClientPending])
 
-  return { agentWallet, isApproved, isApproving, checkApprovalStatus }
+  return { agentWallet, agentPrivateKey: agentWallet?.privateKey, isApproved, isApproving, checkApprovalStatus }
 }

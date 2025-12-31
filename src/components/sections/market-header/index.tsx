@@ -12,6 +12,14 @@ const getCoinIcon = (symbol: string): string => {
   return `https://app.hyperliquid-testnet.xyz/coins/${baseSymbol}.svg`;
 };
 
+// Helper function to convert leverage from string to number
+const parseLeverage = (leverage: string | null): number => {
+  if (!leverage) return 1;
+  // Remove 'x' suffix if present and parse to number
+  const num = parseFloat(leverage.replace(/x$/i, ''));
+  return isNaN(num) ? 1 : num;
+};
+
 // Single source of truth for all markets
 
 export type PerpetualMarket = {
@@ -109,7 +117,7 @@ export const MarketHeader = ({ currency }: { currency: string }) => {
             updated.set(marketToSelect.symbol, { ...marketToSelect, isSelected: true });
             return updated;
           });
-          setSelectedMarket(marketToSelect.coin);
+          setSelectedMarket({ coin: marketToSelect.coin, leverage: parseLeverage(marketToSelect.leverage) });
         } else {
           // Fallback to first market if saved market doesn't exist
           const firstMarket = marketsArray[0];
@@ -121,7 +129,7 @@ export const MarketHeader = ({ currency }: { currency: string }) => {
             updated.set(firstMarket.symbol, { ...firstMarket, isSelected: true });
             return updated;
           });
-          setSelectedMarket(firstMarket.coin);
+          setSelectedMarket({ coin: firstMarket.coin, leverage: parseLeverage(firstMarket.leverage) });
         }
       } else {
         // Fallback to first market if no currency
@@ -134,7 +142,7 @@ export const MarketHeader = ({ currency }: { currency: string }) => {
           updated.set(firstMarket.symbol, { ...firstMarket, isSelected: true });
           return updated;
         });
-        setSelectedMarket(firstMarket.coin);
+        setSelectedMarket({ coin: firstMarket.coin, leverage: parseLeverage(firstMarket.leverage) });
       }
     }
   }, [isHydrated, marketsArray.length, currency]);
@@ -159,15 +167,19 @@ export const MarketHeader = ({ currency }: { currency: string }) => {
         updated.set(marketToSelect.symbol, { ...marketToSelect, isSelected: true });
         return updated;
       });
-      setSelectedMarket(marketToSelect.coin);
+      setSelectedMarket({ coin: marketToSelect.coin, leverage: parseLeverage(marketToSelect.leverage) });
     }
   }, [currency, isHydrated, marketsArray.length]);
 
   // Get selected market data
   const selectedMarketData = useMemo(() => {
-    const selected = marketsArray.find(m => m.isSelected);
-    return selected || marketsArray[0] || null;
-  }, [marketsArray]);
+    if (currency) {
+      const marketByCurrency = marketsArray.find(m => m.coin === currency);
+      if (marketByCurrency) return marketByCurrency;
+    }
+    // Fallback to first market if currency not found or not provided
+    return marketsArray[0] || null;
+  }, [marketsArray, currency]);
 
   // Get favorite markets (memoized)
   const favoriteMarkets = useMemo(() => {
@@ -229,7 +241,7 @@ export const MarketHeader = ({ currency }: { currency: string }) => {
       if (market) {
         updated.set(symbol, { ...market, isSelected: true });
         // Save selected market to store
-        setSelectedMarket(market.coin);
+        setSelectedMarket({ coin: market.coin, leverage: parseLeverage(market.leverage) });
       }
       return updated;
     });

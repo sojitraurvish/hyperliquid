@@ -9,15 +9,29 @@ import {
 import type { AbstractWallet } from '@nktkas/hyperliquid/signing'
 import { privateKeyToAccount } from 'viem/accounts'
 import { ENVIRONMENT, ENVIRONMENT_TYPES } from '@/lib/constants'
+import { SymbolConverter, formatPrice, formatSize } from '@nktkas/hyperliquid/utils'
 
 // 1) shared transport for both info & exchange // Increase timeout to be tolerant to slow networks (default is 10s)
-const transport = new HttpTransport({ isTestnet: ENVIRONMENT === ENVIRONMENT_TYPES.DEVELOPMENT,  timeout: 30000 })
+export const transport = new HttpTransport({ isTestnet: ENVIRONMENT === ENVIRONMENT_TYPES.DEVELOPMENT,  timeout: 30000 })
 
 // 2) read-only client to list your approved agents // Read-only client
 export const infoClient = new InfoClient({ transport })
 
+// Cache the symbol converter instance to avoid repeated API calls
+let symbolConverterCache: Awaited<ReturnType<typeof SymbolConverter.create>> | null = null;
+
+export async function getSymbolConverter() {
+  if (!symbolConverterCache) {
+    symbolConverterCache = await SymbolConverter.create({ transport })
+  }
+  return symbolConverterCache
+}
+
 // Exchange client signing with an AGENT private key
 export function getAgentExchangeClient(agentPrivateKey: `0x${string}`) {
+  if (!agentPrivateKey) {
+    throw new Error("Agent private key is required but was not provided. Please ensure the API wallet is initialized.");
+  }
   const account = privateKeyToAccount(agentPrivateKey)
   return new ExchangeClient({ transport, wallet: account })
 }
@@ -51,4 +65,33 @@ export const subscriptionClient = new SubscriptionClient({
 // ) {
 //   // Note: nSigFigs and mantissa are optional. mantissa is only valid when nSigFigs is 5.
 //   return subscriptionClient.l2Book(params, onData);
+// }
+
+
+
+// --------
+
+
+// // using the same getUserExchangeClient(walletClient) you use for approvals
+// const exchangeClient = getUserExchangeClient(walletClient)
+
+// // Market order example (user signs via connected wallet)
+// const res = await exchangeClient.placeOrder?.({
+//   coin: "ETH",            // market symbol used by Hyperliquid
+//   side: "Buy",            // "Buy" / "Sell" (SDK may also accept "A"/"B" depending on implementation)
+//   orderType: "Market",    // "Market" or "Limit"
+//   sz: "0.0007",           // size (base asset units or lot units; convert per market lot size)
+//   tif: "GTC",             // time-in-force: "GTC" | "IOC" | "ALO" etc
+//   reduceOnly: false,      // reduce-only flag
+//   cloid: "0x1234...",     // optional client order id (128-bit hex)
+//   // builder fields (optional)
+//   b: BUILDER_ADDRESS,     // builder public address (0x...)
+//   f: desiredBps * 10      // builder fee in tenths of bps (5 bps -> 50)
+// })
+
+// // handle response
+// if (res?.status === "ok") {
+//   // order accepted
+// } else {
+//   // show error/res.response
 // }

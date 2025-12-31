@@ -1,25 +1,21 @@
+import { SelectedMarket } from "@/types/market";
 import { create } from "zustand";
 import { createJSONStorage, devtools, persist } from "zustand/middleware";
 
 type MarketStore = {
-  selectedMarket: string | null;
+  selectedMarket: SelectedMarket | null;
   
-  setSelectedMarket: (coin: string) => void;
-  getSelectedMarket: () => string | null;
+  setSelectedMarket: (selectedMarket: SelectedMarket) => void;
 };
 
 export const useMarketStore = create<MarketStore>()(
   devtools(
     persist(
-      (set, get) => ({
+      (set) => ({
         selectedMarket: null,
 
-        setSelectedMarket: (coin: string) => {
-          set({ selectedMarket: coin });
-        },
-
-        getSelectedMarket: () => {
-          return get().selectedMarket;
+        setSelectedMarket: (selectedMarket: SelectedMarket) => {
+          set({ selectedMarket });
         },
       }),
       {

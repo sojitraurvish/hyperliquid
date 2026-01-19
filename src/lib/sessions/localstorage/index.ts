@@ -7,6 +7,8 @@ export const LOCAL_STORAGE_KEYS = {
   HYPERLIQUID_AGENT: 'hyperliquid_agent_' as `${'hyperliquid_agent_'}${string}`,
   SELECTED_MARKET: 'selectedMarket',
   FAVORITE_MARKETS: 'favoriteMarkets',
+  SELECTED_INTERVAL: 'selectedInterval',
+  FAVORITE_INTERVALS: 'favoriteIntervals',
 } as const;
 
 
@@ -27,6 +29,8 @@ export type LocalStorageSchema = {
   [LOCAL_STORAGE_KEYS.FAVORITE_MARKETS]: {
     symbols?: string[] | null;
   } | null,
+  [LOCAL_STORAGE_KEYS.SELECTED_INTERVAL]: string | null,
+  [LOCAL_STORAGE_KEYS.FAVORITE_INTERVALS]: string[] | null,
 } & {
   // Support dynamic HYPERLIQUID_AGENT keys with user addresses
   // by defautl you can not create stiatic and diymanic key object together so firt extranally created and then merged

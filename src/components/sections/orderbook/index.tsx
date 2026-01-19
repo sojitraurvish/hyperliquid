@@ -359,13 +359,13 @@ export const OrderBook = ({ currency }: { currency: string }) => {
       <div className="flex-1 flex flex-col min-h-0">
         {/* Header with Tabs */}
         <div className="flex items-center justify-between px-2 sm:px-3 py-2 border-b border-gray-800 shrink-0">
-          <div className="inline-flex items-center gap-2 sm:gap-4 bg-transparent p-0 h-auto">
+          <div className="flex items-center bg-transparent p-0 h-auto w-full">
             {tabs.map((tab) => (
               <button
                 key={tab.value}
                 onClick={tab.onClick}
-                className={`
-                  text-xs sm:text-sm px-0 py-1 transition-colors duration-200
+                className={` hover:cursor-pointer
+                  flex-1 text-xs sm:text-sm px-0 py-1 transition-colors duration-200
                   relative focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-gray-950 focus:ring-teal-400
                   ${tab.isActive ? "text-white" : "text-gray-400 hover:text-gray-300"}
                 `}
@@ -377,7 +377,7 @@ export const OrderBook = ({ currency }: { currency: string }) => {
               </button>
             ))}
           </div>
-          <div className="relative">
+          {/* <div className="relative">
             <AppButton
               variant={VARIANT_TYPES.NOT_SELECTED}
               onClick={() => setIsOptionsOpen(!isOptionsOpen)}
@@ -416,7 +416,7 @@ export const OrderBook = ({ currency }: { currency: string }) => {
                 </div>
               </>
             )}
-          </div>
+          </div> */}
         </div>
 
         {/* Tab Content Container - Maintains consistent height */}

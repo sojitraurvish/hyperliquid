@@ -142,7 +142,9 @@ export const IntervalDropdown = ({
                         return (
                           <button
                             key={item.value}
-                            onClick={() => handleSelect(sectionIndex, itemIndex, item.value)}
+                            onClick={(e) => {
+                              handleSelect(sectionIndex, itemIndex, item.value);
+                            }}
                             className={`w-full px-4 py-2 text-xs text-left flex items-center justify-between transition-colors group ${
                               isSelected
                                 ? "bg-teal-500/20 text-teal-400"

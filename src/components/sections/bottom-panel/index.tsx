@@ -576,28 +576,15 @@ const PositionsRow = ({ position, markPrice }: PositionsRowProps) => {
   const positionValue = `$${parseFloat(pos.positionValue).toFixed(2)} USDC`;
   
   // Format entry price (remove decimals if whole number)
-  const entryPrice = parseFloat(pos.entryPx).toLocaleString('en-US', {
-    minimumFractionDigits: 0,
-    maximumFractionDigits: 0
-  });
+  const entryPrice = parseFloat(pos.entryPx).toFixed(2);
   
   // Format mark price (use provided or calculate from position value and size)
   const formattedMarkPrice = markPrice 
-    ? parseFloat(markPrice).toLocaleString('en-US', {
-        minimumFractionDigits: 0,
-        maximumFractionDigits: 0
-      })
-    : (() => {
+    ? parseFloat(markPrice).toFixed(2) : (() => {
         // Calculate approximate mark price from position value and size
         const posValue = parseFloat(pos.positionValue);
         const posSize = parseFloat(pos.szi);
-        if (posSize > 0) {
-          return (posValue / posSize).toLocaleString('en-US', {
-            minimumFractionDigits: 0,
-            maximumFractionDigits: 0
-          });
-        }
-        return "--";
+        return (posValue / posSize).toFixed(2);
       })();
   
   // Format PNL
@@ -614,10 +601,7 @@ const PositionsRow = ({ position, markPrice }: PositionsRowProps) => {
   
   // Format liquidation price
   const liqPrice = pos.liquidationPx 
-    ? parseFloat(pos.liquidationPx).toLocaleString('en-US', {
-        minimumFractionDigits: 0,
-        maximumFractionDigits: 0
-      })
+    ? parseFloat(pos.liquidationPx).toFixed(2)
     : "--";
   
   // Format margin with type
@@ -627,9 +611,9 @@ const PositionsRow = ({ position, markPrice }: PositionsRowProps) => {
   // Format funding
   const funding = parseFloat(pos.cumFunding.sinceOpen);
   const fundingFormatted = funding >= 0 
-    ? `$${funding.toFixed(2)}`
-    : `-$${Math.abs(funding).toFixed(2)}`;
-  const fundingColor = funding >= 0 ? "text-green-500" : "text-red-500";
+    ? `-$${funding.toFixed(2)}`
+    : `$${Math.abs(funding).toFixed(2)}`;
+  const fundingColor = funding <= 0 ? "text-green-500" : "text-red-500";
   
   const gridColumns = usePositionsGridColumns();
 
@@ -681,7 +665,7 @@ const PositionsRow = ({ position, markPrice }: PositionsRowProps) => {
           }}
           className="inline-flex items-center shrink-0"
         >
-          <ExternalLink className="h-3 w-3 text-gray-500 hover:text-teal-400 transition-colors" />
+          {/* <ExternalLink className="h-3 w-3 text-gray-500 hover:text-teal-400 transition-colors" /> */}
         </a>
       </div>
       
@@ -705,7 +689,7 @@ const PositionsRow = ({ position, markPrice }: PositionsRowProps) => {
             }}
             className="inline-flex items-center shrink-0"
           >
-            <Pencil className="h-3 w-3 text-gray-500 hover:text-teal-400 transition-colors" />
+            {/* <Pencil className="h-3 w-3 text-gray-500 hover:text-teal-400 transition-colors" /> */}
           </button>
         </div>
       </div>
@@ -1297,7 +1281,8 @@ subscriptionClient.openOrders({ user: userAddress }, (orders) => {
 //   console.log("orders fills",fills);
 //     }); 
 subscriptionClient.clearinghouseState({ user: userAddress }, (fundings) => {
-  
+
+  console.log("fundings",fundings);
       setUserPositions(fundings.clearinghouseState.assetPositions);
     }); 
    

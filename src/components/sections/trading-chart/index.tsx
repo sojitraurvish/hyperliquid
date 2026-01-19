@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { createChart, ColorType, CandlestickSeries, HistogramSeries, CandlestickData } from "lightweight-charts";
+import { createChart, ColorType, CandlestickSeries, HistogramSeries, CandlestickData, CrosshairMode, IChartApi, ISeriesApi, SeriesMarker, Time, createSeriesMarkers, ISeriesMarkersPluginApi, IPriceLine } from "lightweight-charts";
 import { BarChart3, Maximize2 } from "lucide-react";
 import { IntervalDropdown, IntervalSection } from "../../ui/dropdown/IntervalDropdown";
 import { Subscription } from "@nktkas/hyperliquid";
@@ -7,6 +7,10 @@ import { infoClient, subscriptionClient } from "@/lib/config/hyperliquied/hyperl
 import { getCandleData, CandleInterval } from "@/lib/services/candle-chart";
 import AppButton from "@/components/ui/button";
 import { VARIANT_TYPES } from "@/lib/constants";
+import { LOCAL_STORAGE_KEYS, getLocalStorage, setLocalStorage } from "@/lib/sessions/localstorage";
+import { useAccount } from "wagmi";
+import { info } from "node:console";
+import { useBottomPanelStore } from "@/store/bottom-panel";
 
 type TimePeriod = {
   title: string;
@@ -31,7 +35,7 @@ type CandleApiData = {
 
 // Chart data format
 type ChartCandleData = {
-  time: number; // Unix timestamp in seconds
+  time: Time; // Unix timestamp in seconds
   open: number;
   high: number;
   low: number;
@@ -39,15 +43,40 @@ type ChartCandleData = {
 };
 
 type ChartVolumeData = {
-  time: number;
+  time: Time;
   value: number;
   color: string;
+};
+
+// Fill data type
+type FillData = {
+  coin: string;
+  px: string;
+  sz: string;
+  side: "A" | "B"; // A = Ask (Sell), B = Bid (Buy)
+  time: number; // milliseconds
+  startPosition: string;
+  dir: string;
+  closedPnl: string;
+  hash: string;
+  oid: number;
+  crossed: boolean;
+  fee: string;
+  tid: number;
+  feeToken: string;
+  twapId: string | null;
+  liquidation?: {
+    liquidatedUser: string;
+    markPx: string;
+    method: string;
+  };
+  builderFee?: string;
 };
 
 // Transform API data to chart format
 const transformCandleData = (apiData: CandleApiData[]): ChartCandleData[] => {
   return apiData.map((candle) => ({
-    time: Math.floor(candle.t / 1000) as number, // Convert milliseconds to seconds
+    time: Math.floor(candle.t / 1000) as Time, // Convert milliseconds to seconds
     open: parseFloat(candle.o),
     high: parseFloat(candle.h),
     low: parseFloat(candle.l),
@@ -58,7 +87,7 @@ const transformCandleData = (apiData: CandleApiData[]): ChartCandleData[] => {
 // Transform volume data
 const transformVolumeData = (apiData: CandleApiData[]): ChartVolumeData[] => {
   return apiData.map((candle) => ({
-    time: Math.floor(candle.t / 1000) as number,
+    time: Math.floor(candle.t / 1000) as Time,
     value: parseFloat(candle.v),
     color: parseFloat(candle.c) > parseFloat(candle.o) 
       ? "#2dd4bf80" // teal with opacity
@@ -66,11 +95,115 @@ const transformVolumeData = (apiData: CandleApiData[]): ChartVolumeData[] => {
   }));
 };
 
+// Convert interval string to milliseconds
+const intervalToMilliseconds = (interval: string): number => {
+  const unit = interval.slice(-1);
+  const value = parseInt(interval.slice(0, -1));
+  
+  switch (unit) {
+    case 'm': // minutes
+      return value * 60 * 1000;
+    case 'h': // hours
+      return value * 60 * 60 * 1000;
+    case 'd': // days
+      return value * 24 * 60 * 60 * 1000;
+    case 'w': // weeks
+      return value * 7 * 24 * 60 * 60 * 1000;
+    case 'M': // months (approximate as 30 days)
+      return value * 30 * 24 * 60 * 60 * 1000;
+    default:
+      return 15 * 60 * 1000; // default to 15 minutes
+  }
+};
+
+// Convert timestamp to candle time based on interval
+const getCandleTime = (timestamp: number, interval: string): number => {
+  const intervalMs = intervalToMilliseconds(interval);
+  const candleStartTime = Math.floor(timestamp / intervalMs) * intervalMs;
+  return Math.floor(candleStartTime / 1000); // Convert to seconds
+};
+
+// Create markers from fills data
+const createMarkersFromFills = (
+  fills: FillData[],
+  interval: string,
+  selectedTimePeriod: TimePeriod | undefined
+): SeriesMarker<Time>[] => {
+  if (!interval || !selectedTimePeriod || fills.length === 0) return [];
+
+  const markers: SeriesMarker<Time>[] = [];
+  
+  // Get the time range based on selected time period
+  const now = Date.now();
+  const startTime = now - selectedTimePeriod.timePeriod;
+  const endTime = now;
+
+  // Filter fills within the time period and sort by timestamp to preserve chronological order
+  const filteredFills = fills
+    .filter((fill) => fill.time >= startTime && fill.time <= endTime)
+    .sort((a, b) => a.time - b.time); // Sort by timestamp to preserve chronological order
+
+  // Group fills by candle time while preserving order within each candle
+  const fillsByCandleTime = new Map<number, FillData[]>();
+  
+  // Calculate the valid candle time range (in seconds)
+  // Use the same logic as getCandleTime to ensure consistency
+  const intervalMs = intervalToMilliseconds(interval);
+  const startCandleTime = Math.floor(Math.floor(startTime / intervalMs) * intervalMs / 1000);
+  const endCandleTime = Math.floor(Math.floor(endTime / intervalMs) * intervalMs / 1000);
+
+  filteredFills.forEach((fill) => {
+    // Double-check the fill is within the time period (safety check)
+    if (fill.time < startTime || fill.time > endTime) {
+      return; // Skip fills outside the time period
+    }
+    
+    // Convert fill time to candle time based on interval
+    const candleTime = getCandleTime(fill.time, interval);
+    
+    // Validate that the candle time is within the valid range
+    // Allow fills at the boundary (>= start, <= end)
+    if (candleTime < startCandleTime || candleTime > endCandleTime) {
+      return; // Skip fills whose candle time is outside the period
+    }
+    
+    if (!fillsByCandleTime.has(candleTime)) {
+      fillsByCandleTime.set(candleTime, []);
+    }
+    
+    fillsByCandleTime.get(candleTime)!.push(fill);
+  });
+
+  // Create markers in chronological order for each candle
+  let markerId = 0;
+  fillsByCandleTime.forEach((candleFills, candleTime) => {
+    // Create markers in the order they occurred (chronological order)
+    candleFills.forEach((fill) => {
+      markers.push({
+        time: candleTime as Time,
+        position: "aboveBar",
+        color: fill.side === "B" ? "#2dd4bf" : "#ef4444", // teal for buy, red for sell
+        shape: "circle",
+        text: fill.side === "B" ? "B" : "S",
+        size: 1.5, // Larger size to ensure text is visible inside circles
+        id: `${fill.side === "B" ? "buy" : "sell"}-${candleTime}-${markerId++}`, // Unique ID for each marker
+      });
+    });
+  });
+
+  return markers;
+};
+
 export const TradingChart = ({ currency }: { currency: string }) => {
   const chartContainerRef = useRef<HTMLDivElement>(null);
-  const chartRef = useRef<any>(null);
-  const candlestickSeriesRef = useRef<any>(null);
-  const volumeSeriesRef = useRef<any>(null);
+  const chartRef = useRef<IChartApi | null>(null);
+  const candlestickSeriesRef = useRef<ISeriesApi<"Candlestick"> | null>(null);
+  const volumeSeriesRef = useRef<ISeriesApi<"Histogram"> | null>(null);
+  const markersPluginRef = useRef<ISeriesMarkersPluginApi<Time> | null>(null);
+  const entryPriceLineRef = useRef<IPriceLine | null>(null);
+  const liquidationPriceLineRef = useRef<IPriceLine | null>(null);
+  const fullscreenContainerRef = useRef<HTMLDivElement>(null);
+  const [entryPriceY, setEntryPriceY] = useState<number | null>(null);
   const [chartHeight, setChartHeight] = useState(400);
   const isInitialLoadRef = useRef<boolean>(true);
   const previousDataLengthRef = useRef<number>(0);
@@ -78,6 +211,8 @@ export const TradingChart = ({ currency }: { currency: string }) => {
   // State for candle data
   const [candleData, setCandleData] = useState<CandleApiData[]>([]);
   const [isLoading, setIsLoading] = useState(false);
+  const [hoveredCandle, setHoveredCandle] = useState<{ time: number; open: number; high: number; low: number; close: number } | null>(null);
+  const [fillsData, setFillsData] = useState<FillData[]>([]);
 
   
   const [timePeriods, setTimePeriods] = useState<TimePeriod[]>([
@@ -135,109 +270,166 @@ export const TradingChart = ({ currency }: { currency: string }) => {
     );
   };
 
-  const [interval, setInterval] = useState<IntervalSection[]>([
+  // Helper function to create initial interval state with a selected value and favorites
+  const createIntervalState = (selectedValue: string = "15m", favoriteValues: string[] = []): IntervalSection[] => {
+    const defaultInterval: IntervalSection[] = [
       {
-      title:"minutes",
-      value:[
-        {
-          title:"1 minute",
-          value:"1m",
-          isSelected: false,
-          isFavorite: false,
-        },
-        {
-          title:"3 minutes",
-          value:"3m",
-          isSelected: false,
-          isFavorite: false,
-        },
-        {
-          title:"5 minutes",
-          value:"5m",
-          isSelected: false,
-          isFavorite: false,
-        },
-        {
-          title:"15 minutes",
-          value:"15m",
-          isSelected: true,
-          isFavorite: false,
-        },
-        {
-          title:"30 minutes",
-          value:"30m",
-          isSelected: false,
-          isFavorite: false,
-        },
-      ]
-    },
-    {
-      title:"hours",
-      value:[
-        {
-          title:"1 hour",
-          value:"1h",
-          isSelected: false,
-          isFavorite: false,
-        },
-        {
-          title:"2 hours",
-          value:"2h",
-          isSelected: false,
-          isFavorite: true,
-        },
-        {
-          title:"4 hours",
-          value:"4h",
-          isSelected: false,
-          isFavorite: true,
-        },
-        {
-          title:"8 hours",
-          value:"8h",
-          isSelected: false,
-          isFavorite: true,
-        },
-        {
-          title:"12 hours",
-          value:"12h",
-          isSelected: false,
-          isFavorite: true,
-        },
-      ]
-    },
-    {
-      title:"days",
-      value:[
-        {
-          title:"1 day",
-          value:"1d",
-          isSelected: false,
-          isFavorite: false,
-        },
-        {
-          title:"3 days",
-          value:"3d",
-          isSelected: false,
-          isFavorite: false,
+        title:"minutes",
+        value:[
+          {
+            title:"1 minute",
+            value:"1m",
+            isSelected: false,
+            isFavorite: false,
           },
-        {
-          title:"1 week",
-          value:"1w",
-          isSelected: false,
-          isFavorite: false,
-        },
-        {
-          title:"1 month",
-          value:"1M",
-          isSelected: false,
-          isFavorite: false,
-        },
-      ]
-    }]);
+          {
+            title:"3 minutes",
+            value:"3m",
+            isSelected: false,
+            isFavorite: false,
+          },
+          {
+            title:"5 minutes",
+            value:"5m",
+            isSelected: false,
+            isFavorite: false,
+          },
+          {
+            title:"15 minutes",
+            value:"15m",
+            isSelected: false,
+            isFavorite: false,
+          },
+          {
+            title:"30 minutes",
+            value:"30m",
+            isSelected: false,
+            isFavorite: false,
+          },
+        ]
+      },
+      {
+        title:"hours",
+        value:[
+          {
+            title:"1 hour",
+            value:"1h",
+            isSelected: false,
+            isFavorite: false,
+          },
+          {
+            title:"2 hours",
+            value:"2h",
+            isSelected: false,
+            isFavorite: true,
+          },
+          {
+            title:"4 hours",
+            value:"4h",
+            isSelected: false,
+            isFavorite: true,
+          },
+          {
+            title:"8 hours",
+            value:"8h",
+            isSelected: false,
+            isFavorite: true,
+          },
+          {
+            title:"12 hours",
+            value:"12h",
+            isSelected: false,
+            isFavorite: true,
+          },
+        ]
+      },
+      {
+        title:"days",
+        value:[
+          {
+            title:"1 day",
+            value:"1d",
+            isSelected: false,
+            isFavorite: false,
+          },
+          {
+            title:"3 days",
+            value:"3d",
+            isSelected: false,
+            isFavorite: false,
+            },
+          {
+            title:"1 week",
+            value:"1w",
+            isSelected: false,
+            isFavorite: false,
+          },
+          {
+            title:"1 month",
+            value:"1M",
+            isSelected: false,
+            isFavorite: false,
+          },
+        ]
+      }
+    ];
+
+    // Set the selected value and favorites
+    // favoriteValues can be:
+    // - undefined/null: use default favorites (first time, never saved)
+    // - []: empty array means user cleared all favorites
+    // - ['2h', '4h']: use saved favorites
+    const useSavedFavorites = favoriteValues !== undefined && favoriteValues !== null;
+    return defaultInterval.map((section) => ({
+      ...section,
+      value: section.value.map((item) => ({
+        ...item,
+        isSelected: item.value === selectedValue,
+        isFavorite: useSavedFavorites 
+          ? favoriteValues.includes(item.value)
+          : item.isFavorite, // Use default favorites if not saved yet
+      })),
+    }));
+  };
+
+  // Helper function to extract favorite values from interval state
+  const extractFavoriteValues = (intervalState: IntervalSection[]): string[] => {
+    const favorites: string[] = [];
+    intervalState.forEach((section) => {
+      section.value.forEach((item) => {
+        if (item.isFavorite) {
+          favorites.push(item.value);
+        }
+      });
+    });
+    return favorites;
+  };
+
+  // Helper function to save favorites to localStorage
+  const saveFavoritesToStorage = (intervalState: IntervalSection[]) => {
+    const favoriteValues = extractFavoriteValues(intervalState);
+    setLocalStorage(LOCAL_STORAGE_KEYS.FAVORITE_INTERVALS, favoriteValues);
+  };
+
+  // Initialize interval state with default value to avoid hydration mismatch
+  // Load from localStorage after mount (client-side only)
+  const [interval, setInterval] = useState<IntervalSection[]>(() => {
+    // Always use default on initial render to match server and client
+    return createIntervalState("15m");
+  });
+
+  // Load interval and favorites from localStorage after mount (client-side only)
+  useEffect(() => {
+    const savedInterval = getLocalStorage(LOCAL_STORAGE_KEYS.SELECTED_INTERVAL);
+    const savedFavorites = getLocalStorage(LOCAL_STORAGE_KEYS.FAVORITE_INTERVALS);
+    
+    // Pass savedFavorites as-is (could be null, [], or array of values)
+    // createIntervalState will handle null by using defaults
+    setInterval(createIntervalState(savedInterval || "15m", savedFavorites ?? undefined));
+  }, []);
 
     const selectedInterval = useMemo(() => interval.find((item) => item.value.find((item) => item.isSelected))?.value.filter((item) => item.isSelected)[0].value, [interval]);
-    const selectedTimePeriodObj = timePeriods.find((item) => item.isSelected);
+    const selectedTimePeriodObj = useMemo(() => timePeriods.find((item) => item.isSelected), [timePeriods]);
     
     // Fetch candle data from API
     useEffect(() => {
@@ -312,6 +504,7 @@ export const TradingChart = ({ currency }: { currency: string }) => {
         borderColor: colors.border,
       },
       crosshair: {
+        mode: CrosshairMode.Normal, // Free movement instead of snapping to candles
         vertLine: {
           color: colors.crosshair,
           width: 1,
@@ -378,6 +571,138 @@ export const TradingChart = ({ currency }: { currency: string }) => {
     };
   }, []);
 
+  // Subscribe to crosshair move events to track hovered candle
+  useEffect(() => {
+    if (!chartRef.current || !candlestickSeriesRef.current || candleData.length === 0) return;
+
+    const chart = chartRef.current;
+    const candlestickSeries = candlestickSeriesRef.current;
+
+    const crosshairMoveHandler = (param: any) => {
+      if (param.time && param.seriesData && param.seriesData.size > 0) {
+        // Get the candlestick data at the crosshair time
+        const candlestickData = param.seriesData.get(candlestickSeries);
+        if (candlestickData && candlestickData.time) {
+          // Use the data directly from the series
+          const timeValue = typeof candlestickData.time === 'number' 
+            ? candlestickData.time 
+            : (candlestickData.time as any).timestamp || Date.now() / 1000;
+          setHoveredCandle({
+            time: timeValue,
+            open: candlestickData.open as number,
+            high: candlestickData.high as number,
+            low: candlestickData.low as number,
+            close: candlestickData.close as number,
+          });
+        }
+      } else {
+        // Crosshair moved out of chart area or no data
+        setHoveredCandle(null);
+      }
+    };
+
+    chart.subscribeCrosshairMove(crosshairMoveHandler);
+
+    return () => {
+      chart.unsubscribeCrosshairMove(crosshairMoveHandler);
+    };
+  }, [candleData]);
+
+  const { address: userAddress } = useAccount();
+  
+  // Clear fills data and markers immediately when time period changes (before fetching new data)
+  useEffect(() => {
+    // Clear fills data - this will trigger markers to update to empty array
+    setFillsData([]);
+    
+    // AGGRESSIVELY clear markers plugin immediately when time period changes
+    if (markersPluginRef.current) {
+      const plugin = markersPluginRef.current as any;
+      try {
+        // Try setMarkers with empty array first (fastest way to clear)
+        if (typeof plugin.setMarkers === 'function') {
+          plugin.setMarkers([]);
+        }
+        // Then detach to fully remove
+        if (typeof plugin.detach === 'function') {
+          plugin.detach();
+        } else if (typeof plugin.remove === 'function') {
+          plugin.remove();
+        }
+      } catch (e) {
+        // Ignore errors
+      }
+      markersPluginRef.current = null;
+    }
+    
+    // Force create empty markers plugin to ensure chart is cleared
+    if (candlestickSeriesRef.current) {
+      try {
+        markersPluginRef.current = createSeriesMarkers(candlestickSeriesRef.current, []);
+      } catch (e) {
+        // Ignore errors
+      }
+    }
+  }, [selectedTimePeriodObj]);
+  
+  // Fetch fills data based on selected time period
+  useEffect(() => {
+    const getFills = async () => {
+      if (!userAddress || !selectedTimePeriodObj) {
+        // Clear fills data if no user or time period selected
+        setFillsData([]);
+        return;
+      }
+      
+      try {
+        const now = Date.now();
+        const startTime = now - selectedTimePeriodObj.timePeriod;
+        const endTime = now;
+        
+        // Use userFillsByTime to fetch only fills within the selected time period
+        const fills = await infoClient.userFillsByTime({ 
+          user: userAddress as `0x${string}`, 
+          startTime,
+          endTime,
+          aggregateByTime: true,
+        });
+
+        // subscriptionClient.userFills({ user: userAddress }, (fills) => {
+        //     console.log("orders fills",fills);
+        //       }); 
+        
+        console.log("fills", fills);
+        // Additional client-side filtering to ensure strict time boundaries
+        // This is a safety net in case the API returns data slightly outside the range
+        const filteredFills = (fills as FillData[]).filter(
+          (fill) => fill.time >= startTime && fill.time <= endTime
+        );
+        
+        setFillsData(filteredFills);
+      } catch (error) {
+        console.error("Error fetching fills:", error);
+        setFillsData([]);
+      }
+    };
+    getFills();
+  }, [userAddress, selectedTimePeriodObj]);
+
+  // Filter fills by currency
+  const filteredFills = useMemo(() => {
+    if (!currency) return [];
+    return fillsData.filter((fill) => fill.coin === currency);
+  }, [fillsData, currency]);
+
+  // Create markers from filtered fills
+  // Create markers for ALL fills within the time period - lightweight-charts will handle visibility
+  const markers = useMemo(() => {
+    return createMarkersFromFills(
+      filteredFills,
+      selectedInterval || "15m",
+      selectedTimePeriodObj
+    );
+  }, [filteredFills, selectedInterval, selectedTimePeriodObj]);
+
   // Update chart when candle data changes
   useEffect(() => {
     if (!candlestickSeriesRef.current || !volumeSeriesRef.current || candleData.length === 0) return;
@@ -387,6 +712,9 @@ export const TradingChart = ({ currency }: { currency: string }) => {
 
     candlestickSeriesRef.current.setData(chartCandleData);
     volumeSeriesRef.current.setData(chartVolumeData);
+
+    // Don't recreate markers here - let the markers useEffect handle it
+    // This prevents conflicts and ensures markers are properly managed
 
     // Configure time scale based on interval
     if (chartRef.current && selectedInterval) {
@@ -414,6 +742,48 @@ export const TradingChart = ({ currency }: { currency: string }) => {
       }
     }
   }, [candleData, selectedInterval]);
+
+  // Update markers - SINGLE source of truth for marker updates
+  // This effect handles ALL marker updates to prevent conflicts
+  useEffect(() => {
+    if (!candlestickSeriesRef.current) return;
+    
+    // If plugin exists, try to update markers using setMarkers (preferred method)
+    if (markersPluginRef.current) {
+      const plugin = markersPluginRef.current as any;
+      if (typeof plugin.setMarkers === 'function') {
+        // Use setMarkers to update - this is the proper way and clears old markers
+        try {
+          plugin.setMarkers(markers);
+          return; // Successfully updated, no need to recreate
+        } catch (e) {
+          console.error("Error setting markers:", e);
+          // Fall through to recreate plugin
+        }
+      }
+      
+      // If setMarkers doesn't work, detach and recreate
+      try {
+        if (typeof plugin.detach === 'function') {
+          plugin.detach();
+        } else if (typeof plugin.remove === 'function') {
+          plugin.remove();
+        }
+      } catch (e) {
+        console.error("Error detaching markers plugin:", e);
+      }
+      markersPluginRef.current = null;
+    }
+    
+    // Create new plugin with current markers (or recreate if update failed)
+    // Empty array = no markers, which clears the chart
+    if (candlestickSeriesRef.current) {
+      markersPluginRef.current = createSeriesMarkers(candlestickSeriesRef.current, markers);
+    }
+  }, [markers]);
+
+  // Removed visible range change handler - it was causing duplicate markers
+  // The markers useEffect handles all marker updates now
 
 
   // Get all favorite items
@@ -451,9 +821,14 @@ export const TradingChart = ({ currency }: { currency: string }) => {
       value: section.value.map((item) => ({
         ...item,
         isSelected: item.value === value,
+        // If item is selected, also make it a favorite
+        isFavorite: item.value === value ? true : item.isFavorite,
       })),
     }));
     setInterval(updatedInterval);
+    // Save to localStorage
+    setLocalStorage(LOCAL_STORAGE_KEYS.SELECTED_INTERVAL, value);
+    saveFavoritesToStorage(updatedInterval);
   };
 
   // Handle favorite toggle
@@ -468,6 +843,8 @@ export const TradingChart = ({ currency }: { currency: string }) => {
       }),
     }));
     setInterval(updatedInterval);
+    // Save favorites to localStorage
+    saveFavoritesToStorage(updatedInterval);
   };
 
   // Handle quick favorite button click
@@ -480,13 +857,28 @@ export const TradingChart = ({ currency }: { currency: string }) => {
       })),
     }));
     setInterval(updatedInterval);
+    // Save to localStorage
+    setLocalStorage(LOCAL_STORAGE_KEYS.SELECTED_INTERVAL, value);
+    saveFavoritesToStorage(updatedInterval);
   };
 
 
   const favoriteItems = getFavoriteItems();
 
-  // Get latest OHLC values from candle data
-  const latestCandle = useMemo(() => {
+  // Get displayed OHLC values - use hovered candle if available, otherwise latest candle
+  const displayedCandle = useMemo(() => {
+    if (hoveredCandle) {
+      // Find the corresponding API data for volume
+      const apiCandle = candleData.find((c) => Math.floor(c.t / 1000) === hoveredCandle.time);
+      return {
+        open: hoveredCandle.open,
+        high: hoveredCandle.high,
+        low: hoveredCandle.low,
+        close: hoveredCandle.close,
+        volume: apiCandle ? parseFloat(apiCandle.v) : 0,
+      };
+    }
+    
     if (candleData.length === 0) return null;
     const latest = candleData[candleData.length - 1];
     return {
@@ -496,16 +888,33 @@ export const TradingChart = ({ currency }: { currency: string }) => {
       close: parseFloat(latest.c),
       volume: parseFloat(latest.v),
     };
-  }, [candleData]);
+  }, [candleData, hoveredCandle]);
 
-  // Calculate price change
+  // Calculate price change - compare with previous candle
   const priceChange = useMemo(() => {
-    if (!latestCandle || candleData.length < 2) return null;
-    const previousClose = parseFloat(candleData[candleData.length - 2].c);
-    const change = latestCandle.close - previousClose;
+    if (!displayedCandle || candleData.length < 2) return null;
+    
+    // Find the previous candle
+    let previousClose: number;
+    if (hoveredCandle) {
+      // Find the candle before the hovered one
+      const transformedData = transformCandleData(candleData);
+      const hoveredIndex = transformedData.findIndex((c) => c.time === hoveredCandle.time);
+      if (hoveredIndex > 0) {
+        previousClose = transformedData[hoveredIndex - 1].close;
+      } else {
+        // If it's the first candle, use its open as previous
+        previousClose = hoveredCandle.open;
+      }
+    } else {
+      // Use the previous candle from latest
+      previousClose = parseFloat(candleData[candleData.length - 2].c);
+    }
+    
+    const change = displayedCandle.close - previousClose;
     const changePercent = (change / previousClose) * 100;
     return { change, changePercent };
-  }, [candleData, latestCandle]);
+  }, [candleData, displayedCandle, hoveredCandle]);
 
   // WebSocket subscription for real-time updates
   useEffect(() => {
@@ -561,9 +970,198 @@ export const TradingChart = ({ currency }: { currency: string }) => {
       }
     };
   }, [selectedInterval, currency]);
+  const { userPositions } = useBottomPanelStore();
+  
+  const position = userPositions?.find(
+    (p) => p.position?.coin === currency
+  );
+
+  const positionData = position?.position;
+
+  const pnlValue = positionData?.unrealizedPnl 
+  ? parseFloat(positionData.unrealizedPnl).toFixed(2)
+  : null;
+const pnlIsPositive = pnlValue ? parseFloat(pnlValue) >= 0 : false;
+
+// Position size display
+const positionSize = positionData?.szi || null;
+
+  // Update price lines when position data changes
+  useEffect(() => {
+    if (!candlestickSeriesRef.current) return;
+
+    const series = candlestickSeriesRef.current;
+
+    // Remove existing price lines
+    if (entryPriceLineRef.current) {
+      series.removePriceLine(entryPriceLineRef.current);
+      entryPriceLineRef.current = null;
+    }
+    if (liquidationPriceLineRef.current) {
+      series.removePriceLine(liquidationPriceLineRef.current);
+      liquidationPriceLineRef.current = null;
+    }
+
+    // Add price lines if position exists
+    if (positionData) {
+      // Entry price line (green dashed)
+      if (positionData.entryPx) {
+        entryPriceLineRef.current = series.createPriceLine({
+          price: parseFloat(positionData.entryPx),
+          color: "#2dd4bf", // teal-400 (green)
+          lineWidth: 1,
+          lineStyle: 2, // dashed
+          axisLabelVisible: true,
+          title: `PNL ${pnlValue} | ${positionSize}`,
+        });
+      }
+
+      // Liquidation price line (pink dashed)
+      if (positionData.liquidationPx) {
+        liquidationPriceLineRef.current = series.createPriceLine({
+          price: parseFloat(positionData.liquidationPx),
+          color: "#ec4899", // pink-500
+          lineWidth: 1,
+          lineStyle: 2, // dashed
+          axisLabelVisible: true,
+          title: "Liq. Price",
+        });
+      }
+    }
+
+    return () => {
+      // Cleanup on unmount
+      if (entryPriceLineRef.current && series) {
+        try {
+          series.removePriceLine(entryPriceLineRef.current);
+        } catch (e) {
+          // Ignore errors during cleanup
+        }
+      }
+      if (liquidationPriceLineRef.current && series) {
+        try {
+          series.removePriceLine(liquidationPriceLineRef.current);
+        } catch (e) {
+          // Ignore errors during cleanup
+        }
+      }
+    };
+  }, [positionData]);
+
+  // Calculate entry price Y coordinate for positioning PNL box
+  useEffect(() => {
+    if (!positionData?.entryPx || !candlestickSeriesRef.current || !chartRef.current || !chartContainerRef.current) {
+      setEntryPriceY(null);
+      return;
+    }
+
+    const updateEntryPriceY = () => {
+      try {
+        const series = candlestickSeriesRef.current;
+        const chart = chartRef.current;
+        if (!series || !chart || !chartContainerRef.current) return;
+
+        const entryPrice = parseFloat(positionData.entryPx);
+        const priceScale = series.priceScale();
+        
+        // Get visible price range
+        const visibleRange = priceScale.getVisibleRange();
+        if (!visibleRange) return;
+
+        // Get container dimensions - this is what we're positioning relative to
+        const containerRect = chartContainerRef.current.getBoundingClientRect();
+        const containerHeight = containerRect.height;
+        
+        // Get price scale options to account for margins
+        const priceScaleOptions = priceScale.options();
+        const topMargin = priceScaleOptions.scaleMargins?.top || 0.1;
+        const bottomMargin = priceScaleOptions.scaleMargins?.bottom || 0;
+        
+        // Calculate the actual chart area height (excluding margins)
+        const chartAreaHeight = containerHeight * (1 - topMargin - bottomMargin);
+        const chartAreaTopOffset = containerHeight * topMargin;
+        
+        // Calculate the Y position within the visible price range
+        const priceRange = visibleRange.to - visibleRange.from;
+        if (priceRange === 0) return;
+        
+        // Calculate price ratio (0 = bottom of visible range, 1 = top of visible range)
+        const priceOffset = entryPrice - visibleRange.from;
+        const priceRatio = priceOffset / priceRange;
+        
+        // Y coordinate: 0 is top, so we invert (higher price = higher on screen = lower Y value)
+        // Price at top of range should be at top of chart area
+        const yInChartArea = chartAreaHeight * (1 - priceRatio);
+        
+        // Calculate relative Y position within the container
+        // Position is: top margin + position in chart area
+        const relativeY = chartAreaTopOffset + yInChartArea;
+        
+        setEntryPriceY(relativeY);
+      } catch (e) {
+        console.error('Error calculating entry price Y:', e);
+        setEntryPriceY(null);
+      }
+    };
+
+    // Update immediately with a delay to ensure chart is rendered
+    const timeoutId = setTimeout(updateEntryPriceY, 200);
+
+    // Update on chart resize
+    const resizeObserver = new ResizeObserver(() => {
+      setTimeout(updateEntryPriceY, 100);
+    });
+    resizeObserver.observe(chartContainerRef.current);
+
+    // Update on visible range changes (zoom/pan)
+    const handleTimeRangeChange = () => {
+      setTimeout(updateEntryPriceY, 100);
+    };
+    
+    if (chartRef.current) {
+      const timeScale = chartRef.current.timeScale();
+      timeScale.subscribeVisibleTimeRangeChange(handleTimeRangeChange);
+    }
+
+    // Update frequently to catch any price scale changes (zoom/pan on price axis)
+    const intervalId = window.setInterval(() => {
+      updateEntryPriceY();
+    }, 200);
+
+    return () => {
+      resizeObserver.disconnect();
+      clearTimeout(timeoutId);
+      window.clearInterval(intervalId);
+      if (chartRef.current) {
+        try {
+          const timeScale = chartRef.current.timeScale();
+          timeScale.unsubscribeVisibleTimeRangeChange(handleTimeRangeChange);
+        } catch (e) {
+          // Ignore errors
+        }
+      }
+    };
+  }, [positionData, candleData, chartHeight]);
+
+  // Calculate PNL display value
+
+  // Handle fullscreen toggle
+  const handleFullscreen = async () => {
+    if (!fullscreenContainerRef.current) return;
+
+    try {
+      if (!document.fullscreenElement) {
+        await fullscreenContainerRef.current.requestFullscreen();
+      } else {
+        await document.exitFullscreen();
+      }
+    } catch (error) {
+      console.error("Error toggling fullscreen:", error);
+    }
+  };
 
   return (
-    <div className="flex-1 flex flex-col bg-gray-950 w-full">
+    <div ref={fullscreenContainerRef} className="flex-1 flex flex-col bg-gray-950 w-full">
       {/* Chart toolbar */}
       <div className="flex items-center justify-between px-2 sm:px-3 py-1.5 sm:py-2 border-b border-gray-800">
         <div className="flex items-center gap-0.5 sm:gap-1 overflow-x-auto [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
@@ -598,7 +1196,10 @@ export const TradingChart = ({ currency }: { currency: string }) => {
             showFavorites={true}
           />
 
-          <button className="h-6 w-6 sm:h-7 sm:w-7 text-gray-400 hover:text-white hover:bg-gray-900/50 rounded transition-colors flex items-center justify-center">
+          <button 
+            onClick={handleFullscreen}
+            className="h-6 w-6 sm:h-7 sm:w-7 text-gray-400 hover:text-white hover:bg-gray-900/50 rounded transition-colors flex items-center justify-center"
+          >
             <Maximize2 className="h-3 w-3 sm:h-3.5 sm:w-3.5" />
           </button>
         </div>
@@ -608,21 +1209,21 @@ export const TradingChart = ({ currency }: { currency: string }) => {
       <div className="px-2 sm:px-3 py-1.5 sm:py-2 text-xs flex items-center gap-1 flex-wrap">
         <span className="text-gray-400">{currency} · {getSelectedIntervalText()} · Hyperliquid</span>
         <span className="w-2 h-2 rounded-full bg-teal-400 ml-1 sm:ml-2" />
-        {latestCandle ? (
+        {displayedCandle ? (
           <>
             <span className="text-gray-400 ml-1 sm:ml-2">O</span>
-            <span className="text-teal-400 tabular-nums">{latestCandle.open.toFixed(2)}</span>
+            <span className={`tabular-nums ${displayedCandle.close >= displayedCandle.open ? 'text-teal-400' : 'text-red-500'}`}>{displayedCandle.open.toFixed(2)}</span>
             <span className="text-gray-400 ml-1 sm:ml-2">H</span>
-            <span className="text-white tabular-nums">{latestCandle.high.toFixed(2)}</span>
+            <span className={`tabular-nums ${displayedCandle.close >= displayedCandle.open ? 'text-teal-400' : 'text-red-500'}`}>{displayedCandle.high.toFixed(2)}</span>
             <span className="text-gray-400 ml-1 sm:ml-2">L</span>
-            <span className="text-white tabular-nums">{latestCandle.low.toFixed(2)}</span>
+            <span className={`tabular-nums ${displayedCandle.close >= displayedCandle.open ? 'text-teal-400' : 'text-red-500'}`}>{displayedCandle.low.toFixed(2)}</span>
             <span className="text-gray-400 ml-1 sm:ml-2">C</span>
-            <span className={`tabular-nums ${latestCandle.close >= latestCandle.open ? 'text-teal-400' : 'text-red-500'}`}>
-              {latestCandle.close.toFixed(2)}
+            <span className={`tabular-nums ${displayedCandle.close >= displayedCandle.open ? 'text-teal-400' : 'text-red-500'}`}>
+              {displayedCandle.close.toFixed(2)}
             </span>
             {priceChange && (
               <span className={`ml-1 sm:ml-2 tabular-nums ${priceChange.change >= 0 ? 'text-teal-400' : 'text-red-500'}`}>
-                {priceChange.change >= 0 ? '+' : ''}{priceChange.change.toFixed(4)} ({priceChange.changePercent >= 0 ? '+' : ''}{priceChange.changePercent.toFixed(2)}%)
+                {priceChange.change >= 0 ? '+' : ''}{priceChange.change.toFixed(6)} ({priceChange.changePercent >= 0 ? '+' : ''}{priceChange.changePercent.toFixed(2)}%)
               </span>
             )}
           </>
@@ -632,15 +1233,19 @@ export const TradingChart = ({ currency }: { currency: string }) => {
       </div>
 
       {/* Chart */}
-      <div ref={chartContainerRef} className="flex-1  w-full min-h-0" />
+      <div className="flex-1 w-full min-h-0 relative">
+        <div ref={chartContainerRef} className="absolute inset-0 cursor-crosshair" />
+        
+       
+      </div>
 
       {/* Volume label */}
-      <div className="px-2 sm:px-3 py-1 text-xs text-gray-400 flex items-center gap-2">
+      {/* <div className="px-2 sm:px-3 py-1 text-xs text-gray-400 flex items-center gap-2">
         <span>Volume</span>
         <span className="text-teal-400 tabular-nums">
-          {latestCandle ? latestCandle.volume.toFixed(2) : '0.00'}
+          {displayedCandle ? displayedCandle.volume.toFixed(2) : '0.00'}
         </span>
-      </div>
+      </div> */}
 
       {/* Bottom time controls */}
       <div className="flex items-center justify-between px-2 sm:px-3 py-1.5 sm:py-2 border-t border-gray-800 text-xs">
@@ -660,12 +1265,12 @@ export const TradingChart = ({ currency }: { currency: string }) => {
             </AppButton>
           ))}
         </div>
-        <div className="flex items-center gap-2 sm:gap-3 text-gray-400 shrink-0">
+        {/* <div className="flex items-center gap-2 sm:gap-3 text-gray-400 shrink-0">
           <span className="tabular-nums text-[10px] sm:text-xs">06:38:10 (UTC-5)</span>
           <span className="hidden sm:inline">%</span>
           <span className="hidden sm:inline">log</span>
           <span className="hidden sm:inline">auto</span>
-        </div>
+        </div> */}
       </div>
     </div>
   );

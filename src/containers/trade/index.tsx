@@ -52,45 +52,43 @@ export default function TradeContainer() {
 console.log("selectedMarket", selectedMarket)
 
   return (
-    <div className="h-screen flex flex-col">
+    <div className="h-screen flex flex-col overflow-hidden">
       {/* Fixed Header - Non-scrollable */}
       <div className="shrink-0">
         <Header />
       </div>
       
-      {/* Scrollable Content Area */}
-      <div className="flex-1 overflow-y-auto overflow-x-hidden scrollbar-hide">
-        <div className="flex flex-col min-h-full">
-          <div className="shrink-0">
-            <MarketHeader currency={selectedCoin} />
-          </div>
-          
-          {/* Main Layout: Left side (Chart + OrderBook + BottomPanel) | Right side (TradingPanel) */}
-          <div className="flex flex-1 min-h-0">
-            {/* Left Side: Chart, OrderBook, and BottomPanel */}
-            <div className="flex-1 flex flex-col min-h-0">
-              {/* Chart and OrderBook side by side - Takes most of the space */}
-              <div className="flex flex-[1.2] sm:flex-[1.2] md:flex-[1.1] min-h-0 w-full flex-shrink-0 basis-auto">
-                {/* Chart takes remaining space - maximizes width */}
-                <div className="flex-1 flex flex-col min-h-0 w-full min-w-0">
-                  <TradingChart currency={selectedCoin} />
-                </div>
-                {/* OrderBook keeps its fixed width */}
-                <div className="shrink-0 flex flex-col min-h-0">
-                  <OrderBook currency={selectedCoin} />
-                </div>
+      {/* Main Content Area - Fixed height, no scroll */}
+      <div className="flex-1 flex flex-col min-h-0 overflow-hidden">
+        <div className="shrink-0">
+          <MarketHeader currency={selectedCoin} />
+        </div>
+        
+        {/* Main Layout: Left side (Chart + OrderBook + BottomPanel) | Right side (TradingPanel) */}
+        <div className="flex flex-1 min-h-0 overflow-hidden">
+          {/* Left Side: Chart, OrderBook, and BottomPanel */}
+          <div className="flex-1 flex flex-col min-h-0 overflow-hidden">
+            {/* Chart and OrderBook side by side - Takes remaining space after BottomPanel */}
+            <div className="flex flex-1 min-h-0 w-full overflow-hidden">
+              {/* Chart takes remaining space - maximizes width */}
+              <div className="flex-1 flex flex-col min-h-0 w-full min-w-0 overflow-hidden">
+                <TradingChart currency={selectedCoin} />
               </div>
-              
-              {/* BottomPanel below both Chart and OrderBook - Takes less space */}
-              <div className="shrink-0 border-t border-gray-800 flex-[0.8] sm:flex-[0.7] md:flex-[0.6] min-h-[200px] sm:min-h-[220px] md:min-h-[240px] max-h-[400px] sm:max-h-[450px] md:max-h-[350px]">
-                <BottomPanel />
+              {/* OrderBook keeps its fixed width */}
+              <div className="shrink-0 flex flex-col min-h-0 overflow-hidden">
+                <OrderBook currency={selectedCoin} />
               </div>
             </div>
             
-            {/* Right Side: TradingPanel - Full height beside all */}
-            <div className="shrink-0 border-l border-gray-800 flex flex-col min-h-full">
-              <TradingPanel currentCurrency={selectedCoin} currentLeverage={selectedLeverage} />
+            {/* BottomPanel below both Chart and OrderBook - Fixed height with internal scroll */}
+            <div className="shrink-0 border-t border-gray-800 h-[180px] sm:h-[200px] md:h-[220px] flex flex-col overflow-hidden">
+              <BottomPanel />
             </div>
+          </div>
+          
+          {/* Right Side: TradingPanel - Full height beside all */}
+          <div className="shrink-0 border-l border-gray-800 flex flex-col min-h-full overflow-hidden">
+            <TradingPanel currentCurrency={selectedCoin} currentLeverage={selectedLeverage} />
           </div>
         </div>
       </div>

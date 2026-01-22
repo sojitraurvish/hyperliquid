@@ -1,19 +1,28 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { ChevronDown, ExternalLink, Pencil } from "lucide-react";
-import { infoClient , subscriptionClient, transport} from "@/lib/config/hyperliquied/hyperliquid-client";
+import { infoClient , subscriptionClient, transport, getSymbolConverter} from "@/lib/config/hyperliquied/hyperliquid-client";
+import { Subscription } from "@nktkas/hyperliquid";
 import { useAccount } from "wagmi";
+import { useApiWallet } from "@/hooks/useWallet";
+import { useBuilderFee } from "@/hooks/useBuilderFee";
 import { useBottomPanelStore } from "@/store/bottom-panel";
 import { Balance, HistoricalOrder, FundingHistory, TradeHistory, OpenOrder, Position } from "@/types/bottom-panel";
 import { addDecimals, DATE_TIME_FORMAT } from "@/lib/constants";
 import moment from "moment";
 import { formatDateTimeAccordingToFormat } from "@/lib/date-operation";
 import { HISTORICAL_ORDERS_URL, FUNDING_HISTORY_URL, TRADE_HISTORY_URL, EXPLORER_TX_URL } from "@/lib/config";
-
+import { useTradesStore } from "@/store/trades";  
+import { appToast } from "@/components/ui/toast";
+import { formatPrice } from "@nktkas/hyperliquid/utils";
+import AppModal from "@/components/ui/modal";
+import { useOrderBookStore } from "@/store/orderbook";
+import { useMarketStore } from "@/store/market";
+import { errorHandler } from "@/store/errorHandler";
 // ==================== Types ====================
 
-type TabValue = "balances" | "positions" | "openorders" | "twap" | "tradehistory" | "fundinghistory" | "orderhistory";
+type TabValue = "balances" | "positions" | "openorders" | "tradehistory" | "fundinghistory" | "orderhistory";
 
 interface Tab {
   label: string;
@@ -60,7 +69,7 @@ interface BalancesData {
 
 // Custom hook for positions table grid columns
 const usePositionsGridColumns = () => {
-  const [gridColumns, setGridColumns] = useState<string>("0.9fr 1fr 1.1fr 1.5fr 1.3fr 0.8fr");
+  const [gridColumns, setGridColumns] = useState<string>("0.9fr 1fr 1.1fr 1.5fr 1.3fr");
 
   useEffect(() => {
     if (typeof window === "undefined") return;
@@ -68,20 +77,20 @@ const usePositionsGridColumns = () => {
     const updateGridColumns = () => {
       const width = window.innerWidth;
       if (width >= 1280) {
-        // xl: 11 columns
-        setGridColumns("0.9fr 1fr 1.1fr 1fr 1fr 1.5fr 1fr 1.2fr 1fr 1.3fr 0.8fr");
+        // xl: 10 columns
+        setGridColumns("0.9fr 1fr 1.1fr 1fr 1fr 1.5fr 1fr 1.2fr 1fr 1.3fr");
       } else if (width >= 1024) {
-        // lg: 9 columns
-        setGridColumns("0.9fr 1fr 1.1fr 1fr 1fr 1.5fr 1fr 1.3fr 0.8fr");
+        // lg: 8 columns
+        setGridColumns("0.9fr 1fr 1.1fr 1fr 1fr 1.5fr 1fr 1.3fr");
       } else if (width >= 768) {
-        // md: 8 columns
-        setGridColumns("0.9fr 1fr 1.1fr 1fr 1fr 1.5fr 1.3fr 0.8fr");
+        // md: 7 columns
+        setGridColumns("0.9fr 1fr 1.1fr 1fr 1fr 1.5fr 1.3fr");
       } else if (width >= 640) {
-        // sm: 7 columns
-        setGridColumns("0.9fr 1fr 1.1fr 1fr 1.5fr 1.3fr 0.8fr");
+        // sm: 6 columns
+        setGridColumns("0.9fr 1fr 1.1fr 1fr 1.5fr 1.3fr");
       } else {
-        // base: 6 columns
-        setGridColumns("0.9fr 1fr 1.1fr 1.5fr 1.3fr 0.8fr");
+        // base: 5 columns
+        setGridColumns("0.9fr 1fr 1.1fr 1.5fr 1.3fr");
       }
     };
 
@@ -93,11 +102,41 @@ const usePositionsGridColumns = () => {
   return gridColumns;
 };
 
+// Input Component
+interface InputProps extends React.InputHTMLAttributes<HTMLInputElement> {}
+
+const Input = ({ className = "", ...props }: InputProps) => {
+  return (
+    <input
+      className={`flex h-8 w-full rounded-md bg-gray-900/50 border border-gray-800 px-3 py-1 text-sm text-white placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-green-400 focus:ring-offset-2 focus:ring-offset-gray-950 focus:border-green-400 disabled:cursor-not-allowed disabled:opacity-50 transition-colors ${className}`}
+      {...props}
+    />
+  );
+};
+
+// Label Component
+interface LabelProps extends React.LabelHTMLAttributes<HTMLLabelElement> {
+  children: React.ReactNode;
+}
+
+const Label = ({ className = "", children, ...props }: LabelProps) => {
+  return (
+    <label
+      className={`text-xs font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 ${className}`}
+      {...props}
+    >
+      {children}
+    </label>
+  );
+};
+
 // Button Component
 interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
   variant?: "ghost" | "outline" | "primary";
   size?: "sm" | "md" | "lg";
   children: React.ReactNode;
+  isLoading?: boolean;
+  isDisabled?: boolean;
 }
 
 const Button = ({ 
@@ -105,14 +144,16 @@ const Button = ({
   size = "md", 
   children, 
   className = "",
+  isLoading = false,
+  isDisabled = false,
   ...props 
 }: ButtonProps) => {
-  const baseStyles = "inline-flex items-center justify-center rounded-md font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-teal-400 focus:ring-offset-2 focus:ring-offset-gray-950 disabled:opacity-50 disabled:pointer-events-none";
+  const baseStyles = "inline-flex items-center justify-center rounded-md font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-green-400 focus:ring-offset-2 focus:ring-offset-gray-950 disabled:opacity-50 disabled:pointer-events-none disabled:cursor-not-allowed";
   
   const variants = {
-    ghost: "bg-transparent text-gray-400 hover:bg-gray-800/50 hover:text-gray-300",
-    outline: "border border-gray-700 bg-transparent text-gray-400 hover:bg-gray-800/50 hover:text-gray-300 hover:border-gray-600",
-    primary: "bg-teal-400 text-white hover:bg-teal-500",
+    ghost: "bg-transparent text-gray-400 hover:bg-gray-800/50 hover:text-gray-300 cursor-pointer",
+    outline: "border border-gray-700 bg-transparent text-gray-400 hover:bg-gray-800/50 hover:text-gray-300 hover:border-gray-600 cursor-pointer",
+    primary: "bg-green-400 text-white hover:bg-green-500 cursor-pointer",
   };
   
   const sizes = {
@@ -124,8 +165,15 @@ const Button = ({
   return (
     <button
       className={`${baseStyles} ${variants[variant]} ${sizes[size]} ${className}`}
+      disabled={isDisabled || isLoading}
       {...props}
     >
+      {isLoading && (
+        <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+        </svg>
+      )}
       {children}
     </button>
   );
@@ -145,9 +193,9 @@ const TabButton = ({ isActive, onClick, children, count }: TabButtonProps) => {
       onClick={onClick}
       className={`
         relative px-2 sm:px-3 h-8 sm:h-10 text-xs font-medium transition-all duration-200
-        whitespace-nowrap
+        whitespace-nowrap cursor-pointer
         ${isActive 
-          ? "text-white border-b-2 border-teal-400" 
+          ? "text-white border-b-2 border-green-400" 
           : "text-gray-400 hover:text-gray-300 border-b-2 border-transparent"
         }
       `}
@@ -192,7 +240,6 @@ const PositionsTableHeader = () => {
     { label: "Margin", underline: true, className: "hidden xl:block" },
     { label: "Funding", underline: true, className: "hidden xl:block" },
     { label: "Close All", className: "" },
-    { label: "TP/SL", className: "" },
   ];
 
   return (
@@ -218,15 +265,14 @@ const PositionsTableHeader = () => {
 // Balances Table Header Component
 const BalancesTableHeader = () => {
   const headers = [
-    { label: "Coin", className: "col-span-2 sm:col-span-1" },
-    { label: "Total Balance", className: "col-span-2 sm:col-span-1" },
-    { label: "Available Balance", className: "col-span-2 sm:col-span-1" },
+    { label: "Coin", className: "col-span-1" },
+    { label: "Total Balance", className: "col-span-1" },
+    { label: "Available Balance", className: "col-span-1" },
     { label: "USDC Value", icon: true, className: "hidden md:col-span-1 md:block" },
-    { label: "Send", className: "col-span-1 sm:col-span-1" },
   ];
 
   return (
-    <div className="grid grid-cols-5 sm:grid-cols-6 md:grid-cols-6 gap-1 sm:gap-2 px-2 sm:px-3 py-2 text-xs text-gray-400 border-b border-gray-800">
+    <div className="grid grid-cols-3 md:grid-cols-4 gap-1 sm:gap-2 px-2 sm:px-3 py-2 text-xs text-gray-400 border-b border-gray-800">
       {headers.map((header, index) => (
         <div
           key={index}
@@ -401,13 +447,13 @@ const FundingHistoryRow = ({ funding }: FundingHistoryRowProps) => {
       <div className="text-gray-300 truncate" title={formattedDateTime}>
         {formattedDateTime}
       </div>
-      <div className="text-teal-400 font-medium truncate" title={funding.delta.coin}>
+      <div className="text-green-400 font-medium truncate" title={funding.delta.coin}>
         {funding.delta.coin}
       </div>
       <div className="text-gray-300 truncate" title={size}>
         {size}
       </div>
-      <div className="text-teal-400 font-medium truncate" title={positionSide}>
+      <div className="text-green-400 font-medium truncate" title={positionSide}>
         {positionSide}
       </div>
       <div className="text-red-500 truncate" title={payment}>
@@ -517,12 +563,12 @@ const TradeHistoryRow = ({ trade }: TradeHistoryRowProps) => {
           href={`${EXPLORER_TX_URL}/${trade.hash}`}
           target="_blank"
           rel="noopener noreferrer"
-          className="inline-flex items-center shrink-0"
+          className="inline-flex items-center shrink-0 cursor-pointer"
         >
-          <ExternalLink className="h-3 w-3 text-gray-500 hover:text-teal-400 transition-colors" />
+          <ExternalLink className="h-3 w-3 text-gray-500 hover:text-green-400 transition-colors" />
         </a>
       </div>
-      <div className="text-teal-400 font-medium truncate" title={coin}>
+      <div className="text-green-400 font-medium truncate" title={coin}>
         {coin}
       </div>
       <div className={`${directionColor} font-medium truncate`} title={direction}>
@@ -548,12 +594,288 @@ const TradeHistoryRow = ({ trade }: TradeHistoryRowProps) => {
           href={`${EXPLORER_TX_URL}/${trade.hash}`}
           target="_blank"
           rel="noopener noreferrer"
-          className="inline-flex items-center shrink-0"
+          className="inline-flex items-center shrink-0 cursor-pointer"
         >
-          {/* <ExternalLink className="h-3 w-3 text-gray-500 hover:text-teal-400 transition-colors" /> */}
+          {/* <ExternalLink className="h-3 w-3 text-gray-500 hover:text-green-400 transition-colors" /> */}
         </a>
       </div>
     </div>
+  );
+};
+
+// Limit Close Modal Component
+interface LimitCloseModalProps {
+  isOpen: boolean;
+  onClose: () => void;
+  position: Position;
+  markPrice?: string;
+  agentPrivateKey?: `0x${string}`;
+  szDecimals: number;
+  onConfirm: (price: string, size: string, percentage: number) => Promise<void>;
+}
+
+const LimitCloseModal = ({ 
+  isOpen, 
+  onClose, 
+  position, 
+  markPrice,
+  szDecimals,
+  onConfirm 
+}: LimitCloseModalProps) => {
+  const pos = position.position;
+  const { bids, asks } = useOrderBookStore();
+  
+  // Calculate mid price from orderbook or use mark price
+  const getMidPrice = (): number => {
+    if (bids.length > 0 && asks.length > 0) {
+      const bestBid = parseFloat(bids[0]?.price || "0");
+      const bestAsk = parseFloat(asks[0]?.price || "0");
+      if (bestBid > 0 && bestAsk > 0) {
+        return (bestBid + bestAsk) / 2;
+      }
+    }
+    // Fallback to mark price or calculate from position
+    if (markPrice) {
+      return parseFloat(markPrice);
+    }
+    const posValue = parseFloat(pos.positionValue);
+    const posSize = Math.abs(parseFloat(pos.szi));
+    return posSize > 0 ? posValue / posSize : 0;
+  };
+
+  const midPrice = getMidPrice();
+  const currentSize = Math.abs(parseFloat(pos.szi));
+  const entryPrice = parseFloat(pos.entryPx);
+  
+  const [closePrice, setClosePrice] = useState<string>(midPrice > 0 ? midPrice.toFixed(2) : "");
+  const [closePercentage, setClosePercentage] = useState<number>(100);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [sizeCurrency, setSizeCurrency] = useState<"currency" | "USDC">("currency");
+
+  // Update close price when modal opens or mid price changes
+  // Reset currency display to currency (not USDC) when modal opens
+  useEffect(() => {
+    if (isOpen && midPrice > 0) {
+      setClosePrice(midPrice.toFixed(2));
+      setSizeCurrency("currency"); // Reset to show currency by default
+    }
+  }, [isOpen, midPrice]);
+
+  // Calculate close size based on percentage
+  const closeSize = (currentSize * closePercentage) / 100;
+  const formattedCloseSize = addDecimals(closeSize, szDecimals);
+  
+  // Calculate size in USDC (closeSize * midPrice)
+  const closeSizeInUSDC = closeSize * midPrice;
+  const formattedCloseSizeInUSDC = addDecimals(closeSizeInUSDC, 2);
+  
+  // Display size based on selected currency
+  const displaySize = sizeCurrency === "USDC" 
+    ? formattedCloseSizeInUSDC 
+    : formattedCloseSize;
+  const displayCurrency = sizeCurrency === "USDC" ? "USDC" : pos.coin;
+
+  // Calculate estimated PNL (without fees)
+  const calculateEstimatedPNL = (): number => {
+    if (!closePrice || parseFloat(closePrice) <= 0 || closeSize <= 0) return 0;
+    
+    const closePriceNum = parseFloat(closePrice);
+    const isLong = parseFloat(pos.szi) > 0;
+    
+    // PNL = (closePrice - entryPrice) * size for long
+    // PNL = (entryPrice - closePrice) * size for short
+    const pnlPerUnit = isLong 
+      ? (closePriceNum - entryPrice) 
+      : (entryPrice - closePriceNum);
+    
+    return pnlPerUnit * closeSize;
+  };
+
+  const estimatedPNL = calculateEstimatedPNL();
+  const pnlFormatted = estimatedPNL >= 0 
+    ? `$${estimatedPNL.toFixed(2)}`
+    : `-$${Math.abs(estimatedPNL).toFixed(2)}`;
+
+  const handlePriceChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    // Allow empty, numbers, and one decimal point
+    if (value === "" || /^\d*\.?\d*$/.test(value)) {
+      setClosePrice(value);
+    }
+  };
+
+  const handlePercentageChange = (value: number[]) => {
+    setClosePercentage(value[0]);
+  };
+
+  const handleConfirm = async () => {
+    if (!closePrice || parseFloat(closePrice) <= 0) {
+      appToast.error({ message: "Please enter a valid price" });
+      return;
+    }
+
+    if (closeSize <= 0) {
+      appToast.error({ message: "Close size must be greater than 0" });
+      return;
+    }
+
+    setIsSubmitting(true);
+    try {
+      const formattedPrice = formatPrice(closePrice, szDecimals);
+      await onConfirm(formattedPrice, formattedCloseSize, closePercentage);
+      onClose();
+    } catch (error) {
+      console.error("Error placing limit close order:", error);
+      errorHandler(error, "Failed to place order");
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  return (
+    <AppModal
+      isOpen={isOpen}
+      onClose={onClose}
+      title="Limit Close"
+      className="max-w-md bg-gray-950 border border-gray-800"
+      contentClassName="space-y-6"
+    >
+      <p className="text-sm text-gray-400">
+        This will send an order to close your position at the limit price.
+      </p>
+
+      {/* Price Input */}
+      <div className="space-y-2">
+        <div className="flex items-center justify-between">
+          <Label className="text-xs text-gray-400">Price (USDC)</Label>
+          {midPrice > 0 && (
+            <button
+              onClick={() => setClosePrice(midPrice.toFixed(2))}
+              className="text-xs text-green-400 hover:text-green-300 transition-colors cursor-pointer"
+            >
+              Mid
+            </button>
+          )}
+        </div>
+        <Input
+          type="text"
+          value={closePrice}
+          onChange={handlePriceChange}
+          placeholder="0.00"
+          className="h-9 text-right font-mono bg-gray-900/50 border border-gray-800 text-white"
+        />
+        {midPrice > 0 && (
+          <p className="text-xs text-gray-500 text-right">
+            {midPrice.toFixed(2)} Mid
+          </p>
+        )}
+      </div>
+
+      {/* Size Input */}
+      <div className="space-y-2">
+        <Label className="text-xs text-gray-400">Size</Label>
+        <div className="relative">
+          <Input
+            value={displaySize}
+            readOnly
+            className="h-9 text-right font-mono pr-20 bg-gray-900/50 border border-gray-800 text-white"
+          />
+          <button
+            onClick={() => setSizeCurrency(sizeCurrency === "USDC" ? "currency" : "USDC")}
+            className="absolute right-1 top-1/2 -translate-y-1/2 h-6 sm:h-7 px-2 text-xs text-gray-400 hover:text-white flex items-center gap-1 transition-colors cursor-pointer"
+          >
+            {displayCurrency} <ChevronDown className="h-3 w-3" />
+          </button>
+        </div>
+      </div>
+
+      {/* Percentage Slider */}
+      <div className="space-y-3">
+        <div className="flex items-center justify-between">
+          <Label className="text-xs text-gray-400">Position Size</Label>
+          <span className="text-xs text-white font-mono">{closePercentage}%</span>
+        </div>
+        <div className="relative flex items-center py-2">
+          {/* Slider track background */}
+          <div className="relative w-full h-2 bg-gray-800 rounded-full">
+            {/* Filled portion */}
+            <div 
+              className="absolute top-0 left-0 h-2 bg-green-400 rounded-full transition-all duration-150 ease-out"
+              style={{ width: `${closePercentage}%` }}
+            />
+            
+            {/* Slider markers - positioned behind handle */}
+            <div className="absolute inset-0 flex items-center justify-between px-0.5 pointer-events-none">
+              {[0, 25, 50, 75, 100].map((val) => (
+                <div
+                  key={val}
+                  className={`w-1.5 h-1.5 rounded-full transition-colors duration-150 ${
+                    val <= closePercentage ? "bg-green-400" : "bg-gray-600"
+                  }`}
+                />
+              ))}
+            </div>
+            
+            {/* Custom slider handle */}
+            <div
+              className="absolute top-1/2 -translate-y-1/2 w-4 h-4 bg-green-400 rounded-full border-2 border-gray-950 shadow-lg transition-all duration-150 ease-out hover:scale-110 hover:bg-green-300 z-20 pointer-events-none"
+              style={{ left: `calc(${closePercentage}% - 8px)` }}
+            />
+            
+            {/* Slider input - on top for interaction */}
+            <input
+              type="range"
+              min={0}
+              max={100}
+              step={1}
+              value={closePercentage}
+              onChange={(e) => handlePercentageChange([Number(e.target.value)])}
+              className="absolute inset-0 w-full h-full cursor-pointer opacity-0 z-30"
+              style={{
+                WebkitAppearance: 'none',
+                appearance: 'none',
+                background: 'transparent',
+              }}
+            />
+          </div>
+        </div>
+        {/* Quick percentage buttons */}
+        <div className="flex items-center justify-end gap-2">
+          {[25, 50, 75, 100].map((val) => (
+            <button
+              key={val}
+              onClick={() => setClosePercentage(val)}
+              className={`text-xs px-2.5 py-1 rounded transition-colors cursor-pointer ${
+                closePercentage === val
+                  ? "bg-green-400/20 text-green-400 border border-green-400/30"
+                  : "text-gray-400 hover:text-green-400 hover:bg-gray-800/50 border border-transparent"
+              }`}
+            >
+              {val}%
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {/* Estimated PNL */}
+      <div className="space-y-1">
+        <p className="text-xs text-gray-400">
+          Estimated closed PNL (without fees): <span className={estimatedPNL >= 0 ? "text-green-500" : "text-red-500"}>{pnlFormatted}</span>
+        </p>
+      </div>
+
+      {/* Confirm Button */}
+      <Button
+        variant="primary"
+        size="lg"
+        className="w-full cursor-pointer"
+        onClick={handleConfirm}
+        isLoading={isSubmitting}
+        isDisabled={isSubmitting || !closePrice || parseFloat(closePrice) <= 0 || closeSize <= 0}
+      >
+        Confirm
+      </Button>
+    </AppModal>
   );
 };
 
@@ -561,16 +883,42 @@ const TradeHistoryRow = ({ trade }: TradeHistoryRowProps) => {
 interface PositionsRowProps {
   position: Position;
   markPrice?: string;
+  agentPrivateKey?: `0x${string}`;
 }
 
-const PositionsRow = ({ position, markPrice }: PositionsRowProps) => {
+const PositionsRow = ({ position, markPrice, agentPrivateKey }: PositionsRowProps) => {
   const pos = position.position;
+  const [szDecimals, setSzDecimals] = useState<number>(5); // Default to 5 if not loaded yet
+  const [isLimitCloseModalOpen, setIsLimitCloseModalOpen] = useState(false);
+  const { placeOrderWithAgent } = useTradesStore();
+  const { address: userAddress } = useAccount();
+  const { agentWallet, checkApprovalStatus } = useApiWallet({userPublicKey: userAddress as `0x${string}`});
+  const { checkBuilderFeeStatus } = useBuilderFee({userPublicKey: userAddress as `0x${string}`});
+  
+  // Fetch coin-specific decimals
+  useEffect(() => {
+    const fetchDecimals = async () => {
+      try {
+        const converter = await getSymbolConverter();
+        const decimals = converter.getSzDecimals(pos.coin);
+        setSzDecimals(decimals ?? 5);
+      } catch (error) {
+        console.error("Error fetching szDecimals:", error);
+        // Don't show toast for decimals fetch errors, just use fallback
+        setSzDecimals(5); // Fallback to 5 on error
+      }
+    };
+    fetchDecimals();
+  }, [pos.coin]);
   
   // Format coin with leverage (e.g., "BTC 20x")
   const coin = `${pos.coin} ${pos.leverage.value}x`;
   
-  // Format size with coin name
-  const size = `${parseFloat(pos.szi).toFixed(5)} ${pos.coin}`;
+  // Get numeric position size for comparisons
+  const posSize = parseFloat(pos.szi);
+  
+  // Format size with coin name using coin-specific decimals
+  const size = `${addDecimals(posSize, szDecimals)} ${pos.coin}`;
   
   // Format position value
   const positionValue = `$${parseFloat(pos.positionValue).toFixed(2)} USDC`;
@@ -583,7 +931,6 @@ const PositionsRow = ({ position, markPrice }: PositionsRowProps) => {
     ? parseFloat(markPrice).toFixed(2) : (() => {
         // Calculate approximate mark price from position value and size
         const posValue = parseFloat(pos.positionValue);
-        const posSize = parseFloat(pos.szi);
         return (posValue / posSize).toFixed(2);
       })();
   
@@ -615,6 +962,148 @@ const PositionsRow = ({ position, markPrice }: PositionsRowProps) => {
     : `$${Math.abs(funding).toFixed(2)}`;
   const fundingColor = funding <= 0 ? "text-green-500" : "text-red-500";
   
+  // Handle close position with market order
+  const handleClosePositionMarket = async () => {
+    if (!agentPrivateKey) {
+      appToast.error({ message: "Please connect your wallet" });
+      return;
+    }
+
+    const isApprovedBuilderFee = await checkBuilderFeeStatus({
+      userPublicKeyParam: userAddress as `0x${string}`,
+    });
+
+    const isApproved = await checkApprovalStatus({
+      agentPublicKeyParam: agentWallet?.address as `0x${string}`,
+      userPublicKeyParam: userAddress as `0x${string}`
+    });
+
+    if(!isApprovedBuilderFee){
+      appToast.error({ message: "Please approve the builder fee to place order" });
+      return;
+    }
+    
+    if(!isApproved){
+      appToast.error({ message: "Please approve the agent wallet to place order" });
+      return;
+    }
+
+    try {
+      // Determine if position is long (positive) or short (negative)
+      const currentSize = parseFloat(pos.szi);
+      if (currentSize === 0) {
+        appToast.error({ message: "Position size is zero" });
+        return;
+      }
+
+      // Determine if short position: negative size = short position
+      const isShortPosition = currentSize < 0;
+      
+      // Get current price (mark price or calculate from position)
+      const currentPrice = markPrice 
+        ? parseFloat(markPrice) 
+        : (() => {
+            const posValue = parseFloat(pos.positionValue);
+            return posValue / Math.abs(currentSize);
+          })();
+
+      if (!currentPrice || currentPrice <= 0) {
+        appToast.error({ message: "Unable to get current price" });
+        return;
+      }
+
+      // Calculate limit price using buffer logic (same as trading panel)
+      const buffer = 0.01; // 1% aggressiveness buffer
+      let rawPrice = isShortPosition 
+        ? currentPrice * (1 + buffer) 
+        : currentPrice * (1 - buffer);
+      
+      // Round to guarantee execution: ceil for buy, floor for sell
+      rawPrice = isShortPosition ? Math.ceil(rawPrice) : Math.floor(rawPrice);
+      
+      // Format using Hyperliquid's formatPrice utility with szDecimals
+      const limitPrice = formatPrice(String(rawPrice), szDecimals);
+      
+      // Get absolute size for the order and format it
+      const orderSize = Math.abs(currentSize);
+      const formattedSize = addDecimals(orderSize, szDecimals).toString();
+      
+      // Place market order to close position
+      // b: true = buy (to close short positions), false = sell (to close long positions)
+      // Use size directly: if size is negative (short), need to buy (true) to close
+      const success = await placeOrderWithAgent({
+        agentPrivateKey: agentPrivateKey,
+        a: pos.coin,
+        b: currentSize < 0, // true for buy (closing short), false for sell (closing long)
+        s: formattedSize,
+        p: limitPrice,
+        r: true, // reduceOnly = true (closing position, prevent opening opposite position)
+      });
+
+      if (success) {
+        appToast.success({ message: `Position closed successfully` });
+      }
+    } catch (error) {
+      console.error("Error closing position:", error);
+      appToast.error({ message: "Failed to close position" });
+    }
+  };
+
+  // Handle close position with limit order
+  const handleClosePositionLimit = async (price: string, size: string, percentage: number) => {
+    if (!agentPrivateKey) {
+      appToast.error({ message: "Please connect your wallet" });
+      return;
+    }
+
+    const isApprovedBuilderFee = await checkBuilderFeeStatus({
+      userPublicKeyParam: userAddress as `0x${string}`,
+    });
+
+    const isApproved = await checkApprovalStatus({
+      agentPublicKeyParam: agentWallet?.address as `0x${string}`,
+      userPublicKeyParam: userAddress as `0x${string}`
+    });
+
+    if(!isApprovedBuilderFee){
+      appToast.error({ message: "Please approve the builder fee to place order" });
+      return;
+    }
+    
+    if(!isApproved){
+      appToast.error({ message: "Please approve the agent wallet to place order" });
+      return;
+    }
+
+    try {
+      const currentSize = parseFloat(pos.szi);
+      if (currentSize === 0) {
+        appToast.error({ message: "Position size is zero" });
+        return;
+      }
+
+      // Place limit order to close position
+      // b: true = buy (to close short positions), false = sell (to close long positions)
+      const success = await placeOrderWithAgent({
+        agentPrivateKey: agentPrivateKey,
+        a: pos.coin,
+        b: currentSize < 0, // true for buy (closing short), false for sell (closing long)
+        s: size,
+        p: price,
+        r: true, // reduceOnly = true (closing position, prevent opening opposite position)
+        tif: "Gtc", // Good till cancel for limit orders
+      });
+
+      if (success) {
+        appToast.success({ message: `Limit close order placed successfully` });
+      }
+    } catch (error) {
+      console.error("Error placing limit close order:", error);
+      appToast.error({ message: "Failed to place limit close order" });
+      throw error;
+    }
+  };
+
   const gridColumns = usePositionsGridColumns();
 
   return (
@@ -624,14 +1113,14 @@ const PositionsRow = ({ position, markPrice }: PositionsRowProps) => {
     >
       {/* Coin */}
       <div>
-        <span className="inline-block px-2 py-0.5 bg-teal-400/20 text-teal-400 rounded text-xs font-medium">
+        <span className={`inline-block px-2 py-0.5 rounded text-xs font-medium ${posSize > 0 ? "text-green-500 bg-green-500/20" :"text-red-500 bg-red-500/20"}`}>
           {coin}
         </span>
       </div>
       
       {/* Size */}
-      <div className="text-gray-300 truncate" title={size}>
-        {size}
+      <div className={`text-gray-300 truncate ${posSize > 0 ? "text-green-500" :"text-red-500"}`} title={size}>
+        {size.replace("-","")}
       </div>
       
       {/* Position Value */}
@@ -646,7 +1135,7 @@ const PositionsRow = ({ position, markPrice }: PositionsRowProps) => {
       
       {/* Mark Price */}
       <div className="hidden md:block text-gray-300 truncate" title={formattedMarkPrice}>
-        {formattedMarkPrice}
+        {formattedMarkPrice.replace("-","")}
       </div>
       
       {/* PNL (ROE %) */}
@@ -663,9 +1152,9 @@ const PositionsRow = ({ position, markPrice }: PositionsRowProps) => {
             e.preventDefault();
             // TODO: Open PNL details
           }}
-          className="inline-flex items-center shrink-0"
+          className="inline-flex items-center shrink-0 cursor-pointer"
         >
-          {/* <ExternalLink className="h-3 w-3 text-gray-500 hover:text-teal-400 transition-colors" /> */}
+          {/* <ExternalLink className="h-3 w-3 text-gray-500 hover:text-green-400 transition-colors" /> */}
         </a>
       </div>
       
@@ -687,9 +1176,9 @@ const PositionsRow = ({ position, markPrice }: PositionsRowProps) => {
             onClick={() => {
               // TODO: Edit margin
             }}
-            className="inline-flex items-center shrink-0"
+            className="inline-flex items-center shrink-0 cursor-pointer"
           >
-            {/* <Pencil className="h-3 w-3 text-gray-500 hover:text-teal-400 transition-colors" /> */}
+            {/* <Pencil className="h-3 w-3 text-gray-500 hover:text-green-400 transition-colors" /> */}
           </button>
         </div>
       </div>
@@ -702,45 +1191,30 @@ const PositionsRow = ({ position, markPrice }: PositionsRowProps) => {
       {/* Close All */}
       <div className="flex items-center gap-1 text-xs">
         <button
-          onClick={() => {
-            // TODO: Close with limit order
-          }}
-          className="text-teal-400 hover:text-teal-300 cursor-pointer transition-colors"
+          onClick={() => setIsLimitCloseModalOpen(true)}
+          className="text-green-400 hover:text-green-300 cursor-pointer transition-colors"
         >
           Limit
         </button>
         <span className="text-gray-600">|</span>
         <button
-          onClick={() => {
-            // TODO: Close with market order
-          }}
-          className="text-teal-400 hover:text-teal-300 cursor-pointer transition-colors"
+          onClick={handleClosePositionMarket}
+          className="text-green-400 hover:text-green-300 cursor-pointer transition-colors"
         >
           Market
         </button>
-        <span className="text-gray-600">|</span>
-        <button
-          onClick={() => {
-            // TODO: Reverse position
-          }}
-          className="text-teal-400 hover:text-teal-300 cursor-pointer transition-colors"
-        >
-          Reverse
-        </button>
       </div>
-      
-      {/* TP/SL */}
-      <div className="flex items-center gap-1">
-        <span className="text-gray-400 truncate">--/--</span>
-        <button
-          onClick={() => {
-            // TODO: Edit TP/SL
-          }}
-          className="inline-flex items-center shrink-0"
-        >
-          <Pencil className="h-3 w-3 text-gray-500 hover:text-teal-400 transition-colors" />
-        </button>
-      </div>
+
+      {/* Limit Close Modal */}
+      <LimitCloseModal
+        isOpen={isLimitCloseModalOpen}
+        onClose={() => setIsLimitCloseModalOpen(false)}
+        position={position}
+        markPrice={markPrice}
+        agentPrivateKey={agentPrivateKey}
+        szDecimals={szDecimals}
+        onConfirm={handleClosePositionLimit}
+      />
     </div>
   );
 };
@@ -761,8 +1235,8 @@ const EmptyState = ({ message }: EmptyStateProps) => {
 // Shimmer Skeleton Component
 const ShimmerSkeleton = ({ className = "" }: { className?: string }) => {
   return (
-    <div className={`relative overflow-hidden bg-gray-800/50 rounded ${className}`}>
-      <div className="absolute inset-0 bg-gradient-to-r from-transparent via-gray-700/50 to-transparent animate-shimmer" />
+      <div className={`relative overflow-hidden bg-gray-800/50 rounded ${className}`}>
+      <div className="absolute inset-0 bg-linear-to-r from-transparent via-gray-700/50 to-transparent animate-shimmer" />
     </div>
   );
 };
@@ -794,9 +1268,9 @@ const BalancesTableShimmer = () => {
       {[1, 2, 3].map((index) => (
         <div
           key={index}
-          className="grid grid-cols-5 sm:grid-cols-6 md:grid-cols-6 gap-1 sm:gap-2 px-2 sm:px-3 py-2 sm:py-3 text-xs sm:text-sm border-b border-gray-800"
+          className="grid grid-cols-3 md:grid-cols-4 gap-1 sm:gap-2 px-2 sm:px-3 py-2 sm:py-3 text-xs sm:text-sm border-b border-gray-800"
         >
-          {[1, 2, 3, 4, 5, 6].map((colIndex) => (
+          {[1, 2, 3, 4].map((colIndex) => (
             <ShimmerSkeleton key={colIndex} className="h-4 sm:h-5" />
           ))}
         </div>
@@ -892,21 +1366,18 @@ const BalanceRow = ({
   
   
   return (
-    <div className="grid grid-cols-5 sm:grid-cols-6 md:grid-cols-6 gap-1 sm:gap-2 px-2 sm:px-3 py-2 sm:py-3 text-xs sm:text-sm border-b border-gray-800 hover:bg-gray-900/50 transition-colors">
-      <div className="col-span-2 sm:col-span-1 text-gray-300 font-medium">
+    <div className="grid grid-cols-3 md:grid-cols-4 gap-1 sm:gap-2 px-2 sm:px-3 py-2 sm:py-3 text-xs sm:text-sm border-b border-gray-800 hover:bg-gray-900/50 transition-colors">
+      <div className="col-span-1 text-gray-300 font-medium">
         {coin}
       </div>
-      <div className="col-span-2 sm:col-span-1 text-gray-300">
+      <div className="col-span-1 text-gray-300">
         {total_balance}
       </div>
-      <div className={`col-span-2 sm:col-span-1 text-gray-300 ${isAvailableEqualTotal ? "decoration-dotted underline" : ""}`}>
+      <div className={`col-span-1 text-gray-300 ${isAvailableEqualTotal ? "decoration-dotted underline" : ""}`}>
         {available_balance}
       </div>
       <div className="hidden md:col-span-1 md:block text-gray-300">
         {usdc_value}
-      </div>
-      <div className="col-span-1 sm:col-span-1 text-xs text-teal-400 hover:text-teal-300 cursor-pointer">
-        Send
       </div>
     </div>
   );
@@ -1094,7 +1565,7 @@ const OrderHistoryRow = ({
 // Open Orders Row Component
 interface OpenOrdersRowProps {
   order: OpenOrder;
-  onCancel?: (oid: number) => void;
+  onCancel?: (oid: number, coin: string) => void;
 }
 
 const OpenOrdersRow = ({ order, onCancel }: OpenOrdersRowProps) => {
@@ -1107,7 +1578,7 @@ const OpenOrdersRow = ({ order, onCancel }: OpenOrdersRowProps) => {
   // Determine direction based on side
   // side: "B" = Buy = Long, side: "A" = Sell = Short
   const direction = order.side === "B" ? "Long" : "Short";
-  const directionColor = direction === "Long" ? "text-teal-400" : "text-red-500";
+  const directionColor = direction === "Long" ? "text-green-400" : "text-red-500";
 
   // Format coin - display as-is
   const coin = order.coin;
@@ -1178,7 +1649,7 @@ const OpenOrdersRow = ({ order, onCancel }: OpenOrdersRowProps) => {
       <div className="text-gray-300 truncate" title={tpSl}>
         {tpSl}
       </div>
-      <div className="text-teal-400 hover:text-teal-300 cursor-pointer truncate" title="Cancel" onClick={() => onCancel?.(order.oid)}>
+      <div className="text-green-400 hover:text-green-300 cursor-pointer truncate" title="Cancel" onClick={() => onCancel?.(order.oid, order.coin)}>
         Cancel
       </div>
     </div>
@@ -1190,7 +1661,7 @@ const OnlineIndicator = () => {
   return (
     <div className="absolute bottom-2 left-2 sm:left-3 z-10">
       <div className="flex items-center gap-1.5 text-xs">
-        <div className="w-2 h-2 rounded-full bg-teal-400 animate-pulse" />
+        <div className="w-2 h-2 rounded-full bg-green-400 animate-pulse" />
         <span className="text-gray-400 hidden sm:inline">Online</span>
       </div>
     </div>
@@ -1204,7 +1675,35 @@ export const BottomPanel = () => {
   const [markPrices, setMarkPrices] = useState<Record<string, string>>({});
   const [isHydrated, setIsHydrated] = useState(false);
   const { address: userAddress } = useAccount();
-  const { setBalances,setUserPositions,balances, isBalancesLoading, getAllBalances, getHistoricalOrders ,isHistoricalOrdersLoading ,historicalOrders ,isError,setOpenOrders,userFundings, isUserFundingsLoading, getUserFundings, tradeHistory, isTradeHistoryLoading, getUserTradeHistory, userOpenOrders, isUserOpenOrdersLoading, getUserOpenOrders, userPositions, isUserPositionsLoading, getUserPositions} = useBottomPanelStore();
+  const { agentPrivateKey, agentWallet, checkApprovalStatus } = useApiWallet({userPublicKey: userAddress as `0x${string}`});
+  const { checkBuilderFeeStatus } = useBuilderFee({userPublicKey: userAddress as `0x${string}`});
+  const { 
+    setBalances,
+    setUserPositions,
+    balances, 
+    isBalancesLoading, 
+    getAllBalances, 
+    getHistoricalOrders,
+    isHistoricalOrdersLoading,
+    historicalOrders,
+    isError,
+    setOpenOrders,
+    userFundings, 
+    isUserFundingsLoading, 
+    getUserFundings, 
+    tradeHistory, 
+    isTradeHistoryLoading, 
+    getUserTradeHistory, 
+    userOpenOrders, 
+    isUserOpenOrdersLoading, 
+    getUserOpenOrders, 
+    userPositions, 
+    isUserPositionsLoading, 
+    getUserPositions,
+    getAllData,
+    isLoading
+  } = useBottomPanelStore();
+  const { selectedMarket } = useMarketStore();
 
   // Hydration check to prevent SSR/client mismatch
   useEffect(() => {
@@ -1213,82 +1712,158 @@ export const BottomPanel = () => {
 
   const openOrdersCount = userOpenOrders?.length || 0;
   
+  // Filter positions by selected market coin - if market is selected, show only that market's positions
+  // If no market is selected, show no positions
+  const filteredPositions = useMemo(() => {
+    return selectedMarket?.coin 
+      ? (userPositions?.filter(position => position.position.coin === selectedMarket.coin) || [])
+      : [];
+  }, [selectedMarket?.coin, userPositions]);
+  
+  // Count always shows all open positions regardless of market selection
   const positionsCount = userPositions?.length || 0;
   
   const tabs: Tab[] = [
     { label: "Balances", value: "balances", count: 1 },
     { label: "Positions", value: "positions", count: positionsCount > 0 ? positionsCount : undefined },
     { label: "Open Orders", value: "openorders", count: openOrdersCount > 0 ? openOrdersCount : undefined },
-    { label: "TWAP", value: "twap" },
     { label: "Trade History", value: "tradehistory" },
     { label: "Funding History", value: "fundinghistory" },
     { label: "Order History", value: "orderhistory" },
   ];
 
+  // Load data based on active tab - use individual calls for better UX (only load what's needed)
+  // Note: If you want to load all data in parallel, use getAllData() from the store instead
   useEffect(() => {
     if (!infoClient || !userAddress) return;
 
-    if (activeTab === "balances") {
-      getAllBalances({ publicKey: userAddress });
-    }
+    const loadTabData = async () => {
+      switch (activeTab) {
+        case "balances":
+          await getAllBalances({ publicKey: userAddress });
+          break;
+        case "orderhistory":
+          await getHistoricalOrders({ publicKey: userAddress });
+          break;
+        case "fundinghistory":
+          await getUserFundings({ publicKey: userAddress });
+          break;
+        case "tradehistory":
+          await getUserTradeHistory({ publicKey: userAddress });
+          break;
+        case "openorders":
+          await getUserOpenOrders({ publicKey: userAddress });
+          break;
+        case "positions":
+          await getUserPositions({ publicKey: userAddress });
+          break;
+      }
+    };
 
-    if (activeTab === "orderhistory") {
-      getHistoricalOrders({ publicKey: userAddress });
-    }
+    loadTabData();
+  }, [infoClient, userAddress, activeTab, getAllBalances, getHistoricalOrders, getUserFundings, getUserTradeHistory, getUserOpenOrders, getUserPositions]);
 
-    if (activeTab === "fundinghistory") {
-      getUserFundings({ publicKey: userAddress });
-    }
+  // Setup subscriptions for real-time updates
+  useEffect(() => {
+    if (!userAddress) return;
+
+    let webDataSubscription: Subscription | null = null;
+    let openOrdersSubscription: Subscription | null = null;
+    let clearinghouseSubscription: Subscription | null = null;
+
+    const setupSubscriptions = async () => {
+      try {
+        // WebData2 subscription for balances
+        webDataSubscription = await subscriptionClient.webData2(
+          { user: userAddress as `0x${string}` },
+          (resp) => {
+            const ch = resp?.clearinghouseState ?? {};
+            const marginSummary = ch?.marginSummary ?? {};
+
+            const rows: Balance[] = [
+              {
+                coin: "USDC (Perps)",
+                total_balance: `${addDecimals(marginSummary?.accountValue ?? 0)} USDC`,
+                available_balance: `${addDecimals((((Number(marginSummary.accountValue) - (Number(marginSummary.totalMarginUsed)) - 0.01) || 0)))} USDC`,
+                usdc_value: addDecimals(marginSummary?.accountValue ?? 0),
+              },
+            ];
+
+            setBalances(rows);
+          }
+        );
+
+        // Open orders subscription
+        openOrdersSubscription = await subscriptionClient.openOrders(
+          { user: userAddress },
+          (orders) => {
+            setOpenOrders(orders.orders);
+          }
+        );
+
+        // Clearinghouse state subscription for positions
+        clearinghouseSubscription = await subscriptionClient.clearinghouseState(
+          { user: userAddress },
+          (fundings) => {
+            setUserPositions(fundings.clearinghouseState.assetPositions);
+          }
+        );
+      } catch (error) {
+        console.error("Error setting up subscriptions:", error);
+        errorHandler(error, "Failed to load account data");
+      }
+    };
+
+    setupSubscriptions();
+
+    // Cleanup subscriptions on unmount
+    return () => {
+      try {
+        webDataSubscription?.unsubscribe();
+        openOrdersSubscription?.unsubscribe();
+        clearinghouseSubscription?.unsubscribe();
+      } catch (error) {
+        console.error("Error unsubscribing:", error);
+        // Don't show toast for unsubscribe errors
+      }
+    };
+  }, [userAddress, setBalances, setOpenOrders, setUserPositions]);
+
+  const { cancelOrdersWithAgent, isCancellingOrdersWithAgentLoading } = useTradesStore();
+
+  useEffect(() => {
+    if (isCancellingOrdersWithAgentLoading) {
+      appToast.info({ message: "Cancelling orders..." });
+    } 
+  }, [isCancellingOrdersWithAgentLoading]);
+
+  // const handleCancelAllOrders = async () => {
+  //   if (!userAddress || !userOpenOrders || userOpenOrders.length === 0) return;
     
-    if (activeTab === "tradehistory") {
-      getUserTradeHistory({ publicKey: userAddress });
-    }
-
-    if (activeTab === "openorders") {
-      getUserOpenOrders({ publicKey: userAddress });
-    }
-
-    if (activeTab === "positions") {
-      getUserPositions({ publicKey: userAddress });
-    }
-
+  //   const success = await cancelOrdersWithAgent({
+  //     agentPrivateKey: userAddress, 
+  //     orders: userOpenOrders.map((order) => ({orderId: order.oid.toString(), a: order.coin}))
+  //   });
     
-  
-    subscriptionClient.webData2({ user: userAddress as `0x${string}`},(resp) => {
-      const ch = resp?.clearinghouseState ?? {};
-      const marginSummary = ch?.marginSummary ?? {};
+  //   if (success) {
+  //     setOpenOrders([]);
+  //   }
+  // }
 
-      const rows: Balance[] = [
-        {
-          coin: "USDC (Perps)",
-          total_balance: `${addDecimals(marginSummary?.accountValue ?? 0)} USDC`,
-          available_balance: `${addDecimals((((Number(marginSummary.accountValue) - (Number(marginSummary.totalMarginUsed)) - 0.01) || 0)))} USDC`,
-          usdc_value: addDecimals(marginSummary?.accountValue ?? 0),
-        },
-      ];
-
-      setBalances(rows);
+  const handleCancelOrder = async ({agentPrivateKey, oid, coin}: { agentPrivateKey: `0x${string}`, oid: number, coin: string}) => {
+    if (!userAddress) return;
+    
+    const success = await cancelOrdersWithAgent({
+      agentPrivateKey: agentPrivateKey,
+      orders: [{ orderId: oid.toString(), a: coin }]
     });
     
-    
-    
-
-subscriptionClient.openOrders({ user: userAddress }, (orders) => {
-      // console.log("orders 1",orders);
-      setOpenOrders(orders.orders);
-    }); 
-// subscriptionClient.userFills({ user: userAddress }, (fills) => {
-//   console.log("orders fills",fills);
-//     }); 
-subscriptionClient.clearinghouseState({ user: userAddress }, (fundings) => {
-
-  console.log("fundings",fundings);
-      setUserPositions(fundings.clearinghouseState.assetPositions);
-    }); 
-   
-
-  }, [infoClient, userAddress, activeTab]);
-
+    if (success) {
+      appToast.success({ message: "Order cancelled successfully" });
+    } else {
+      appToast.error({ message: "Failed to cancel order" });
+    }
+  };
 
   return (
     <div className="relative h-full bg-gray-950 border-t border-gray-800 flex flex-col min-h-0 max-h-full overflow-hidden">
@@ -1335,13 +1910,14 @@ subscriptionClient.clearinghouseState({ user: userAddress }, (fundings) => {
               <PositionsTableShimmer />
             ) : !userAddress ? (
               <EmptyState message="Connect wallet to view positions" />
-            ) : userPositions && userPositions.length > 0 ? (
+            ) : filteredPositions && filteredPositions.length > 0 ? (
               <div className="pb-10">
-                {userPositions.map((position, index) => (
+                {filteredPositions.map((position, index) => (
                   <PositionsRow
                     key={`${position.position.coin}-${index}`}
                     position={position}
                     markPrice={markPrices[position.position.coin]}
+                    agentPrivateKey={agentPrivateKey as `0x${string}` | undefined}
                   />
                 ))}
               </div>
@@ -1383,7 +1959,7 @@ subscriptionClient.clearinghouseState({ user: userAddress }, (fundings) => {
             {/* {userOpenOrders && userOpenOrders.length > 0 && (
               <div className="flex justify-end px-2 sm:px-3 py-2 border-b border-gray-800">
                 <button
-                  className="text-xs text-teal-400 hover:text-teal-300 cursor-pointer transition-colors"
+                  className="text-xs text-green-400 hover:text-green-300 cursor-pointer transition-colors"
                   onClick={() => {
                     // TODO: Implement cancel all functionality
                     console.log("Cancel all orders");
@@ -1405,9 +1981,10 @@ subscriptionClient.clearinghouseState({ user: userAddress }, (fundings) => {
                     <OpenOrdersRow
                       key={order.oid || index}
                       order={order}
-                      onCancel={(oid) => {
-                        // TODO: Implement cancel order functionality
-                        console.log("Cancel order", oid);
+                      onCancel={(oid, coin) => {
+                        if (agentPrivateKey) {
+                          handleCancelOrder({agentPrivateKey: agentPrivateKey as `0x${string}`, oid, coin});
+                        }
                       }}
                     />
                   ))}
@@ -1417,11 +1994,6 @@ subscriptionClient.clearinghouseState({ user: userAddress }, (fundings) => {
               )}
             </div>
           </div>
-        </TabContent>
-
-        {/* TWAP Tab */}
-        <TabContent value="twap" activeTab={activeTab}>
-          <EmptyState message="No TWAP orders" />
         </TabContent>
 
         {/* Trade History Tab */}
@@ -1453,7 +2025,7 @@ subscriptionClient.clearinghouseState({ user: userAddress }, (fundings) => {
                   href={`${TRADE_HISTORY_URL}/${userAddress}`}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="block px-2 sm:px-3 py-2 text-xs text-teal-400 hover:text-teal-300 cursor-pointer transition-colors"
+                  className="block px-2 sm:px-3 py-2 text-xs text-green-400 hover:text-green-300 cursor-pointer transition-colors"
                 >
                   View All
                 </a>
@@ -1491,7 +2063,7 @@ subscriptionClient.clearinghouseState({ user: userAddress }, (fundings) => {
                   href={`${FUNDING_HISTORY_URL}/${userAddress}`}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="block px-2 sm:px-3 py-2 text-xs text-teal-400 hover:text-teal-300 cursor-pointer transition-colors"
+                  className="block px-2 sm:px-3 py-2 text-xs text-green-400 hover:text-green-300 cursor-pointer transition-colors"
                 >
                   View All
                 </a>
@@ -1540,7 +2112,7 @@ subscriptionClient.clearinghouseState({ user: userAddress }, (fundings) => {
                   href={`${HISTORICAL_ORDERS_URL}/${userAddress}`}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="block px-2 sm:px-3 py-2 text-xs text-teal-400 hover:text-teal-300 cursor-pointer transition-colors"
+                  className="block px-2 sm:px-3 py-2 text-xs text-green-400 hover:text-green-300 cursor-pointer transition-colors"
                 >
                   View All
                 </a>

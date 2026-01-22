@@ -12,19 +12,24 @@ export type OrderPayload = {
   response: {
       type: "order",
       data: {
-          statuses: ({
-              resting: {
-                  oid: number;
-                  cloid?: `0x${string}` | undefined;
-              };
-          } | {
-              filled: {
+          statuses: {
+              filled?: {
                   totalSz: string;
                   avgPx: string;
                   oid: number;
                   cloid?: `0x${string}` | undefined;
               };
-          })[];
+          }[];
       };
   };
+}
+
+export type CancelPayload = {
+  status: "ok";
+    response: {
+        type: "cancel";
+        data: {
+            statuses: "success"[];
+        };
+    };
 }

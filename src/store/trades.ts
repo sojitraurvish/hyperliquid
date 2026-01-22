@@ -1,8 +1,10 @@
-import { placeOrderWithAgent, updateMarginAndLeverage } from "@/lib/services/trading-panel";
+import { cancelOrdersWithAgent, placeOrderWithAgent, updateMarginAndLeverage } from "@/lib/services/trading-panel";
 import { MarginAndLeverage, MarginLeverageValue } from "@/types/trading-panel";
 import { create } from "zustand";
 import { createJSONStorage, devtools, persist } from "zustand/middleware";
 import { errorHandler } from "./errorHandler";
+import { appToast } from "@/components/ui/toast";
+import { toast } from "react-toastify";
 
 export interface TradeData {
   price: number;
@@ -28,7 +30,11 @@ type TradesStore = {
   getMarginAndLeverage: (selectedMarket: string) => MarginLeverageValue | undefined;
 
   isPlacingOrderWithAgent: boolean;
-  placeOrderWithAgent: ({agentPrivateKey, a, b, s, p, r}: {agentPrivateKey: `0x${string}`, a: string, b: boolean, s: string, p: string, r: boolean}) => Promise<boolean>;
+  placeOrderWithAgent: ({agentPrivateKey, a, b, s, p, r, tif}: {agentPrivateKey: `0x${string}`, a: string, b: boolean, s: string, p: string, r: boolean, tif?: "FrontendMarket" | "Gtc" | "Ioc" | "Alo" | "LiquidationMarket"}) => Promise<boolean>;
+
+
+  isCancellingOrdersWithAgentLoading: boolean;
+  cancelOrdersWithAgent: ({agentPrivateKey, orders}: {agentPrivateKey: `0x${string}`, orders: {orderId: string, a: string}[]}) => Promise<boolean>;
 };
 
 export const useTradesStore = create<TradesStore>()(
@@ -75,25 +81,64 @@ export const useTradesStore = create<TradesStore>()(
 
 
       isPlacingOrderWithAgent: false,
-      placeOrderWithAgent: async ({agentPrivateKey, a, b, s, p, r}) => {
+      placeOrderWithAgent: async ({agentPrivateKey, a, b, s, p, r, tif = "FrontendMarket"}) => {
         set({ isPlacingOrderWithAgent: true });
+        const loadingToastId = appToast.loading({title:"Order Submitted..."});
         try {
-          const resp = await placeOrderWithAgent({agentPrivateKey, a, b, s, p, r});
+          const resp = await placeOrderWithAgent({agentPrivateKey, a, b, s, p, r, tif});
           if (resp.status === "ok") {
+            toast.dismiss(loadingToastId);
+            resp.response.data.statuses.forEach((status) => {
+              // Check if order was filled (for ALO orders, it might not be filled immediately)
+              if (status.filled) {
+                appToast.success({title:`${status.filled.totalSz} assert ${b ? "bought" : "sold"} at average price ${status.filled.avgPx}`});
+              } else if (tif === "Gtc" || tif === "Ioc" || tif === "Alo") {
+                // Order was placed but not filled (e.g., ALO orders waiting for auction)
+                appToast.success({title:`Limit Order placed successfully`});
+              }else {
+                appToast.success({title:`Order placed successfully`});
+              }
+            });
             set({ isPlacingOrderWithAgent: false });
             return true;
           } else {
+            toast.dismiss(loadingToastId);
+            appToast.error({title:"Order Failed", message: resp.response.type || "Failed to place order"});
             set({ isError: resp.response.type, isPlacingOrderWithAgent: false });
             return false;
           }
         } catch (error) {
-          set({ isError: errorHandler(error), isPlacingOrderWithAgent: false });
+          toast.dismiss(loadingToastId);
+          const errorMessage = errorHandler(error);
+          appToast.error({title:"Order Failed", message: errorMessage});
+          set({ isError: errorMessage, isPlacingOrderWithAgent: false });
           return false;
         } finally {
           set({ isPlacingOrderWithAgent: false });
         }
       },
 
+      isCancellingOrdersWithAgentLoading: false,
+      cancelOrdersWithAgent: async ({agentPrivateKey, orders}: {agentPrivateKey: `0x${string}`, orders: {orderId: string, a: string}[]}) => {
+        set({ isCancellingOrdersWithAgentLoading: true });
+
+        try {
+          const resp = await cancelOrdersWithAgent({agentPrivateKey, orders});
+          if (resp.status === "ok") {
+            set({ isCancellingOrdersWithAgentLoading: false });
+            return true;
+          } else {
+            set({ isError: resp.response.type, isCancellingOrdersWithAgentLoading: false });
+            return false;
+          }
+        } catch (error) {
+          set({ isError: errorHandler(error), isCancellingOrdersWithAgentLoading: false });
+          return false;
+        } finally {
+          set({ isCancellingOrdersWithAgentLoading: false });
+        }
+      },
+      
       }),
       {
         name: "trades-store",

@@ -321,14 +321,14 @@ export const DepositModal: React.FC<DepositModalProps> = ({ isOpen, onClose, onS
                 min="0"
                 value={amount}
                 onChange={handleAmountChange}
-                className="w-full px-4 py-3 pr-24 bg-gray-800 border border-gray-700 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                className="w-full px-4 py-3 pr-24 bg-gray-800 border border-gray-700 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                 placeholder="0.00"
                 disabled={isPending || isConfirming}
               />
               <button
                 type="button"
                 onClick={handleMaxClick}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-teal-400 hover:text-teal-300 text-sm font-medium cursor-pointer"
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-green-400 hover:text-green-300 text-sm font-medium cursor-pointer"
                 disabled={!balance || isPending || isConfirming}
               >
                 MAX: {maxBalance}
@@ -365,7 +365,7 @@ export const DepositModal: React.FC<DepositModalProps> = ({ isOpen, onClose, onS
               isSwitchingChain
             }
             isLoading={isPending || isConfirming || isSwitchingChain}
-            className="w-full mt-7 bg-teal-500 text-white hover:bg-teal-600 disabled:bg-gray-700 disabled:cursor-not-allowed py-3 text-base font-medium justify-center"
+            className="w-full mt-7 bg-green-500 text-white hover:bg-green-600 disabled:bg-gray-700 disabled:cursor-not-allowed py-3 text-base font-medium justify-center"
           >
             {isSwitchingChain 
               ? "Switching Network..." 

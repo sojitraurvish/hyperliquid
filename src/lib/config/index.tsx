@@ -11,14 +11,36 @@ export const OG_DESC = `Professional trading platform for Hyperliquid. Execute t
 export const KEYWORDS = `hyperliquid, crypto trading, perpetual futures, decentralized exchange, trading platform, crypto derivatives`;
 
 export const isTestnet =  ENVIRONMENT === ENVIRONMENT_TYPES.DEVELOPMENT
+
+// Hyperliquid App URLs - dynamically based on environment
 export const WEB_URL = isTestnet ? "https://app.hyperliquid-testnet.xyz" : "https://app.hyperliquid.xyz";
 
+// Hyperliquid API URLs - dynamically based on environment
+export const HYPERLIQUID_API_URL = isTestnet 
+  ? "https://api.hyperliquid-testnet.xyz/exchange" 
+  : "https://api.hyperliquid.xyz/exchange";
 
+// Hyperliquid WebSocket URLs - dynamically based on environment
+export const HYPERLIQUID_WS_URL = isTestnet
+  ? "wss://api.hyperliquid-testnet.xyz/ws"
+  : "wss://api.hyperliquid.xyz/ws";
+
+// Hyperliquid App Routes
 export const EXPLORER_URL =   `${WEB_URL}/explorer`;
 export const EXPLORER_TX_URL =   `${EXPLORER_URL}/tx`;
 export const HISTORICAL_ORDERS_URL =   `${WEB_URL}/historicalOrders`;
 export const FUNDING_HISTORY_URL =   `${WEB_URL}/fundingHistory`;
 export const TRADE_HISTORY_URL =   `${WEB_URL}/tradeHistory`;
+export const REFERRAL_URL =   `${WEB_URL}/referral`;
+
+// Coin Icon URL Helper - uses WEB_URL to ensure environment consistency
+export const getCoinIconUrl = (symbol: string): string => {
+  const baseSymbol = symbol.split('-')[0].split('/')[0];
+  return `${WEB_URL}/coins/${baseSymbol}.svg`;
+};
+
+// Default coin icon fallback
+export const DEFAULT_COIN_ICON_URL = `${WEB_URL}/coins/ETH.svg`;
 
 // SEO image
 export const DESK_LOGO = "/images/logo.png";
@@ -29,7 +51,47 @@ export const SEO_LOGO = WEB_URL + DESK_LOGO;
 // Favicon
 export const FavIcon = "/images/logo.png";
 
+// External URLs
+export const EXTERNAL_URLS = {
+  // Social Media
+  TWITTER: "https://twitter.com",
+  DISCORD: "https://discord.com",
+  GITHUB: "https://github.com",
+  LINKEDIN: "https://www.linkedin.com/company/hypertrading",
+  
+  // Support
+  SUPPORT_EMAIL: "mailto:support@hypertrading.com",
+  
+  // Wallets
+  METAMASK_DOWNLOAD: "https://metamask.io/download/",
+  METAMASK_ICON: "https://upload.wikimedia.org/wikipedia/commons/3/36/MetaMask_Fox.svg",
+  ETHEREUM_WALLETS: "https://ethereum.org/en/wallets/find-wallet/",
+} as const;
 
+// Application Routes
+export const ROUTES = {
+  HOME: "/",
+  TRADE: "/trade",
+  MARKETS: "/markets",
+  VAULTS: "/vaults",
+  STAKING: "/staking",
+  PORTFOLIO: "/portfolio",
+  REFERRALS: "/referrals",
+  LEADERBOARD: "/leaderboard",
+  DOCS: "/docs",
+  BLOG: "/blog",
+  FAQ: "/faq",
+  SUPPORT: "/support",
+  STATUS: "/status",
+  ABOUT: "/about",
+  CAREERS: "/careers",
+  CONTACT: "/contact",
+  PRESS: "/press",
+  TERMS: "/terms",
+  PRIVACY: "/privacy",
+  COOKIES: "/cookies",
+  FEES: "/fees",
+} as const;
 
 export const SEO_SCHEMA={
     CONTEXT: "http://schema.org",
@@ -40,7 +102,7 @@ export const SEO_SCHEMA={
       TELEPHONE:"+1-800-HYPER-TRD",
       CONTACT_TYPE:"Customer Service"
     },
-    SAME_AS:["https://www.linkedin.com/company/hypertrading","https://twitter.com/hypertrading"],
+    SAME_AS:[EXTERNAL_URLS.LINKEDIN, EXTERNAL_URLS.TWITTER],
     TYPE_PRIMARY:"WebSite",
     TYPE_SECONDARY:"FAQPage",
     TYPE_TERTIARY:"Question",

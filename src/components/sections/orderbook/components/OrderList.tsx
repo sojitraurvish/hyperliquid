@@ -1,6 +1,6 @@
 import React from "react";
 import { OrderRow } from "./OrderRow";
-import { OrderBookData } from "..";
+import { OrderBookData } from "@/store/orderbook";
 
 
 interface OrderListProps {

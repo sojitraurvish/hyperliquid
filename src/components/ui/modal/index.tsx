@@ -108,7 +108,7 @@ export const AppModal: React.FC<Props> = ({
               {showCloseButton && (
                 <button
                   onClick={onClose}
-                  className="ml-auto p-2 rounded-lg hover:bg-gray-800 transition-colors duration-200 text-gray-400 hover:text-white"
+                  className="ml-auto p-2 rounded-lg hover:bg-gray-800 transition-colors duration-200 text-gray-400 hover:text-white cursor-pointer"
                   aria-label="Close modal"
                 >
                   <X size={20} />

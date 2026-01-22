@@ -13,13 +13,8 @@ import { SpreadIndicator } from "./components/SpreadIndicator";
 import { TradesList } from "./components/TradesList";
 import { Dropdown } from "../../ui/dropdown/Dropdown";
 import { useTradesStore, TradeData } from "@/store/trades";
-
-
-export interface OrderBookData {
-  price: string;
-  size: string;
-  total: string;
-}
+import { useOrderBookStore, OrderBookData } from "@/store/orderbook";
+import { errorHandler } from "@/store/errorHandler";
 
 // TradeData is now exported from @/store/trades
 
@@ -46,12 +41,11 @@ export const OrderBook = ({ currency }: { currency: string }) => {
   const [viewMode, setViewMode] = useState<"Stacked" | "Large">("Stacked");
   const [isOptionsOpen, setIsOptionsOpen] = useState(false);
   const { trades, setTrades } = useTradesStore();
+  const { asks, bids, setAsks, setBids } = useOrderBookStore();
   
   const [spread, setSpread] = useState(0);
   const [spreadPercent, setSpreadPercent] = useState(0);
   
-  const [asks, setAsks] = useState<OrderBookData[]>([]);
-  const [bids, setBids] = useState<OrderBookData[]>([]);
   const [highlightedAskPrices, setHighlightedAskPrices] = useState<Set<string>>(new Set());
   const [highlightedBidPrices, setHighlightedBidPrices] = useState<Set<string>>(new Set());
   
@@ -109,11 +103,12 @@ export const OrderBook = ({ currency }: { currency: string }) => {
     let isSubscribed = true;
     
     const handleSubscribeToLiveOrderBook = async () => {
-      const config: L2BookParameters = {coin: currency, ...precisionConfig[precision]};
+      try {
+        const config: L2BookParameters = {coin: currency, ...precisionConfig[precision]};
  
-      orderbookSubscription = await subscriptionClient.l2Book(
-        config,
-        (book) => {
+        orderbookSubscription = await subscriptionClient.l2Book(
+          config,
+          (book) => {
           // Only update state if still subscribed to this market
           if (!isSubscribed) return;
           // console.log("book", book);
@@ -275,7 +270,10 @@ export const OrderBook = ({ currency }: { currency: string }) => {
             return currentBids?.slice(0, 11);
           });
         });
-        
+      } catch (error) {
+        console.error("Error subscribing to orderbook:", error);
+        errorHandler(error, "Failed to load orderbook");
+      }
     };
     handleSubscribeToLiveOrderBook();
 
@@ -289,6 +287,7 @@ export const OrderBook = ({ currency }: { currency: string }) => {
           orderbookSubscription.unsubscribe();
         } catch (error) {
           console.error("Error unsubscribing from orderbook:", error);
+          // Don't show toast for unsubscribe errors
         }
         orderbookSubscription = null;
       }
@@ -304,9 +303,10 @@ export const OrderBook = ({ currency }: { currency: string }) => {
     let isSubscribed = true;
     
     const handleSubscribeToTrades = async () => {
-      const config: TradesParameters = {coin: currency};
-      
-      tradeSubscription = await subscriptionClient.trades(config, (trades) => {
+      try {
+        const config: TradesParameters = {coin: currency};
+        
+        tradeSubscription = await subscriptionClient.trades(config, (trades) => {
         // Only update state if still subscribed to this market
         if (!isSubscribed) return;
         
@@ -333,6 +333,10 @@ export const OrderBook = ({ currency }: { currency: string }) => {
           setTrades(updatedTrades?.slice(0, 50));
         }
       });
+      } catch (error) {
+        console.error("Error subscribing to trades:", error);
+        errorHandler(error, "Failed to load trades");
+      }
     };
     handleSubscribeToTrades();
 
@@ -346,6 +350,7 @@ export const OrderBook = ({ currency }: { currency: string }) => {
           tradeSubscription.unsubscribe();
         } catch (error) {
           console.error("Error unsubscribing from trades:", error);
+          // Don't show toast for unsubscribe errors
         }
         tradeSubscription = null;
       }
@@ -355,7 +360,7 @@ export const OrderBook = ({ currency }: { currency: string }) => {
   // Show loading state during SSR or initial mount
 
   return (
-    <div className="w-full sm:w-72 lg:w-80 xl:w-96 bg-gray-950 border-l border-gray-800 flex flex-col h-full">
+    <div className="w-full bg-gray-950 border-l border-gray-800 flex flex-col h-full">
       <div className="flex-1 flex flex-col min-h-0">
         {/* Header with Tabs */}
         <div className="flex items-center justify-between px-2 sm:px-3 py-2 border-b border-gray-800 shrink-0">
@@ -366,13 +371,13 @@ export const OrderBook = ({ currency }: { currency: string }) => {
                 onClick={tab.onClick}
                 className={` hover:cursor-pointer
                   flex-1 text-xs sm:text-sm px-0 py-1 transition-colors duration-200
-                  relative focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-gray-950 focus:ring-teal-400
+                  relative focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-gray-950 focus:ring-green-400
                   ${tab.isActive ? "text-white" : "text-gray-400 hover:text-gray-300"}
                 `}
               >
                 {tab.label}
                 {tab.isActive && (
-                  <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-teal-400" />
+                  <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-green-400" />
                 )}
               </button>
             ))}
@@ -381,7 +386,7 @@ export const OrderBook = ({ currency }: { currency: string }) => {
             <AppButton
               variant={VARIANT_TYPES.NOT_SELECTED}
               onClick={() => setIsOptionsOpen(!isOptionsOpen)}
-              className="h-6 w-6 p-0 inline-flex items-center justify-center hover:bg-gray-800/50 text-gray-400 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-gray-900 focus:ring-teal-400"
+              className="h-6 w-6 p-0 inline-flex items-center justify-center hover:bg-gray-800/50 text-gray-400 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-gray-900 focus:ring-green-400"
             >
               <MoreVertical className="h-3.5 w-3.5" />
             </AppButton>

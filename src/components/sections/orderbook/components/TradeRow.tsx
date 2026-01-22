@@ -9,7 +9,7 @@ interface TradeRowProps {
 }
 
 export const TradeRow = ({ trade }: TradeRowProps) => {
-  const priceColor = trade.isBuy ? "text-teal-400" : "text-red-500";
+  const priceColor = trade.isBuy ? "text-green-400" : "text-red-500";
 
   return (
     <div className="px-2 sm:px-3 py-1.5 flex justify-between items-center text-xs sm:text-sm hover:bg-gray-800/50 border-b border-gray-800/50 transition-colors">
@@ -27,7 +27,7 @@ export const TradeRow = ({ trade }: TradeRowProps) => {
           rel="noopener noreferrer"
           className="inline-flex items-center"
         >
-          <ExternalLink className="h-3 w-3 text-gray-500 hover:text-teal-400 transition-colors" />
+          <ExternalLink className="h-3 w-3 text-gray-500 hover:text-green-400 transition-colors" />
         </a>
       </div>
     </div>

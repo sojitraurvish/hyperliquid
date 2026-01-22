@@ -4,6 +4,7 @@ import { API_ROUTES } from '@/lib/api-routes';
 import { getCookie, setCookie } from '@/lib/sessions/cookie';
 import { COOKIE_NAMES } from '@/lib/sessions/cookie';
 import { COOKIE_PREFIX } from '@/lib/constants';
+import { errorHandler } from '@/store/errorHandler';
 
 // Client-side context simulation
 type ClientContext = object;
@@ -75,53 +76,66 @@ apiClient.interceptors.request.use(
   (error: AxiosError) => Promise.reject(error)
 );
 
-// Response interceptor - handles token refresh
+// Response interceptor - handles token refresh and global error handling
 apiClient.interceptors.response.use(
   (response: AxiosResponse) => response,
   async (error: AxiosError) => {
     const originalRequest = error.config as InternalAxiosRequestConfig & { _retry?: boolean };
     const cache = promiseCache.get(CLIENT_CONTEXT)!;
     
-    if (!originalRequest || error.response?.status !== 401 || !(error.response.data as { message: string }).message.startsWith("Token expired")) {
-      return Promise.reject(error);
-    }
-
-    // Skip retry for guest auth and refresh token endpoints
+    // Handle 401 errors for token refresh (only for token expired messages)
     if (
-      originalRequest.url?.includes("guestAuth") ||
-      originalRequest.url?.includes("refreshToken")
+      originalRequest && 
+      error.response?.status === 401 && 
+      (error.response.data as { message?: string })?.message?.startsWith("Token expired")
     ) {
-      return Promise.reject(error);
-    }
-
-    console.log((error.response.data as { message: string }).message);
-    // Handle token refresh with single execution
-    if (!originalRequest._retry) {
-      originalRequest._retry = true;
-      
-      try {
-        // Ensure only one refresh operation per context
-        if (!cache?.refreshPromise) {
-          cache.refreshPromise = (async () => {
-            try {
-              await refreshTokens();
-            } finally {
-              cache.refreshPromise = undefined;
-            }
-          })();
-        }
-        
-         await cache?.refreshPromise;
-        
-        // Retry with new tokens
-        const accessToken = getCookie({ name: COOKIE_NAMES.ACCESS_TOKEN }) || '';
-        const refreshToken = getCookie({ name: COOKIE_NAMES.REFRESH_TOKEN }) || '';
-        originalRequest.headers.Authorization = accessToken;
-        originalRequest.headers.refreshtoken = refreshToken;
-        return apiClient(originalRequest);
-      } catch (refreshError) {
-        return Promise.reject(refreshError);
+      // Skip retry for guest auth and refresh token endpoints
+      if (
+        originalRequest.url?.includes("guestAuth") ||
+        originalRequest.url?.includes("refreshToken")
+      ) {
+        // Don't show toast for auth errors, they're handled internally
+        return Promise.reject(error);
       }
+
+      // Handle token refresh with single execution
+      if (!originalRequest._retry) {
+        originalRequest._retry = true;
+        
+        try {
+          // Ensure only one refresh operation per context
+          if (!cache?.refreshPromise) {
+            cache.refreshPromise = (async () => {
+              try {
+                await refreshTokens();
+              } finally {
+                cache.refreshPromise = undefined;
+              }
+            })();
+          }
+          
+          await cache?.refreshPromise;
+          
+          // Retry with new tokens
+          const accessToken = getCookie({ name: COOKIE_NAMES.ACCESS_TOKEN }) || '';
+          const refreshToken = getCookie({ name: COOKIE_NAMES.REFRESH_TOKEN }) || '';
+          originalRequest.headers.Authorization = accessToken;
+          originalRequest.headers.refreshtoken = refreshToken;
+          return apiClient(originalRequest);
+        } catch (refreshError) {
+          // Don't show toast for refresh errors, they're handled internally
+          return Promise.reject(refreshError);
+        }
+      }
+    }
+    
+    // Handle all other errors with toast notification
+    // Skip showing toast for auth-related endpoints to avoid spam
+    if (
+      !originalRequest?.url?.includes("guestAuth") &&
+      !originalRequest?.url?.includes("refreshToken")
+    ) {
+      errorHandler(error);
     }
     
     return Promise.reject(error);

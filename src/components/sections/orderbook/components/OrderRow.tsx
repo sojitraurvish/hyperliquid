@@ -1,6 +1,6 @@
 import React from "react";
 import { addDecimals } from "@/lib/constants";
-import { OrderBookData } from "..";
+import { OrderBookData } from "@/store/orderbook";
 
 
 interface OrderRowProps {
@@ -13,9 +13,9 @@ interface OrderRowProps {
 }
 
 export const OrderRow = ({ order, isAsk, maxTotal, currency, onClick, isHighlighted = false }: OrderRowProps) => {
-  const priceColor = isAsk ? "text-red-500" : "text-teal-400";
-  const barColor = isAsk ? "bg-red-500/15" : "bg-teal-500/15";
-  const highlightColor = isAsk ? "bg-red-500/40" : "bg-teal-500/40";
+  const priceColor = isAsk ? "text-red-500" : "text-green-400";
+  const barColor = isAsk ? "bg-red-500/15" : "bg-green-500/15";
+  const highlightColor = isAsk ? "bg-red-500/40" : "bg-green-500/40";
   const barWidth = Math.min((parseFloat(order.total) / maxTotal) * 100, 100);
 
   const priceNum = parseFloat(order.price);

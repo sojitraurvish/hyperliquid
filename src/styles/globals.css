@@ -144,33 +144,3 @@ input[type="range"]::-moz-range-thumb {
 input[type="range"]::-moz-range-thumb:active {
   cursor: grabbing;
 }
-
-/* Lightweight Charts Marker Text Styling */
-/* Style marker text to be white and centered inside circles */
-.tv-lightweight-charts svg text,
-.tv-lightweight-charts canvas + svg text,
-svg text[fill],
-svg text {
-  fill: #ffffff !important;
-  color: #ffffff !important;
-  font-size: 11px !important;
-  font-weight: 700 !important;
-  text-anchor: middle !important;
-  dominant-baseline: central !important;
-  alignment-baseline: central !important;
-  pointer-events: none !important;
-}
-
-/* Position text inside marker circles */
-.tv-lightweight-charts svg g[clip-path] text,
-.tv-lightweight-charts svg g text {
-  transform: translateY(0) !important;
-}
-
-/* Ensure marker circles are properly styled */
-.tv-lightweight-charts svg circle[fill="#2dd4bf"],
-.tv-lightweight-charts svg circle[fill="#ef4444"],
-svg circle[fill="#2dd4bf"],
-svg circle[fill="#ef4444"] {
-  fill-opacity: 1 !important;
-}

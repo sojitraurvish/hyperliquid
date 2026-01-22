@@ -8,6 +8,7 @@ import { ENVIRONMENT, ENVIRONMENT_TYPES, VARIANT_TYPES } from "@/lib/constants";
 import { appToast } from "@/components/ui/toast";
 import { Coins } from "lucide-react";
 import { infoClient } from "@/lib/config/hyperliquied/hyperliquid-client";
+import { HYPERLIQUID_API_URL } from "@/lib/config";
 
 type WithdrawModalProps = {
   isOpen: boolean;
@@ -44,16 +45,18 @@ function splitSignature(sigHex: `0x${string}` | string) {
   return { r, s: sPart, v };
 }
 
-// network config (same as yours)
+// network config - uses environment-based API URL
+// Note: Both mainnet and testnet use the same API URL based on environment
+// The actual network is determined by the chain ID used for signing
 const NETWORK_CONFIG = {
   42161: {
-    api: "https://api.hyperliquid.xyz/exchange",
+    api: HYPERLIQUID_API_URL,
     hyperliquidChainString: "Mainnet",
     permitChainId: 42161,
     signatureChainIdHex: "0xa4b1",
   },
   421614: {
-    api: "https://api.hyperliquid-testnet.xyz/exchange",
+    api: HYPERLIQUID_API_URL,
     hyperliquidChainString: "Testnet",
     permitChainId: 421614,
     signatureChainIdHex: "0x66eee",
@@ -539,7 +542,7 @@ console.log("signature", signature);
                   }
                 }}
                 placeholder="0.00"
-                className="w-full px-4 py-3 pr-24 bg-gray-800 border border-gray-700 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none relative z-10"
+                className="w-full px-4 py-3 pr-24 bg-gray-800 border border-gray-700 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none relative z-10"
                 disabled={isSubmitting}
               />
               {!isLoadingBalance && withdrawableBalance !== null && (
@@ -549,7 +552,7 @@ console.log("signature", signature);
                     const maxAmount = Math.floor(withdrawableBalance * 100) / 100;
                     setAmount(maxAmount.toFixed(2));
                   }}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-teal-400 hover:text-teal-300 text-sm font-medium cursor-pointer z-20"
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-green-400 hover:text-green-300 text-sm font-medium cursor-pointer z-20"
                   disabled={isSubmitting || withdrawableBalance === null}
                 >
                   MAX: {formattedBalance}
@@ -599,7 +602,7 @@ console.log("signature", signature);
             variant={VARIANT_TYPES.SECONDARY} 
             isDisabled={!canSubmit} 
             isLoading={isSubmitting} 
-            className="w-full mt-7 bg-teal-500 text-white hover:bg-teal-600 disabled:bg-gray-700 disabled:cursor-not-allowed py-3 text-base font-medium justify-center"
+            className="w-full mt-7 bg-green-500 text-white hover:bg-green-600 disabled:bg-gray-700 disabled:cursor-not-allowed py-3 text-base font-medium justify-center"
           >
             {isSubmitting ? "Processing..." : `Withdraw to ${chainDisplayName}`}
           </AppButton>

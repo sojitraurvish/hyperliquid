@@ -1,4 +1,4 @@
-import { OrderPayload } from "@/types/trading-panel";
+import { CancelPayload, OrderPayload } from "@/types/trading-panel";
 import { BUILDER_CONFIG } from "../config";
 import { getAgentExchangeClient, getSymbolConverter } from "../config/hyperliquied/hyperliquid-client";
 
@@ -133,5 +133,27 @@ export const placeOrderWithAgent = async ({
       ],
       ...(builderAddress && desiredBps ? { builder: { b: builderAddress, f: desiredBps } } : {})
     })
-    return res
+    return res as OrderPayload;
+  }
+
+
+export const cancelOrdersWithAgent = async ({
+    agentPrivateKey,
+    orders,
+  }: {
+    agentPrivateKey: string,
+    orders: {
+      orderId: string,
+      a: string
+    }[]
+  }): Promise<CancelPayload> => {
+    const conv = await getSymbolConverter();
+    const agentExchangeClient = getAgentExchangeClient(agentPrivateKey as `0x${string}`);
+    
+    const cancels = orders.map(({ orderId, a }) => {
+      const assetId = conv.getAssetId(a) as number;
+      return { a: assetId, o: orderId };
+    });
+    
+    return await agentExchangeClient.cancel({ cancels });
   }

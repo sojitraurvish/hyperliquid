@@ -38,17 +38,17 @@ export const MarketInfoBar = ({
   return (
     <div className="px-2 sm:px-3 py-2 text-xs flex items-center gap-1 flex-wrap">
       <span className="text-gray-400">{symbol} · {timeframe} · {exchange}</span>
-      <span className="w-2 h-2 rounded-full bg-teal-400 ml-2" />
+      <span className="w-2 h-2 rounded-full bg-green-400 ml-2" />
       {ohlc && (
         <>
           <span className="text-gray-400 ml-2">O</span>
-          <span className="text-teal-400 tabular-nums">{formatPrice(ohlc.open)}</span>
+          <span className="text-green-400 tabular-nums">{formatPrice(ohlc.open)}</span>
           <span className="text-gray-400 ml-2">H</span>
           <span className="text-white tabular-nums">{formatPrice(ohlc.high)}</span>
           <span className="text-gray-400 ml-2">L</span>
           <span className="text-white tabular-nums">{formatPrice(ohlc.low)}</span>
           <span className="text-gray-400 ml-2">C</span>
-          <span className={`tabular-nums ${isPositive ? "text-teal-400" : "text-red-500"}`}>
+          <span className={`tabular-nums ${isPositive ? "text-green-400" : "text-red-500"}`}>
             {formatPrice(ohlc.close)}
           </span>
         </>
@@ -56,7 +56,7 @@ export const MarketInfoBar = ({
       {change && (
         <span
           className={`ml-2 tabular-nums ${
-            isPositive ? "text-teal-400" : "text-red-500"
+            isPositive ? "text-green-400" : "text-red-500"
           }`}
         >
           {formatChange(change.value, change.percent)}

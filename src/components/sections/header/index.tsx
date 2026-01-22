@@ -1,3 +1,5 @@
+"use client";
+
 import { Settings, Globe, Bell, Mail } from "lucide-react";
 import AppButton, { AppButton as Button } from "@/components/ui/button";
 import AppDropdown, { DropdownOption } from "@/components/ui/dropdown";
@@ -15,43 +17,43 @@ import { WithdrawModal } from "./WithdrawModal";
 import { useBottomPanelStore } from "@/store/bottom-panel";
 import { useApiWallet } from "@/hooks/useWallet";
 import { errorHandler } from "@/store/errorHandler";
+import Link from "next/link";
+import { useRouter } from "next/router";
+import { ROUTES } from "@/lib/config";
 
 const MORE_MENU_ITEMS = [
-  "Testnet",
-  "Explorer",
-  "Sub-Accounts",
-  "API",
-  "Multi-Sig",
-  "Points",
-  "Funding Comparison",
-  "Announcements",
-  "Stats",
-  "Docs",
+  { label: "FAQ", route: ROUTES.FAQ },
+  { label: "Support", route: ROUTES.SUPPORT },
+  { label: "Terms of Service", route: ROUTES.TERMS },
+  { label: "Privacy Policy", route: ROUTES.PRIVACY },
 ];
 
 const moreDropdownOptions: DropdownOption[] = MORE_MENU_ITEMS.map((item) => ({
-  label: item,
-  value: item.toLowerCase().replace(/\s+/g, "-"),
+  label: item.label,
+  value: item.route,
   onClick: () => {
-    console.log(`${item} clicked`);
+    window.location.href = item.route;
   },
 }));
+
+import { EXTERNAL_URLS } from "@/lib/config";
 
 const WALLET_INSTALL_OPTIONS = [
   {
     name: 'MetaMask',
-    iconUrl: 'https://upload.wikimedia.org/wikipedia/commons/3/36/MetaMask_Fox.svg',
-    url: 'https://metamask.io/download/',
+    iconUrl: EXTERNAL_URLS.METAMASK_ICON,
+    url: EXTERNAL_URLS.METAMASK_DOWNLOAD,
     useIcon: false,
   },
   {
     name: 'Browse More Wallets',
-    url: 'https://ethereum.org/en/wallets/find-wallet/',
+    url: EXTERNAL_URLS.ETHEREUM_WALLETS,
     useIcon: true,
   },
 ];
 
 export const Header = () => {
+  const router = useRouter();
   const { address, isConnected } = useAccount();
   const { disconnect } = useDisconnect();
   const [isWalletConnectModalOpen, setIsWalletConnectModalOpen] = useState(false);
@@ -83,7 +85,7 @@ export const Header = () => {
   // Use store for balances
   const { balances, isBalancesLoading, getAllBalances: fetchBalancesFromStore } = useBottomPanelStore();
     // Filter out Injected connector and get available wallets
-    const availableConnectors = useMemo(() => connectors.filter((connector) => connector.name !== 'Injected'), [connectors]);
+    const availableConnectors = useMemo(() => connectors.filter((connector) => connector.name !== 'Injected' && connector.name !== 'Backpack'), [connectors]);
   // Format wallet address for display
 
   // Wallet dropdown options
@@ -177,27 +179,44 @@ export const Header = () => {
     <>
     <header className="h-14 border-b border-gray-800 bg-gray-950 flex items-center justify-between px-4">
       <div className="flex items-center gap-6">
-        <div className="flex items-center gap-2">
-          <div className="w-6 h-6 bg-blue-500 rounded-full" />
+        <Link href={ROUTES.HOME} className="flex items-center gap-2 cursor-pointer hover:opacity-80 transition-opacity">
+          <div className="w-6 h-6 bg-green-500 rounded-lg flex items-center justify-center">
+            <span className="text-white font-bold text-sm">H</span>
+          </div>
           <span className="font-semibold text-lg text-white">Hypertrading</span>
-        </div>
+        </Link>
         
         <nav className="flex items-center gap-1">
-          {["Trade", "Vaults", "Portfolio", "Staking", "Referrals", "Leaderboard"].map((item) => (
-            <Button
-              key={item}
-              variant={VARIANT_TYPES.NOT_SELECTED}
-              className="text-sm px-2 py-2 flex items-center justify-center hover:text-blue-400 text-gray-300 hover:bg-gray-800 shadow-lg hover:shadow-xl transition-all duration-300 rounded-lg cursor-pointer"
-            >
-              {item}
-            </Button>
-          ))}
+          {[
+            { label: "Trade", route: ROUTES.TRADE },
+            { label: "Markets", route: ROUTES.MARKETS },
+            { label: "Portfolio", route: ROUTES.PORTFOLIO },
+            { label: "Blog", route: ROUTES.BLOG },
+          ].map((item) => {
+            // Check if route matches (including dynamic routes like /trade/[id])
+            const isActive = router.pathname === item.route || 
+              (item.route === ROUTES.TRADE && router.pathname.startsWith('/trade'));
+            return (
+              <Link key={item.label} href={item.route}>
+                <Button
+                  variant={VARIANT_TYPES.NOT_SELECTED}
+                  className={`text-sm px-2 py-2 flex items-center justify-center hover:text-green-400 hover:bg-gray-800 shadow-lg hover:shadow-xl transition-all duration-300 rounded-lg cursor-pointer ${
+                    isActive
+                      ? "text-white bg-gray-800"
+                      : "text-gray-300"
+                  }`}
+                >
+                  {item.label}
+                </Button>
+              </Link>
+            );
+          })}
           <AppDropdown
             variant={VARIANT_TYPES.PRIMARY}
             options={moreDropdownOptions}
             placeholder="More"
             className="w-auto"
-            dropdownClassName="text-gray-300 hover:text-blue-400 bg-transparent hover:bg-gray-800 text-sm border-0 !bg-gray-900 !border-gray-700"
+                dropdownClassName="text-gray-300 hover:text-green-400 bg-transparent hover:bg-gray-800 text-sm border-0 !bg-gray-900 !border-gray-700"
             optionClassName="w-40 bg-gray-900 text-gray-300 hover:bg-gray-800 hover:text-white border-gray-700"
           />
         </nav>
@@ -208,7 +227,7 @@ export const Header = () => {
           fallback={
             <AppButton 
               variant={VARIANT_TYPES.NOT_SELECTED} 
-              className="bg-blue-600 text-white hover:bg-blue-700 px-4 py-2 text-sm font-medium rounded transition-colors"
+              className="bg-green-600 text-white hover:bg-green-700 px-4 py-2 text-sm font-medium rounded transition-colors"
             >
               Connect Wallet
             </AppButton>
@@ -247,7 +266,7 @@ export const Header = () => {
               </AppButton>
               <AppButton 
                 variant={VARIANT_TYPES.NOT_SELECTED} 
-                className="bg-teal-500 text-white hover:bg-teal-600 px-4 py-2 text-sm font-medium rounded transition-colors shadow-sm hover:shadow-md"
+                className="bg-green-500 text-white hover:bg-green-600 px-4 py-2 text-sm font-medium rounded transition-colors shadow-sm hover:shadow-md"
                 onClick={() => {
                   setIsDepositModalOpen(true);
                 }}
@@ -270,29 +289,29 @@ export const Header = () => {
                 placeholder={address ? `${address.slice(0, 6)}...${address.slice(-4)}` : "Connect Wallet"}
                 onChange={handleWalletAction}
                 className="w-auto"
-                dropdownClassName="text-gray-300 hover:text-blue-400 bg-gray-900 hover:bg-gray-800 text-sm"
-                optionClassName="bg-gray-900 text-gray-300 hover:bg-gray-800 hover:text-white border-gray-700 hover:text-blue-400"
+                dropdownClassName="text-gray-300 hover:text-green-400 bg-gray-900 hover:bg-gray-800 text-sm"
+                optionClassName="bg-gray-900 text-gray-300 hover:bg-gray-800 hover:text-white border-gray-700 hover:text-green-400"
               />
-              <AppButton variant={VARIANT_TYPES.PRIMARY}>
-                <Bell className="h-4 w-4 hover:text-blue-400" />
-              </AppButton>
+              {/* <AppButton variant={VARIANT_TYPES.PRIMARY}>
+                <Bell className="h-4 w-4 hover:text-green-400" />
+              </AppButton> */}
             </>
           ) : (
             <AppButton 
               variant={VARIANT_TYPES.NOT_SELECTED} 
-              className="bg-blue-600 text-white hover:bg-blue-700 px-4 py-2 text-sm font-medium rounded transition-colors"
+              className="bg-green-600 text-white hover:bg-green-700 px-4 py-2 text-sm font-medium rounded transition-colors"
               onClick={() => setIsWalletConnectModalOpen(true)}
             >
               Connect Wallet
             </AppButton>
           )}
         </HydrationGuard>
-        <AppButton variant={VARIANT_TYPES.PRIMARY}>
-          <Globe className="h-4 w-4 hover:text-blue-400" />
-        </AppButton>
-        <AppButton variant={VARIANT_TYPES.PRIMARY}>
-          <Settings className="h-4 w-4 hover:text-blue-400" />
-        </AppButton>
+        {/* <AppButton variant={VARIANT_TYPES.PRIMARY}>
+          <Globe className="h-4 w-4 hover:text-green-400" />
+        </AppButton> */}
+        {/* <AppButton variant={VARIANT_TYPES.PRIMARY}>
+          <Settings className="h-4 w-4 hover:text-green-400" />
+        </AppButton> */}
       </div>
     </header>
 
@@ -375,17 +394,17 @@ export const Header = () => {
         </HydrationGuard>
 
         {/* OR Divider */}
-        <div className="relative my-6">
+        {/* <div className="relative my-6">
           <div className="absolute inset-0 flex items-center">
             <div className="w-full border-t border-gray-700"></div>
           </div>
           <div className="relative flex justify-center text-sm">
             <span className="px-3 bg-gray-950 text-gray-400">OR</span>
           </div>
-        </div>
+        </div> */}
 
         {/* Email Login Option */}
-        <AppButton
+        {/* <AppButton
           variant={VARIANT_TYPES.SECONDARY}
           onClick={() => {
             console.log("Email login selected");
@@ -394,7 +413,7 @@ export const Header = () => {
         >
           <Mail className="w-5 h-5 text-gray-400" />
           <span className="font-medium">Log in with Email</span>
-        </AppButton>
+        </AppButton> */}
       </AppModal>
 
       <DepositModal

@@ -20,7 +20,7 @@ export const Dropdown = ({ value, options, onChange, className = "" }: DropdownP
     <div className={`relative ${className}`}>
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className="inline-flex items-center gap-1 text-xs sm:text-sm text-gray-400 hover:text-gray-300 transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-gray-950 focus:ring-teal-400 rounded px-1 py-0.5"
+        className="inline-flex items-center gap-1 text-xs sm:text-sm text-gray-400 hover:text-gray-300 transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-gray-950 focus:ring-green-400 rounded px-1 py-0.5"
       >
         {value}
         <ChevronDown className={`h-3 w-3 transition-transform ${isOpen ? "rotate-180" : ""}`} />

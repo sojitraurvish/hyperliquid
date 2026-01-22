@@ -67,6 +67,16 @@ const renderToastContent = ({ title, message }: ToastContent) => (
   </div>
 );
 
+const renderLoadingToastContent = ({ title, message }: ToastContent) => (
+  <div className="flex items-center gap-2">
+    <div className="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin shrink-0" />
+    <div className="flex flex-col">
+      {title && <p className="font-semibold">{title}</p>}
+      {message && <p className={title ? "mt-1" : ""}>{message}</p>}
+    </div>
+  </div>
+);
+
 // Toast functions
 export const appToast = {
   success: (content: string | ToastContent, options?: ToastOptions) => {
@@ -127,6 +137,20 @@ export const appToast = {
         TOAST_VARIANTS[VARIANT_TYPES.QUINARY],
         options?.className
       ),
+      ...options,
+    });
+  },
+  loading: (content: string | ToastContent, options?: ToastOptions) => {
+    const toastContent = typeof content === "string" 
+      ? { message: content } 
+      : content;
+    return toast(renderLoadingToastContent(toastContent), {
+      type: "default",
+      className: cn(
+        TOAST_VARIANTS[VARIANT_TYPES.SECONDARY],
+        options?.className
+      ),
+      icon: false,
       ...options,
     });
   },

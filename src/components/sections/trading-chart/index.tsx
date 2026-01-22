@@ -11,6 +11,7 @@ import { LOCAL_STORAGE_KEYS, getLocalStorage, setLocalStorage } from "@/lib/sess
 import { useAccount } from "wagmi";
 import { info } from "node:console";
 import { useBottomPanelStore } from "@/store/bottom-panel";
+import { errorHandler } from "@/store/errorHandler";
 
 type TimePeriod = {
   title: string;
@@ -90,7 +91,7 @@ const transformVolumeData = (apiData: CandleApiData[]): ChartVolumeData[] => {
     time: Math.floor(candle.t / 1000) as Time,
     value: parseFloat(candle.v),
     color: parseFloat(candle.c) > parseFloat(candle.o) 
-      ? "#2dd4bf80" // teal with opacity
+      ? "#22c55e80" // green with opacity
       : "#ef444480", // red with opacity
   }));
 };
@@ -182,7 +183,7 @@ const createMarkersFromFills = (
       markers.push({
         time: candleTime as Time,
         position: "aboveBar",
-        color: fill.side === "B" ? "#2dd4bf" : "#ef4444", // teal for buy, red for sell
+        color: fill.side === "B" ? "#22c55e" : "#ef4444", // green for buy, red for sell
         shape: "circle",
         text: fill.side === "B" ? "B" : "S",
         size: 1.5, // Larger size to ensure text is visible inside circles
@@ -202,7 +203,6 @@ export const TradingChart = ({ currency }: { currency: string }) => {
   const markersPluginRef = useRef<ISeriesMarkersPluginApi<Time> | null>(null);
   const entryPriceLineRef = useRef<IPriceLine | null>(null);
   const liquidationPriceLineRef = useRef<IPriceLine | null>(null);
-  const fullscreenContainerRef = useRef<HTMLDivElement>(null);
   const [entryPriceY, setEntryPriceY] = useState<number | null>(null);
   const [chartHeight, setChartHeight] = useState(400);
   const isInitialLoadRef = useRef<boolean>(true);
@@ -213,6 +213,7 @@ export const TradingChart = ({ currency }: { currency: string }) => {
   const [isLoading, setIsLoading] = useState(false);
   const [hoveredCandle, setHoveredCandle] = useState<{ time: number; open: number; high: number; low: number; close: number } | null>(null);
   const [fillsData, setFillsData] = useState<FillData[]>([]);
+  const [currentCurrency, setCurrentCurrency] = useState<string | null>(null);
 
   
   const [timePeriods, setTimePeriods] = useState<TimePeriod[]>([
@@ -431,23 +432,50 @@ export const TradingChart = ({ currency }: { currency: string }) => {
     const selectedInterval = useMemo(() => interval.find((item) => item.value.find((item) => item.isSelected))?.value.filter((item) => item.isSelected)[0].value, [interval]);
     const selectedTimePeriodObj = useMemo(() => timePeriods.find((item) => item.isSelected), [timePeriods]);
     
+    // Clear hovered candle when currency changes
+    useEffect(() => {
+      setHoveredCandle(null);
+    }, [currency]);
+
     // Fetch candle data from API
     useEffect(() => {
       if (selectedInterval && selectedTimePeriodObj && currency) {
+        // Clear old data immediately when currency/interval/timePeriod changes
+        // This prevents showing wrong data while new data is being fetched
+        setCandleData([]);
+        setHoveredCandle(null);
         setIsLoading(true);
         isInitialLoadRef.current = true; // Mark as initial load when fetching new data
+        
+        const currentFetchCurrency = currency; // Capture currency for this fetch
         const startTime = Date.now() - selectedTimePeriodObj.timePeriod;
+        
         getCandleData({coin: currency, interval: selectedInterval as CandleInterval, startTime})
           .then((data: CandleApiData[]) => {
-            console.log("brio data", data);
-            setCandleData(data);
-            previousDataLengthRef.current = data.length;
-            setIsLoading(false);
+            // Only update if this fetch is still for the current currency
+            // This prevents race conditions where multiple fetches are in flight
+            if (currentFetchCurrency === currency) {
+              console.log("brio data", data);
+              setCandleData(data);
+              setCurrentCurrency(currency);
+              previousDataLengthRef.current = data.length;
+              setIsLoading(false);
+            }
           })
           .catch((error) => {
-            console.error("Error fetching candle data:", error);
-            setIsLoading(false);
+            // Only update state if this fetch is still for the current currency
+            if (currentFetchCurrency === currency) {
+              console.error("Error fetching candle data:", error);
+              setIsLoading(false);
+              setCurrentCurrency(null);
+              errorHandler(error, "Failed to load chart data");
+            }
           });
+      } else {
+        // Clear data if currency/interval/timePeriod is not available
+        setCandleData([]);
+        setCurrentCurrency(null);
+        setIsLoading(false);
       }
     }, [selectedInterval, selectedTimePeriodObj, currency]);
 
@@ -460,10 +488,10 @@ export const TradingChart = ({ currency }: { currency: string }) => {
       text: "#9ca3af", // gray-400
       grid: "#1f2937", // gray-800
       border: "#374151", // gray-700
-      crosshair: "#2dd4bf", // teal-400
-      upColor: "#2dd4bf", // teal-400
+      crosshair: "#22c55e", // green-400
+      upColor: "#22c55e", // green-400
       downColor: "#ef4444", // red-500
-      volumeBase: "#2dd4bf", // teal-400
+      volumeBase: "#22c55e", // green-400
     };
 
     // Get initial container dimensions
@@ -682,6 +710,7 @@ export const TradingChart = ({ currency }: { currency: string }) => {
       } catch (error) {
         console.error("Error fetching fills:", error);
         setFillsData([]);
+        errorHandler(error, "Failed to load trade history");
       }
     };
     getFills();
@@ -705,7 +734,16 @@ export const TradingChart = ({ currency }: { currency: string }) => {
 
   // Update chart when candle data changes
   useEffect(() => {
-    if (!candlestickSeriesRef.current || !volumeSeriesRef.current || candleData.length === 0) return;
+    if (!candlestickSeriesRef.current || !volumeSeriesRef.current) return;
+    
+    // Only show data if it matches the current currency
+    // This prevents showing stale data from a previous currency
+    if (candleData.length === 0 || currentCurrency !== currency) {
+      // Clear chart data if no data or currency mismatch
+      candlestickSeriesRef.current.setData([]);
+      volumeSeriesRef.current.setData([]);
+      return;
+    }
 
     const chartCandleData = transformCandleData(candleData);
     const chartVolumeData = transformVolumeData(candleData);
@@ -741,7 +779,7 @@ export const TradingChart = ({ currency }: { currency: string }) => {
         previousDataLengthRef.current = candleData.length;
       }
     }
-  }, [candleData, selectedInterval]);
+  }, [candleData, selectedInterval, currency, currentCurrency]);
 
   // Update markers - SINGLE source of truth for marker updates
   // This effect handles ALL marker updates to prevent conflicts
@@ -867,6 +905,9 @@ export const TradingChart = ({ currency }: { currency: string }) => {
 
   // Get displayed OHLC values - use hovered candle if available, otherwise latest candle
   const displayedCandle = useMemo(() => {
+    // Only show data if it matches the current currency
+    if (currentCurrency !== currency || candleData.length === 0) return null;
+    
     if (hoveredCandle) {
       // Find the corresponding API data for volume
       const apiCandle = candleData.find((c) => Math.floor(c.t / 1000) === hoveredCandle.time);
@@ -879,7 +920,6 @@ export const TradingChart = ({ currency }: { currency: string }) => {
       };
     }
     
-    if (candleData.length === 0) return null;
     const latest = candleData[candleData.length - 1];
     return {
       open: parseFloat(latest.o),
@@ -888,7 +928,7 @@ export const TradingChart = ({ currency }: { currency: string }) => {
       close: parseFloat(latest.c),
       volume: parseFloat(latest.v),
     };
-  }, [candleData, hoveredCandle]);
+  }, [candleData, hoveredCandle, currency, currentCurrency]);
 
   // Calculate price change - compare with previous candle
   const priceChange = useMemo(() => {
@@ -920,6 +960,7 @@ export const TradingChart = ({ currency }: { currency: string }) => {
   useEffect(() => {
     let subscription: Subscription | null = null;
     let isSubscribed = true;
+    const currentWsCurrency = currency; // Capture currency for this subscription
 
     const setupWebSocket = async () => {
       if (selectedInterval && currency) {
@@ -928,11 +969,18 @@ export const TradingChart = ({ currency }: { currency: string }) => {
             { coin: currency, interval: selectedInterval as CandleInterval },
             (data: CandleApiData) => {
               // Only update state if still subscribed to this market/interval
-              if (!isSubscribed) return;
+              // AND the data matches the current currency (prevent race conditions)
+              if (!isSubscribed || currentWsCurrency !== currency) return;
+              
+              // Verify the data symbol matches the current currency
+              if (data.s !== currency) return;
               
               console.log("WebSocket candle data", data);
               // Update candle data with new candle from websocket
               setCandleData((prev) => {
+                // Only update if we have data for the current currency
+                if (currentCurrency !== currency) return prev;
+                
                 const newData = [...prev];
                 // Check if this candle already exists (same timestamp)
                 const existingIndex = newData.findIndex((c) => c.t === data.t);
@@ -950,6 +998,7 @@ export const TradingChart = ({ currency }: { currency: string }) => {
           );
         } catch (error) {
           console.error("Error setting up WebSocket:", error);
+          errorHandler(error, "WebSocket connection error");
         }
       }
     };
@@ -969,7 +1018,100 @@ export const TradingChart = ({ currency }: { currency: string }) => {
         subscription = null;
       }
     };
-  }, [selectedInterval, currency]);
+  }, [selectedInterval, currency, currentCurrency]);
+
+  // WebSocket subscription for live user fills (real-time order markers)
+  useEffect(() => {
+    let fillsSubscription: Subscription | null = null;
+    let isSubscribed = true;
+    const currentWsUserAddress = userAddress; // Capture user address for this subscription
+
+    const setupFillsWebSocket = async () => {
+      if (!userAddress || !selectedTimePeriodObj) {
+        return;
+      }
+
+      try {
+        fillsSubscription = await subscriptionClient.userFills(
+          { user: userAddress as `0x${string}` },
+          (data: any) => {
+            // Only update state if still subscribed to this user
+            if (!isSubscribed || currentWsUserAddress !== userAddress) return;
+
+            console.log("WebSocket live fills data", data);
+            
+            // Extract fills from the data object and cast to FillData
+            // The API may return twapId as number | null, but we store it as string | null
+            const fills = (data.fills || []).map((fill: any) => ({
+              ...fill,
+              twapId: fill.twapId !== null && fill.twapId !== undefined ? String(fill.twapId) : null,
+            })) as FillData[];
+            
+            // Process new fills and add them to fillsData
+            setFillsData((prevFills) => {
+              // Get current time period boundaries
+              const now = Date.now();
+              const startTime = now - selectedTimePeriodObj.timePeriod;
+              const endTime = now;
+
+              // Filter fills to only include those within the time period and matching currency
+              const validFills = fills.filter(
+                (fill) =>
+                  fill.time >= startTime &&
+                  fill.time <= endTime &&
+                  fill.coin === currency
+              );
+
+              if (validFills.length === 0) {
+                return prevFills;
+              }
+
+              // Create a Set of existing fill IDs to avoid duplicates
+              // Use a combination of hash, oid, and time as unique identifier
+              const existingFillIds = new Set(
+                prevFills.map((f) => `${f.hash}-${f.oid}-${f.time}`)
+              );
+
+              // Add new fills that don't already exist
+              const newFills = validFills.filter(
+                (fill) => !existingFillIds.has(`${fill.hash}-${fill.oid}-${fill.time}`)
+              );
+
+              if (newFills.length === 0) {
+                return prevFills;
+              }
+
+              // Combine with existing fills and sort by time
+              const combinedFills = [...prevFills, ...newFills].sort(
+                (a, b) => a.time - b.time
+              );
+
+              return combinedFills;
+            });
+          }
+        );
+      } catch (error) {
+        console.error("Error setting up fills WebSocket:", error);
+        errorHandler(error, "Failed to subscribe to live fills");
+      }
+    };
+
+    setupFillsWebSocket();
+
+    return () => {
+      // Mark as unsubscribed to prevent state updates
+      isSubscribed = false;
+      // Unsubscribe from the fills subscription
+      if (fillsSubscription) {
+        try {
+          fillsSubscription.unsubscribe();
+        } catch (error) {
+          console.error("Error unsubscribing from fills WebSocket:", error);
+        }
+        fillsSubscription = null;
+      }
+    };
+  }, [userAddress, selectedTimePeriodObj, currency]);
   const { userPositions } = useBottomPanelStore();
   
   const position = userPositions?.find(
@@ -1008,7 +1150,7 @@ const positionSize = positionData?.szi || null;
       if (positionData.entryPx) {
         entryPriceLineRef.current = series.createPriceLine({
           price: parseFloat(positionData.entryPx),
-          color: "#2dd4bf", // teal-400 (green)
+          color: "#22c55e", // green-400 (green)
           lineWidth: 1,
           lineStyle: 2, // dashed
           axisLabelVisible: true,
@@ -1145,23 +1287,9 @@ const positionSize = positionData?.szi || null;
 
   // Calculate PNL display value
 
-  // Handle fullscreen toggle
-  const handleFullscreen = async () => {
-    if (!fullscreenContainerRef.current) return;
-
-    try {
-      if (!document.fullscreenElement) {
-        await fullscreenContainerRef.current.requestFullscreen();
-      } else {
-        await document.exitFullscreen();
-      }
-    } catch (error) {
-      console.error("Error toggling fullscreen:", error);
-    }
-  };
 
   return (
-    <div ref={fullscreenContainerRef} className="flex-1 flex flex-col bg-gray-950 w-full">
+    <div className="flex-1 flex flex-col bg-gray-950 w-full">
       {/* Chart toolbar */}
       <div className="flex items-center justify-between px-2 sm:px-3 py-1.5 sm:py-2 border-b border-gray-800">
         <div className="flex items-center gap-0.5 sm:gap-1 overflow-x-auto [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
@@ -1172,7 +1300,7 @@ const positionSize = positionData?.szi || null;
               onClick={() => handleQuickFavoriteClick(fav.value)}
               className={`text-xs h-6 sm:h-7 px-1.5 sm:px-2 rounded transition-colors whitespace-nowrap ${
                 fav.isSelected
-                  ? "bg-teal-500/20 text-teal-400"
+                  ? "bg-green-500/20 text-green-400"
                   : "text-gray-400 hover:text-white hover:bg-gray-900/50"
               }`}
             >
@@ -1196,10 +1324,7 @@ const positionSize = positionData?.szi || null;
             showFavorites={true}
           />
 
-          <button 
-            onClick={handleFullscreen}
-            className="h-6 w-6 sm:h-7 sm:w-7 text-gray-400 hover:text-white hover:bg-gray-900/50 rounded transition-colors flex items-center justify-center"
-          >
+          <button className="h-6 w-6 sm:h-7 sm:w-7 text-gray-400 hover:text-white hover:bg-gray-900/50 rounded transition-colors flex items-center justify-center">
             <Maximize2 className="h-3 w-3 sm:h-3.5 sm:w-3.5" />
           </button>
         </div>
@@ -1208,21 +1333,21 @@ const positionSize = positionData?.szi || null;
       {/* OHLC info */}
       <div className="px-2 sm:px-3 py-1.5 sm:py-2 text-xs flex items-center gap-1 flex-wrap">
         <span className="text-gray-400">{currency} · {getSelectedIntervalText()} · Hyperliquid</span>
-        <span className="w-2 h-2 rounded-full bg-teal-400 ml-1 sm:ml-2" />
+        <span className="w-2 h-2 rounded-full bg-green-400 ml-1 sm:ml-2" />
         {displayedCandle ? (
           <>
             <span className="text-gray-400 ml-1 sm:ml-2">O</span>
-            <span className={`tabular-nums ${displayedCandle.close >= displayedCandle.open ? 'text-teal-400' : 'text-red-500'}`}>{displayedCandle.open.toFixed(2)}</span>
+            <span className={`tabular-nums ${displayedCandle.close >= displayedCandle.open ? 'text-green-400' : 'text-red-500'}`}>{displayedCandle.open.toFixed(2)}</span>
             <span className="text-gray-400 ml-1 sm:ml-2">H</span>
-            <span className={`tabular-nums ${displayedCandle.close >= displayedCandle.open ? 'text-teal-400' : 'text-red-500'}`}>{displayedCandle.high.toFixed(2)}</span>
+            <span className={`tabular-nums ${displayedCandle.close >= displayedCandle.open ? 'text-green-400' : 'text-red-500'}`}>{displayedCandle.high.toFixed(2)}</span>
             <span className="text-gray-400 ml-1 sm:ml-2">L</span>
-            <span className={`tabular-nums ${displayedCandle.close >= displayedCandle.open ? 'text-teal-400' : 'text-red-500'}`}>{displayedCandle.low.toFixed(2)}</span>
+            <span className={`tabular-nums ${displayedCandle.close >= displayedCandle.open ? 'text-green-400' : 'text-red-500'}`}>{displayedCandle.low.toFixed(2)}</span>
             <span className="text-gray-400 ml-1 sm:ml-2">C</span>
-            <span className={`tabular-nums ${displayedCandle.close >= displayedCandle.open ? 'text-teal-400' : 'text-red-500'}`}>
+            <span className={`tabular-nums ${displayedCandle.close >= displayedCandle.open ? 'text-green-400' : 'text-red-500'}`}>
               {displayedCandle.close.toFixed(2)}
             </span>
             {priceChange && (
-              <span className={`ml-1 sm:ml-2 tabular-nums ${priceChange.change >= 0 ? 'text-teal-400' : 'text-red-500'}`}>
+              <span className={`ml-1 sm:ml-2 tabular-nums ${priceChange.change >= 0 ? 'text-green-400' : 'text-red-500'}`}>
                 {priceChange.change >= 0 ? '+' : ''}{priceChange.change.toFixed(6)} ({priceChange.changePercent >= 0 ? '+' : ''}{priceChange.changePercent.toFixed(2)}%)
               </span>
             )}
@@ -1236,13 +1361,53 @@ const positionSize = positionData?.szi || null;
       <div className="flex-1 w-full min-h-0 relative">
         <div ref={chartContainerRef} className="absolute inset-0 cursor-crosshair" />
         
-       
+        {/* Loading Overlay */}
+        {(isLoading || currentCurrency !== currency) && (
+          <div className="absolute inset-0 bg-gray-950/90 backdrop-blur-md z-10 flex items-center justify-center">
+            <div className="flex flex-col items-center gap-6">
+              {/* Modern Animated Loader */}
+              <div className="relative">
+                {/* Outer rotating ring */}
+                <div className="w-16 h-16 border-4 border-gray-800 rounded-full relative">
+                  <div className="absolute inset-0 border-4 border-transparent border-t-green-400 rounded-full animate-spin" style={{ animationDuration: '1s' }} />
+                  <div className="absolute inset-0 border-4 border-transparent border-r-green-500 rounded-full animate-spin" style={{ animationDuration: '1.5s', animationDirection: 'reverse' }} />
+                </div>
+                {/* Inner pulsing dot */}
+                <div className="absolute inset-0 flex items-center justify-center">
+                  <div className="w-3 h-3 bg-green-400 rounded-full animate-pulse" style={{ animationDuration: '1s' }} />
+                </div>
+              </div>
+              
+              {/* Loading text with animated dots */}
+              <div className="flex items-center gap-1.5">
+                <span className="text-sm font-medium text-gray-300">Loading chart data</span>
+                <div className="flex gap-1">
+                  <span className="w-1 h-1 bg-green-400 rounded-full animate-bounce" style={{ animationDelay: '0s', animationDuration: '1.4s' }} />
+                  <span className="w-1 h-1 bg-green-400 rounded-full animate-bounce" style={{ animationDelay: '0.2s', animationDuration: '1.4s' }} />
+                  <span className="w-1 h-1 bg-green-400 rounded-full animate-bounce" style={{ animationDelay: '0.4s', animationDuration: '1.4s' }} />
+                </div>
+              </div>
+              
+              {/* Modern progress bar */}
+              <div className="w-72 h-1.5 bg-gray-800/50 rounded-full overflow-hidden relative">
+                <div 
+                  className="absolute inset-0 h-full rounded-full animate-shimmer"
+                  style={{
+                    background: 'linear-gradient(90deg, transparent, rgba(34, 197, 94, 0.8), rgba(34, 197, 94, 1), rgba(34, 197, 94, 0.8), transparent)',
+                    width: '40%',
+                    transform: 'translateX(-100%)'
+                  }}
+                />
+              </div>
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Volume label */}
       {/* <div className="px-2 sm:px-3 py-1 text-xs text-gray-400 flex items-center gap-2">
         <span>Volume</span>
-        <span className="text-teal-400 tabular-nums">
+        <span className="text-green-400 tabular-nums">
           {displayedCandle ? displayedCandle.volume.toFixed(2) : '0.00'}
         </span>
       </div> */}
@@ -1250,14 +1415,14 @@ const positionSize = positionData?.szi || null;
       {/* Bottom time controls */}
       <div className="flex items-center justify-between px-2 sm:px-3 py-1.5 sm:py-2 border-t border-gray-800 text-xs">
         <div className="flex items-center gap-1 sm:gap-2 overflow-x-auto [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
-          {timePeriods.map((period) => (
+          {timePeriods.filter((period) => period.value !== "5y").map((period) => (
             <AppButton
               key={period.value}
               variant={VARIANT_TYPES.QUATERNARY}
               onClick={() => handleTimePeriodSelect(period.value)}
               className={
                 period.isSelected
-                  ? "bg-teal-500/20 text-teal-400"
+                  ? "bg-green-500/20 text-green-400"
                   : ""
               }
             >

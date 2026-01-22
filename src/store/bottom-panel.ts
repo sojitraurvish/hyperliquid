@@ -34,6 +34,10 @@ type BottomPanelStore = {
     isUserPositionsLoading: boolean;
     getUserPositions: (params: {publicKey: `0x${string}`}) => Promise<void>;
     setUserPositions: (positions: Position[]) => void;
+
+    // Load all data in parallel
+    getAllData: (params: {publicKey: `0x${string}`}) => Promise<void>;
+    isLoading: boolean;
 };
 
 export const useBottomPanelStore = create<BottomPanelStore>()(
@@ -137,9 +141,70 @@ export const useBottomPanelStore = create<BottomPanelStore>()(
       set({ userPositions: positions });
     },
 
-    // login: (user: User) => {
-    //   set({user, isAuthenticated: true});
-    // },
+    isLoading: false,
+    getAllData: async ({publicKey}: {publicKey: `0x${string}`}) => {
+      try {
+        set({ 
+          isLoading: true, 
+          isError: null,
+          isBalancesLoading: true,
+          isHistoricalOrdersLoading: true,
+          isUserFundingsLoading: true,
+          isTradeHistoryLoading: true,
+          isUserOpenOrdersLoading: true,
+          isUserPositionsLoading: true,
+        });
+
+        // Load all data in parallel using Promise.all
+        const [balances, historicalOrders, fundings, tradeHistory, openOrders, positions] = await Promise.all([
+          getAllBalances({publicKey}).catch(err => {
+            console.error("Error loading balances:", err);
+            return [];
+          }),
+          getHistoricalOrders({publicKey}).catch(err => {
+            console.error("Error loading historical orders:", err);
+            return [];
+          }),
+          getUserFundings({publicKey}).catch(err => {
+            console.error("Error loading fundings:", err);
+            return [];
+          }),
+          getUserTradeHistory({publicKey}).catch(err => {
+            console.error("Error loading trade history:", err);
+            return [];
+          }),
+          getUserOpenOrders({publicKey}).catch(err => {
+            console.error("Error loading open orders:", err);
+            return [];
+          }),
+          getUserPositions({publicKey}).catch(err => {
+            console.error("Error loading positions:", err);
+            return [];
+          }),
+        ]);
+
+        set({ 
+          balances,
+          historicalOrders,
+          userFundings: fundings,
+          tradeHistory,
+          userOpenOrders: openOrders,
+          userPositions: positions,
+        });
+      } catch (error) {
+        set({ isError: errorHandler(error) });
+      } finally {
+        set({ 
+          isLoading: false,
+          isBalancesLoading: false,
+          isHistoricalOrdersLoading: false,
+          isUserFundingsLoading: false,
+          isTradeHistoryLoading: false,
+          isUserOpenOrdersLoading: false,
+          isUserPositionsLoading: false,
+        });
+      }
+    },
     
   }),{
     name: "bottom-panel-store",

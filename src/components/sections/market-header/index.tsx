@@ -5,12 +5,7 @@ import { ChevronDown, ChevronLeft, ChevronRight, ChevronUp, Star, Search, X } fr
 import { useState, useRef, useEffect, useMemo } from "react";
 import { LOCAL_STORAGE_KEYS, getLocalStorage, setLocalStorage } from "@/lib/sessions/localstorage";
 import { useMarketStore } from "@/store/market";
-
-// Helper function to get coin icon URL
-const getCoinIcon = (symbol: string): string => {
-  const baseSymbol = symbol.split('-')[0].split('/')[0];
-  return `https://app.hyperliquid-testnet.xyz/coins/${baseSymbol}.svg`;
-};
+import { getCoinIconUrl, DEFAULT_COIN_ICON_URL } from "@/lib/config";
 
 // Helper function to convert leverage from string to number
 const parseLeverage = (leverage: string | null): number => {
@@ -117,7 +112,7 @@ export const MarketHeader = ({ currency }: { currency: string }) => {
             updated.set(marketToSelect.symbol, { ...marketToSelect, isSelected: true });
             return updated;
           });
-          setSelectedMarket({ coin: marketToSelect.coin, leverage: parseLeverage(marketToSelect.leverage) });
+          setSelectedMarket({ coin: marketToSelect.coin, leverage: parseLeverage(marketToSelect.leverage) }, false);
         } else {
           // Fallback to first market if saved market doesn't exist
           const firstMarket = marketsArray[0];
@@ -129,7 +124,7 @@ export const MarketHeader = ({ currency }: { currency: string }) => {
             updated.set(firstMarket.symbol, { ...firstMarket, isSelected: true });
             return updated;
           });
-          setSelectedMarket({ coin: firstMarket.coin, leverage: parseLeverage(firstMarket.leverage) });
+          setSelectedMarket({ coin: firstMarket.coin, leverage: parseLeverage(firstMarket.leverage) }, false);
         }
       } else {
         // Fallback to first market if no currency
@@ -142,7 +137,7 @@ export const MarketHeader = ({ currency }: { currency: string }) => {
           updated.set(firstMarket.symbol, { ...firstMarket, isSelected: true });
           return updated;
         });
-        setSelectedMarket({ coin: firstMarket.coin, leverage: parseLeverage(firstMarket.leverage) });
+        setSelectedMarket({ coin: firstMarket.coin, leverage: parseLeverage(firstMarket.leverage) }, false);
       }
     }
   }, [isHydrated, marketsArray.length, currency]);
@@ -167,7 +162,7 @@ export const MarketHeader = ({ currency }: { currency: string }) => {
         updated.set(marketToSelect.symbol, { ...marketToSelect, isSelected: true });
         return updated;
       });
-      setSelectedMarket({ coin: marketToSelect.coin, leverage: parseLeverage(marketToSelect.leverage) });
+      setSelectedMarket({ coin: marketToSelect.coin, leverage: parseLeverage(marketToSelect.leverage) }, false);
     }
   }, [currency, isHydrated, marketsArray.length]);
 
@@ -681,7 +676,7 @@ export const MarketHeader = ({ currency }: { currency: string }) => {
               onClick={() => setViewMode("$")}
               className={`px-2 py-1 text-xs font-medium rounded transition-colors ${
                 viewMode === "$"
-                  ? "bg-teal-500/20 text-teal-400"
+                  ? "bg-green-500/20 text-green-400"
                   : "text-gray-400 hover:text-gray-300"
               }`}
             >
@@ -691,7 +686,7 @@ export const MarketHeader = ({ currency }: { currency: string }) => {
               onClick={() => setViewMode("%")}
               className={`px-2 py-1 text-xs font-medium rounded transition-colors ${
                 viewMode === "%"
-                  ? "bg-teal-500/20 text-teal-400"
+                  ? "bg-green-500/20 text-green-400"
                   : "text-gray-400 hover:text-gray-300"
               }`}
             >
@@ -765,11 +760,11 @@ export const MarketHeader = ({ currency }: { currency: string }) => {
                 >
                   <div className="flex items-center gap-2">
                     <img 
-                      src={getCoinIcon(selectedMarketData.symbol)} 
+                      src={getCoinIconUrl(selectedMarketData.symbol)} 
                       alt={selectedMarketData.coin} 
                       className="w-5 h-5 rounded-full"
                       onError={(e) => {
-                        (e.target as HTMLImageElement).src = 'https://app.hyperliquid-testnet.xyz/coins/ETH.svg';
+                        (e.target as HTMLImageElement).src = DEFAULT_COIN_ICON_URL;
                       }}
                     />
                     <span className="font-semibold text-sm text-white">{selectedMarketData.symbol}</span>
@@ -793,7 +788,7 @@ export const MarketHeader = ({ currency }: { currency: string }) => {
                         placeholder="Search markets..."
                         value={searchQuery}
                         onChange={(e) => setSearchQuery(e.target.value)}
-                        className="w-full pl-9 pr-9 py-2 bg-gray-950 border border-gray-800 rounded text-sm text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-teal-500"
+                        className="w-full pl-9 pr-9 py-2 bg-gray-950 border border-gray-800 rounded text-sm text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-green-500"
                         autoFocus
                       />
                       {searchQuery && (
@@ -854,23 +849,23 @@ export const MarketHeader = ({ currency }: { currency: string }) => {
                                   />
                                 </button>
                                 <img 
-                                  src={getCoinIcon(market.symbol)} 
+                                  src={getCoinIconUrl(market.symbol)} 
                                   alt={market.coin} 
                                   className="w-4 h-4 rounded-full shrink-0"
                                   onError={(e) => {
-                                    (e.target as HTMLImageElement).src = 'https://app.hyperliquid-testnet.xyz/coins/ETH.svg';
+                                    (e.target as HTMLImageElement).src = DEFAULT_COIN_ICON_URL;
                                   }}
                                 />
-                                <span className={`font-medium truncate ${isSelected ? 'text-teal-400' : 'text-white'}`}>
+                                <span className={`font-medium truncate ${isSelected ? 'text-green-400' : 'text-white'}`}>
                                   {market.symbol}
                                 </span>
                                 {market.leverage && (
-                                  <span className="text-xs font-medium bg-teal-500/20 text-teal-400 px-1 py-0.5 rounded shrink-0">
+                                  <span className="text-xs font-medium bg-green-500/20 text-green-400 px-1 py-0.5 rounded shrink-0">
                                     {market.leverage}
                                   </span>
                                 )}
                                 {isSelected && (
-                                  <div className="w-1.5 h-1.5 rounded-full bg-teal-400 shrink-0"></div>
+                                  <div className="w-1.5 h-1.5 rounded-full bg-green-400 shrink-0"></div>
                                 )}
                               </div>
                               <div className="text-right font-medium tabular-nums text-white">
@@ -899,7 +894,7 @@ export const MarketHeader = ({ currency }: { currency: string }) => {
             </div>
 
             {selectedMarketData?.leverage && (
-              <span className="text-xs font-medium bg-teal-500/20 text-teal-400 px-2 py-0.5 rounded shrink-0">{selectedMarketData.leverage}</span>
+              <span className="text-xs font-medium bg-green-500/20 text-green-400 px-2 py-0.5 rounded shrink-0">{selectedMarketData.leverage}</span>
             )}
 
             {selectedMarketData && (
@@ -937,7 +932,7 @@ export const MarketHeader = ({ currency }: { currency: string }) => {
                 {selectedMarketData.fundingDisplay != null && (
                   <div className="shrink-0 hidden xl:block">
                     <div className="text-gray-400 mb-0.5 border-b border-dashed border-gray-600 pb-0.5 block w-fit">Funding / Countdown</div>
-                    <div className="font-medium tabular-nums text-teal-400">
+                    <div className="font-medium tabular-nums text-green-400">
                       {selectedMarketData.fundingDisplay} <span className="text-white">{selectedMarketData.countdown || '—'}</span>
                     </div>
                   </div>
@@ -961,11 +956,11 @@ export const MarketHeader = ({ currency }: { currency: string }) => {
                 >
                   <div className="flex items-center gap-2">
                     <img 
-                      src={getCoinIcon(selectedMarketData.symbol)} 
+                      src={getCoinIconUrl(selectedMarketData.symbol)} 
                       alt={selectedMarketData.coin} 
                       className="w-5 h-5 rounded-full"
                       onError={(e) => {
-                        (e.target as HTMLImageElement).src = 'https://app.hyperliquid-testnet.xyz/coins/ETH.svg';
+                        (e.target as HTMLImageElement).src = DEFAULT_COIN_ICON_URL;
                       }}
                     />
                     <span className="font-semibold text-sm text-white">{selectedMarketData.symbol}</span>
@@ -989,7 +984,7 @@ export const MarketHeader = ({ currency }: { currency: string }) => {
                         placeholder="Search markets..."
                         value={searchQuery}
                         onChange={(e) => setSearchQuery(e.target.value)}
-                        className="w-full pl-9 pr-9 py-2 bg-gray-950 border border-gray-800 rounded text-sm text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-teal-500"
+                        className="w-full pl-9 pr-9 py-2 bg-gray-950 border border-gray-800 rounded text-sm text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-green-500"
                         autoFocus
                       />
                       {searchQuery && (
@@ -1026,11 +1021,11 @@ export const MarketHeader = ({ currency }: { currency: string }) => {
                           >
                             <div className="flex items-center gap-3 flex-1 min-w-0">
                               <img 
-                                src={getCoinIcon(market.symbol)} 
+                                src={getCoinIconUrl(market.symbol)} 
                                 alt={market.coin} 
                                 className="w-5 h-5 rounded-full shrink-0"
                                 onError={(e) => {
-                                  (e.target as HTMLImageElement).src = 'https://app.hyperliquid-testnet.xyz/coins/ETH.svg';
+                                  (e.target as HTMLImageElement).src = DEFAULT_COIN_ICON_URL;
                                 }}
                               />
                               <div className="flex items-center gap-2 flex-1 min-w-0">
@@ -1044,11 +1039,11 @@ export const MarketHeader = ({ currency }: { currency: string }) => {
                                     className={`h-3 w-3 ${isFavorite ? "text-yellow-400" : "text-gray-500"}`}
                                   />
                                 </button>
-                                <span className={`text-sm font-medium truncate ${isSelected ? 'text-teal-400' : 'text-white'}`}>
+                                <span className={`text-sm font-medium truncate ${isSelected ? 'text-green-400' : 'text-white'}`}>
                                   {market.symbol}
                                 </span>
                                 {market.leverage && (
-                                  <span className="text-xs font-medium bg-teal-500/20 text-teal-400 px-1.5 py-0.5 rounded shrink-0">
+                                  <span className="text-xs font-medium bg-green-500/20 text-green-400 px-1.5 py-0.5 rounded shrink-0">
                                     {market.leverage}
                                   </span>
                                 )}
@@ -1059,7 +1054,7 @@ export const MarketHeader = ({ currency }: { currency: string }) => {
                                 {market.change24hPer != null ? `${isPositive ? "+" : ""}${market.change24hPer.toFixed(2)}%` : "—"}
                               </span>
                               {isSelected && (
-                                <div className="w-1.5 h-1.5 rounded-full bg-teal-400"></div>
+                                <div className="w-1.5 h-1.5 rounded-full bg-green-400"></div>
                               )}
                             </div>
                           </button>
@@ -1071,7 +1066,7 @@ export const MarketHeader = ({ currency }: { currency: string }) => {
               )}
             </div>
             {selectedMarketData?.leverage && (
-              <span className="text-xs font-medium bg-teal-500/20 text-teal-400 px-2 py-0.5 rounded">{selectedMarketData.leverage}</span>
+              <span className="text-xs font-medium bg-green-500/20 text-green-400 px-2 py-0.5 rounded">{selectedMarketData.leverage}</span>
             )}
             {selectedMarketData && (
               <div className="ml-auto text-right">
@@ -1127,7 +1122,7 @@ export const MarketHeader = ({ currency }: { currency: string }) => {
               {selectedMarketData.fundingDisplay != null && (
                 <div className="col-span-2">
                   <div className="text-gray-400 mb-0.5 border-b border-dashed border-gray-600 pb-0.5 block w-fit">Funding / Countdown</div>
-                  <div className="font-medium tabular-nums text-teal-400">
+                  <div className="font-medium tabular-nums text-green-400">
                     {selectedMarketData.fundingDisplay} <span className="text-white">{selectedMarketData.countdown || '—'}</span>
                   </div>
                 </div>

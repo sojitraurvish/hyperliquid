@@ -70,3 +70,5 @@ export const FAQCategory = ({ category }: FAQCategoryProps) => {
   );
 };
 
+
+

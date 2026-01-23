@@ -32,3 +32,5 @@ export const TermsSection = ({ section }: TermsSectionProps) => {
   );
 };
 
+
+

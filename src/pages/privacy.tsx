@@ -1,11 +1,12 @@
 import PrivacyContainer from '@/containers/privacy';
 import { CustomHead } from '@/components/seo';
-import { ROUTES, WEB_URL } from '@/lib/config';
+import { ROUTES } from '@/lib/config';
+import { getBaseUrl } from '@/lib/utils/get-base-url';
 
 export default function PrivacyPage() {
   const metaTitle = "Privacy Policy | Hyper Trading";
   const metaDesc = "Learn how Hyper Trading protects your privacy. Our Privacy Policy explains how we collect, use, and safeguard your information on our decentralized trading platform.";
-  const pageFullPath = WEB_URL + ROUTES.PRIVACY;
+  const pageFullPath = `${getBaseUrl()}${ROUTES.PRIVACY}`;
   
   return (
     <>

@@ -1,5 +1,6 @@
 import Head from "next/head";
-import { APP_NAME, OG_TITLE, OG_DESC, FB_APP_ID, FavIcon, OG_IMAGE, WEB_URL } from "@/lib/config";
+import { APP_NAME, OG_TITLE, OG_DESC, FB_APP_ID, FavIcon, OG_IMAGE } from "@/lib/config";
+import { getBaseUrl, getAbsoluteUrl } from "@/lib/utils/get-base-url";
 
 interface CustomHeadProps {
   title?: string;
@@ -15,15 +16,16 @@ interface CustomHeadProps {
 const defaultTitle = APP_NAME;
 const defaultOGTitle = OG_TITLE;
 const defaultDescription = OG_DESC;
-const defaultOGURL = WEB_URL;
-// Default OG Image should be absolute URL
-const defaultOGImage = `${WEB_URL}${OG_IMAGE}`;
 
 const CustomHead = (props: CustomHeadProps) => {
-  // OG Image should be absolute URL
+  // Get current site base URL (not Hyperliquid app URL)
+  const baseUrl = getBaseUrl();
+  const defaultOGURL = props?.url || baseUrl;
+  
+  // OG Image should be absolute URL using current site domain
   const ogImageUrl = props?.ogImage 
-    ? (props.ogImage.startsWith('http') ? props.ogImage : `${WEB_URL}${props.ogImage}`)
-    : defaultOGImage;
+    ? (props.ogImage.startsWith('http') ? props.ogImage : getAbsoluteUrl(props.ogImage))
+    : getAbsoluteUrl(OG_IMAGE);
 
   return (
     <Head>
@@ -38,7 +40,7 @@ const CustomHead = (props: CustomHeadProps) => {
         content={props?.description || defaultDescription}
       />
 
-      <meta property="og:url" content={props?.url || defaultOGURL} />
+      <meta property="og:url" content={defaultOGURL} />
       <meta
         property="og:title"
         content={props?.ogTitle || defaultOGTitle || defaultTitle}
@@ -51,7 +53,7 @@ const CustomHead = (props: CustomHeadProps) => {
       <meta property="og:type" content="website" />
 
       {/* twitter */}
-      <meta name="twitter:site" content={props?.url || defaultOGURL} />
+      <meta name="twitter:site" content={defaultOGURL} />
       <meta name="twitter:card" content="summary_large_image" />
       <meta name="twitter:image" content={ogImageUrl} />
 
@@ -68,7 +70,7 @@ const CustomHead = (props: CustomHeadProps) => {
       <link href="/favicon.ico" rel="icon" type="image/x-icon" />
       {/* Apple touch icon */}
       <link rel="apple-touch-icon" href="/images/logo.svg" />
-      <link rel="canonical" href={props?.url || defaultOGURL} />
+      <link rel="canonical" href={defaultOGURL} />
     </Head>
   );
 };

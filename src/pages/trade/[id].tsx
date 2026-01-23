@@ -1,6 +1,7 @@
 import TradeContainer from '@/containers/trade';
 import { CustomHead } from '@/components/seo';
-import { ROUTES, WEB_URL } from '@/lib/config';
+import { ROUTES } from '@/lib/config';
+import { getBaseUrl } from '@/lib/utils/get-base-url';
 import { GetServerSideProps } from 'next';
 
 interface TradePageProps {
@@ -10,7 +11,7 @@ interface TradePageProps {
 export default function TradePage({ marketSymbol }: TradePageProps) {
   const metaTitle = `Trade ${marketSymbol} | Hyper Trading - ${marketSymbol} Perpetual Futures`;
   const metaDesc = `Trade ${marketSymbol} perpetual futures with advanced tools, real-time charts, and deep liquidity. Execute trades with up to 50x leverage on Hyper Trading.`;
-  const pageFullPath = WEB_URL + `${ROUTES.TRADE}/${marketSymbol}`;
+  const pageFullPath = `${getBaseUrl()}${ROUTES.TRADE}/${marketSymbol}`;
   
   return (
     <>

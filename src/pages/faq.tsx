@@ -1,12 +1,13 @@
 import FAQContainer from '@/containers/faq';
 import { CustomHead, CustomScriptHomePage } from '@/components/seo';
-import { ROUTES, WEB_URL } from '@/lib/config';
+import { ROUTES } from '@/lib/config';
+import { getBaseUrl } from '@/lib/utils/get-base-url';
 import { faqData } from '@/components/sections/faq';
 
 export default function FAQPage() {
   const metaTitle = "Frequently Asked Questions | Hyper Trading";
   const metaDesc = "Find answers to common questions about trading on Hyper Trading. Learn about getting started, trading, security, staking, and more.";
-  const pageFullPath = WEB_URL + ROUTES.FAQ;
+  const pageFullPath = `${getBaseUrl()}${ROUTES.FAQ}`;
   
   // Extract FAQ items for structured data
   const faqSection = faqData.flatMap(category => category.items);

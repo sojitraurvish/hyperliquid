@@ -1,8 +1,9 @@
 import { useEffect } from 'react';
 import { useRouter } from 'next/router';
 import { useMarketStore } from '@/store/market';
-import { ROUTES, WEB_URL } from '@/lib/config';
+import { ROUTES } from '@/lib/config';
 import { CustomHead } from '@/components/seo';
+import { getBaseUrl } from '@/lib/utils/get-base-url';
 
 export default function TradePage() {
   const router = useRouter();
@@ -18,7 +19,7 @@ export default function TradePage() {
 
   const metaTitle = "Trade | Hyper Trading - Advanced Trading Platform";
   const metaDesc = "Trade perpetual futures with advanced tools, real-time charts, and deep liquidity. Execute trades with up to 50x leverage on Hyper Trading.";
-  const pageFullPath = WEB_URL + ROUTES.TRADE;
+  const pageFullPath = `${getBaseUrl()}${ROUTES.TRADE}`;
 
   // Return loading state while redirecting
   return (

@@ -1,11 +1,12 @@
 import HomeContainer from '@/containers/home';
 import { CustomHead, CustomScriptHomePage } from '@/components/seo';
-import { ROUTES, WEB_URL } from '@/lib/config';
+import { ROUTES } from '@/lib/config';
+import { getBaseUrl } from '@/lib/utils/get-base-url';
 
 export default function HomePage() {
   const metaTitle = "Hyper Trading | Advanced Hyperliquid Trading Platform";
   const metaDesc = "Professional trading platform for Hyperliquid. Execute trades, monitor positions, and manage your portfolio with advanced tools and real-time market data.";
-  const pageFullPath = WEB_URL + ROUTES.HOME;
+  const pageFullPath = `${getBaseUrl()}${ROUTES.HOME}`;
   
   return (
     <>

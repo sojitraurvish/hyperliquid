@@ -1,11 +1,12 @@
 import PortfolioContainer from '@/containers/portfolio';
 import { CustomHead } from '@/components/seo';
-import { ROUTES, WEB_URL } from '@/lib/config';
+import { ROUTES } from '@/lib/config';
+import { getBaseUrl } from '@/lib/utils/get-base-url';
 
 export default function PortfolioPage() {
   const metaTitle = "Portfolio | Hyper Trading - Manage Your Trading Positions";
   const metaDesc = "Manage your positions, track performance, and monitor your trading portfolio on Hyper Trading. View open positions, orders, and trade history.";
-  const pageFullPath = WEB_URL + ROUTES.PORTFOLIO;
+  const pageFullPath = `${getBaseUrl()}${ROUTES.PORTFOLIO}`;
   
   return (
     <>

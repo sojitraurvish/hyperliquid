@@ -44,11 +44,11 @@ export const getCoinIconUrl = (symbol: string): string => {
 export const DEFAULT_COIN_ICON_URL = `${WEB_URL}/coins/ETH.svg`;
 
 // SEO Images - All images are in /public/images/
+// Note: These are relative paths. Use getAbsoluteUrl() helper for absolute URLs
 export const DESK_LOGO = "/images/logo.svg"; // Main logo (SVG format)
 export const OG_IMAGE = "/images/og-image.svg"; // Open Graph image (1200x630px recommended, SVG format)
 export const SMALL_LOGO = "/images/logo.svg"; // Small logo variant
-// SEO_LOGO should be absolute URL for structured data
-export const SEO_LOGO = `${WEB_URL}/images/logo.svg`; // Absolute URL for structured data
+// Note: SEO_LOGO should use getAbsoluteUrl() helper - do not use WEB_URL (that's for Hyperliquid app, not this site)
 
 // Favicon - Using SVG favicon (modern browsers support SVG favicons)
 export const FavIcon = "/images/favicon.svg"; // SVG favicon (fallback to /favicon.ico if needed)

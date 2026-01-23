@@ -16,7 +16,7 @@ export interface FAQCategoryData {
   items: FAQItem[];
 }
 
-const faqData: FAQCategoryData[] = [
+export const faqData: FAQCategoryData[] = [
   {
     title: "Getting Started",
     items: [

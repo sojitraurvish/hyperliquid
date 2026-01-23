@@ -308,6 +308,9 @@ export const MarketsTable = () => {
   return (
     <div className="w-full bg-gray-950 py-8 sm:py-12">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        {/* Section Heading */}
+        <h2 className="text-2xl sm:text-3xl font-bold text-white mb-6">Available Markets</h2>
+        
         {/* Search and Filter Section */}
         <div className="flex flex-col sm:flex-row items-center justify-between gap-4 mb-6">
           {/* Search Bar */}

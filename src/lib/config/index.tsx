@@ -9,6 +9,7 @@ export const APP_NAME = "Hyper Trading";
 export const OG_TITLE = "Hyper Trading | Advanced Hyperliquid Trading Platform";
 export const OG_DESC = `Professional trading platform for Hyperliquid. Execute trades, monitor positions, and manage your portfolio with advanced tools and real-time market data.`;
 export const KEYWORDS = `hyperliquid, crypto trading, perpetual futures, decentralized exchange, trading platform, crypto derivatives`;
+export const FB_APP_ID = "";
 
 export const isTestnet =  ENVIRONMENT === ENVIRONMENT_TYPES.DEVELOPMENT
 
@@ -42,14 +43,15 @@ export const getCoinIconUrl = (symbol: string): string => {
 // Default coin icon fallback
 export const DEFAULT_COIN_ICON_URL = `${WEB_URL}/coins/ETH.svg`;
 
-// SEO image
-export const DESK_LOGO = "/images/logo.png";
-export const OG_IMAGE = DESK_LOGO;
-export const SMALL_LOGO = "/images/logo.png";
-export const SEO_LOGO = WEB_URL + DESK_LOGO;
+// SEO Images - All images are in /public/images/
+export const DESK_LOGO = "/images/logo.svg"; // Main logo (SVG format)
+export const OG_IMAGE = "/images/og-image.svg"; // Open Graph image (1200x630px recommended, SVG format)
+export const SMALL_LOGO = "/images/logo.svg"; // Small logo variant
+// SEO_LOGO should be absolute URL for structured data
+export const SEO_LOGO = `${WEB_URL}/images/logo.svg`; // Absolute URL for structured data
 
-// Favicon
-export const FavIcon = "/images/logo.png";
+// Favicon - Using SVG favicon (modern browsers support SVG favicons)
+export const FavIcon = "/images/favicon.svg"; // SVG favicon (fallback to /favicon.ico if needed)
 
 // External URLs
 export const EXTERNAL_URLS = {

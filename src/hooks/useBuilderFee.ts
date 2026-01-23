@@ -6,6 +6,9 @@ import { BUILDER_CONFIG } from '@/lib/config'
 import { errorHandler } from '@/store/errorHandler'
 import { appToast } from '@/components/ui/toast'
 
+
+const pendingApprovalChecks = new Set<string>();
+
 // Convert numeric chain id (e.g. 42161) to hex string (e.g. "0xa4b1")
 function toHexChainId(chainId: number) {
   return `0x${chainId.toString(16)}`
@@ -153,8 +156,16 @@ export function useBuilderFee({builderPublicKey = BUILDER_CONFIG.BUILDER_FEE_ADD
   useEffect(() => {
     if(!userPublicKey || !builderPublicKey) return;
     if(!walletClient?.account.address || isWalletClientPending) return;
+    
+    // const cachekey=`${userPublicKey}_${builderPublicKey}`;
 
-    checkBuilderFeeApproval({userPublicKeyParam: userPublicKey, builderPublicKeyParam: builderPublicKey})
+    // if(!pendingApprovalChecks.has(cachekey)){
+    //   pendingApprovalChecks.add(cachekey)
+    //   checkBuilderFeeApproval({userPublicKeyParam: userPublicKey, builderPublicKeyParam: builderPublicKey})
+    //   .finally(() => {
+    //     pendingApprovalChecks.delete(cachekey)
+    //   })
+    // }
 
   }, [userPublicKey, builderPublicKey,walletClient,isWalletClientPending])
 

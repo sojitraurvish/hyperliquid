@@ -436,6 +436,7 @@ const EstablishConnectionDialog = ({
         size="lg"
         className="w-full"
         onClick={handleEstablish}
+        isDisabled={!stayConnected}
       >
         Establish Connection
       </Button>
@@ -1087,9 +1088,11 @@ export const TradingPanel = ({currentCurrency, currentLeverage}: {currentCurrenc
   const { userPositions } = useBottomPanelStore();
   const { trades, setTrades, updateMarginAndLeverage, placeOrderWithAgent } = useTradesStore();
   const { bids, asks } = useOrderBookStore();
-  const { isApproving: isApprovingAgent, agentPrivateKey, agentWallet, isApproved, checkApprovalStatus } = useApiWallet({userPublicKey: address as `0x${string}`});
+  const { isApproving: isApprovingAgent, agentPrivateKey, agentWallet, isApproved, checkApprovalStatus, checkAgentApproval } = useApiWallet({userPublicKey: address as `0x${string}`});
   const { isApproving: isApprovingBuilderFee, isChecking: isCheckingBuilderFee, isApproved: isApprovedBuilderFee, checkBuilderFeeStatus } = useBuilderFee({userPublicKey: address as `0x${string}`});
 
+  console.log("isApproved", isApproved);
+  
   // ==================== useState Declarations ====================
   // Trading form states
   const [sliderValue, setSliderValue] = useState(0);
@@ -1232,6 +1235,8 @@ export const TradingPanel = ({currentCurrency, currentLeverage}: {currentCurrenc
 
     subscriptionClient.webData2({user:address as `0x${string}`}, (data) => {
       const clearinghouseState = data.clearinghouseState;
+      console.log("clearinghouseState",clearinghouseState);
+      
       const positionData = clearinghouseState.assetPositions.filter((position) => position.position.coin === currentCurrency)[0];
       const positionValue = positionData ? Number(positionData.position.szi) : 0;
       setCurrentPosition(positionValue);
@@ -1239,10 +1244,10 @@ export const TradingPanel = ({currentCurrency, currentLeverage}: {currentCurrenc
       const liquidationPx = positionData?.position?.liquidationPx;
       setIsLiquidationPx(Number(liquidationPx ?? 0));
 
-      const availableToTradeBuy = positionValue > 0 
+      const availableToTradeBuy = positionValue===0 ? Number(clearinghouseState.withdrawable) : positionValue > 0 
         ? Number(clearinghouseState.marginSummary.accountValue) - Number(clearinghouseState.marginSummary.totalMarginUsed) 
         : Number(clearinghouseState.marginSummary.accountValue) + Number(clearinghouseState.marginSummary.totalMarginUsed);
-      const availableToTradeSell = positionValue < 0 
+      const availableToTradeSell = positionValue===0 ? Number(clearinghouseState.withdrawable) : positionValue < 0 
         ? Number(clearinghouseState.marginSummary.accountValue) - Number(clearinghouseState.marginSummary.totalMarginUsed) 
         : Number(clearinghouseState.marginSummary.accountValue) + Number(clearinghouseState.marginSummary.totalMarginUsed);
       setAvailableToTradeBuy(Number(availableToTradeBuy > 0 ? availableToTradeBuy : 0));
@@ -1358,7 +1363,7 @@ export const TradingPanel = ({currentCurrency, currentLeverage}: {currentCurrenc
     
     
     if ((!storedValues?.marginMode && !storedValues?.leverage) || (!getCurrentPosition?.position.leverage && !getCurrentPosition?.position.leverage.type)) {
-      if (agentPrivateKey) {
+      if (agentPrivateKey && isApproved) {
         (async () => {
           const success = await updateMarginAndLeverage({
             currentCurrency,
@@ -1373,7 +1378,7 @@ export const TradingPanel = ({currentCurrency, currentLeverage}: {currentCurrenc
         })();
       }
     } 
-  }, [currentCurrency, currentLeverage, mounted, getCurrentPosition]);
+  }, [currentCurrency, currentLeverage, mounted, getCurrentPosition, isApproved, agentPrivateKey]);
 
   return (
     <div className="w-full sm:w-80 lg:w-full bg-gray-950 border-l border-gray-800 flex flex-col text-xs h-full overflow-hidden relative">
@@ -1528,18 +1533,20 @@ export const TradingPanel = ({currentCurrency, currentLeverage}: {currentCurrenc
           <div className="text-center text-sm text-gray-400 py-4">
             Please connect your wallet to enable trading
           </div>
-        ) : !isApproved ? (
-          <Button 
-            variant="primary" 
-            size="lg" 
-            className="w-full"
-            onClick={() => {
-              setIsEstablishConnectionDialogOpen(true);
-            }}
-          >
-            Enable Trading
-          </Button>
-        ) : (
+        ) 
+        // : !isApproved ? (
+        //   <Button 
+        //     variant="primary" 
+        //     size="lg" 
+        //     className="w-full"
+        //     onClick={() => {
+        //       setIsEstablishConnectionDialogOpen(true);
+        //     }}
+        //   >
+        //     Enable Trading
+        //   </Button>
+        // ) 
+        : (
           <Button 
             variant={activeSide === "buy" ? "primary" : "danger"} 
             size="lg" 
@@ -1552,26 +1559,25 @@ export const TradingPanel = ({currentCurrency, currentLeverage}: {currentCurrenc
             }
             onClick={async () => {
             
-
               const isApprovedBuilderFee = await checkBuilderFeeStatus({
                 userPublicKeyParam: address as `0x${string}`,
               });
 
-              const isApproved = await checkApprovalStatus({
+              const isApproved = await checkAgentApproval({
                 agentPublicKeyParam: agentWallet?.address as `0x${string}`,
                 userPublicKeyParam: address as `0x${string}`
               });
 
+              if(!isApproved){
+                appToast.error({ message: "Please approve the agent wallet to place order" });
+                setIsEstablishConnectionDialogOpen(true);
+              }
 
               if(!isApprovedBuilderFee){
                 appToast.error({ message: "Please approve the builder fee to place order" });
                 return;
               }
               
-              if(!isApproved){
-                appToast.error({ message: "Please approve the agent wallet to place order" });
-                setIsEstablishConnectionDialogOpen(true);
-              }
 
               const s = (addDecimals(orderValueInCurrency, szDecimals)).toString();
               

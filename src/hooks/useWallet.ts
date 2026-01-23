@@ -6,6 +6,9 @@ import { infoClient, getUserExchangeClient } from '@/lib/config/hyperliquied/hyp
 import { appToast } from '@/components/ui/toast'
 import { errorHandler } from '@/store/errorHandler'
 
+// Module-level flag to track if approval check is in progress
+let isCheckingApproval = false
+
 /**
  * Hook to manage API wallet generation and storage
  * This creates a secondary wallet for trading that gets approved by the main wallet
@@ -121,7 +124,17 @@ export const useApiWallet = ({userPublicKey}: {userPublicKey: `0x${string}`}) =>
       try {   
         const wallet = new Wallet(storedData.agentPrivateKey)
         setAgentWallet(wallet)
-        checkApprovalStatus({agentPublicKeyParam: wallet.address as `0x${string}`, userPublicKeyParam : userPublicKeyParam})
+
+        // Only call checkApprovalStatus if it's not already in progress
+        // if (!isCheckingApproval) {
+        //   isCheckingApproval = true
+          // checkApprovalStatus({agentPublicKeyParam: wallet.address as `0x${string}`, userPublicKeyParam : userPublicKeyParam})
+          //   .finally(() => {
+          //     // Reset flag after completion
+          //     isCheckingApproval = false
+          //   })
+        // }
+        
       } catch (error) {
         appToast.error({ message: errorHandler(error) });
         generateNewApiWallet({userPublicKeyParam: userPublicKeyParam})
@@ -139,5 +152,5 @@ export const useApiWallet = ({userPublicKey}: {userPublicKey: `0x${string}`}) =>
     initializeApiWallet({userPublicKeyParam: userPublicKey})
   }, [userPublicKey, walletClient, isWalletClientPending])
 
-  return { agentWallet, agentPrivateKey: agentWallet?.privateKey, isApproved, isApproving, checkApprovalStatus }
+  return { agentWallet, agentPrivateKey: agentWallet?.privateKey, isApproved, isApproving, checkApprovalStatus, checkAgentApproval }
 }

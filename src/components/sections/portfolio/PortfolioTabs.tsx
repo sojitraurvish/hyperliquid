@@ -62,7 +62,7 @@ export const PortfolioTabs = ({
       {/* Tab Content */}
       <div className="p-4 sm:p-6">
         {activeTab === "positions" && (
-          <OpenPositionsTable positions={positions} isLoading={isPositionsLoading} />
+          <OpenPositionsTable positions={positions} isLoading={isPositionsLoading} openOrders={openOrders} />
         )}
         {activeTab === "orders" && (
           <OpenOrdersTable orders={openOrders} isLoading={isOrdersLoading} />

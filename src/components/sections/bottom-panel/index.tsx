@@ -20,6 +20,8 @@ import AppModal from "@/components/ui/modal";
 import { useOrderBookStore } from "@/store/orderbook";
 import { useMarketStore } from "@/store/market";
 import { errorHandler } from "@/store/errorHandler";
+import { PositionTpslModal } from "@/components/sections/portfolio/PositionTpslModal";
+import { placePositionTpslOrder, cancelOrdersWithAgent } from "@/lib/services/trading-panel";
 // ==================== Types ====================
 
 type TabValue = "balances" | "positions" | "openorders" | "tradehistory" | "fundinghistory" | "orderhistory";
@@ -69,7 +71,7 @@ interface BalancesData {
 
 // Custom hook for positions table grid columns
 const usePositionsGridColumns = () => {
-  const [gridColumns, setGridColumns] = useState<string>("0.9fr 1fr 1.1fr 1.5fr 1.3fr");
+  const [gridColumns, setGridColumns] = useState<string>("0.9fr 1fr 1.1fr 1.5fr 1.3fr 1fr");
 
   useEffect(() => {
     if (typeof window === "undefined") return;
@@ -77,20 +79,20 @@ const usePositionsGridColumns = () => {
     const updateGridColumns = () => {
       const width = window.innerWidth;
       if (width >= 1280) {
-        // xl: 10 columns
-        setGridColumns("0.9fr 1fr 1.1fr 1fr 1fr 1.5fr 1fr 1.2fr 1fr 1.3fr");
+        // xl: 11 columns (added TP/SL)
+        setGridColumns("0.9fr 1fr 1.1fr 1fr 1fr 1.5fr 1fr 1.2fr 1fr 1fr 1.3fr");
       } else if (width >= 1024) {
-        // lg: 8 columns
-        setGridColumns("0.9fr 1fr 1.1fr 1fr 1fr 1.5fr 1fr 1.3fr");
+        // lg: 9 columns (added TP/SL)
+        setGridColumns("0.9fr 1fr 1.1fr 1fr 1fr 1.5fr 1fr 1fr 1.3fr");
       } else if (width >= 768) {
-        // md: 7 columns
-        setGridColumns("0.9fr 1fr 1.1fr 1fr 1fr 1.5fr 1.3fr");
+        // md: 8 columns (added TP/SL)
+        setGridColumns("0.9fr 1fr 1.1fr 1fr 1fr 1.5fr 1fr 1.3fr");
       } else if (width >= 640) {
-        // sm: 6 columns
-        setGridColumns("0.9fr 1fr 1.1fr 1fr 1.5fr 1.3fr");
+        // sm: 7 columns (added TP/SL)
+        setGridColumns("0.9fr 1fr 1.1fr 1fr 1.5fr 1fr 1.3fr");
       } else {
-        // base: 5 columns
-        setGridColumns("0.9fr 1fr 1.1fr 1.5fr 1.3fr");
+        // base: 6 columns (added TP/SL)
+        setGridColumns("0.9fr 1fr 1.1fr 1.5fr 1.3fr 1fr");
       }
     };
 
@@ -240,6 +242,7 @@ const PositionsTableHeader = () => {
     { label: "Margin", underline: true, className: "hidden xl:block" },
     { label: "Funding", underline: true, className: "hidden xl:block" },
     { label: "Close All", className: "" },
+    { label: "TP/SL", className: "" },
   ];
 
   return (
@@ -884,17 +887,46 @@ interface PositionsRowProps {
   position: Position;
   markPrice?: string;
   agentPrivateKey?: `0x${string}`;
+  openOrders?: OpenOrder[];
 }
 
-const PositionsRow = ({ position, markPrice, agentPrivateKey }: PositionsRowProps) => {
+const PositionsRow = ({ position, markPrice, agentPrivateKey, openOrders = [] }: PositionsRowProps) => {
   const pos = position.position;
   const [szDecimals, setSzDecimals] = useState<number>(5); // Default to 5 if not loaded yet
   const [isLimitCloseModalOpen, setIsLimitCloseModalOpen] = useState(false);
+  const [isTpslModalOpen, setIsTpslModalOpen] = useState(false);
   const { placeOrderWithAgent, maxSlippage } = useTradesStore();
   const { markPrice: storeMarkPrice } = useMarketStore();
   const { address: userAddress } = useAccount();
   const { agentWallet, checkApprovalStatus } = useApiWallet({userPublicKey: userAddress as `0x${string}`});
   const { checkBuilderFeeStatus } = useBuilderFee({userPublicKey: userAddress as `0x${string}`});
+
+  // Extract TP/SL orders for this position
+  const positionTpsl = useMemo(() => {
+    const tpslOrders = openOrders.filter((order) => 
+      order.isPositionTpsl && order.coin === pos.coin
+    );
+    
+    const tpsl: { takeProfit?: { triggerPx: string; limitPx?: string; orderId?: string }, stopLoss?: { triggerPx: string; limitPx?: string; orderId?: string } } = {};
+    
+    tpslOrders.forEach((order) => {
+      if (order.orderType?.includes("Take Profit")) {
+        tpsl.takeProfit = {
+          triggerPx: order.triggerPx,
+          limitPx: order.limitPx && order.orderType.includes("Limit") ? order.limitPx : undefined,
+          orderId: String(order.oid),
+        };
+      } else if (order.orderType?.includes("Stop")) {
+        tpsl.stopLoss = {
+          triggerPx: order.triggerPx,
+          limitPx: order.limitPx && order.orderType.includes("Limit") ? order.limitPx : undefined,
+          orderId: String(order.oid),
+        };
+      }
+    });
+    
+    return tpsl;
+  }, [openOrders, pos.coin]);
   
   // Fetch coin-specific decimals
   useEffect(() => {
@@ -1039,6 +1071,85 @@ const PositionsRow = ({ position, markPrice, agentPrivateKey }: PositionsRowProp
     } catch (error) {
       console.error("Error closing position:", error);
       appToast.error({ message: "Failed to close position" });
+    }
+  };
+
+  // Handle reverse position
+  const handleReversePosition = async () => {
+    if (!agentPrivateKey) {
+      appToast.error({ message: "Please connect your wallet" });
+      return;
+    }
+
+    const isApprovedBuilderFee = await checkBuilderFeeStatus({
+      userPublicKeyParam: userAddress as `0x${string}`,
+    });
+
+    const isApproved = await checkApprovalStatus({
+      agentPublicKeyParam: agentWallet?.address as `0x${string}`,
+      userPublicKeyParam: userAddress as `0x${string}`
+    });
+
+    if(!isApprovedBuilderFee){
+      appToast.error({ message: "Please approve the builder fee to place order" });
+      return;
+    }
+    
+    if(!isApproved){
+      appToast.error({ message: "Please approve the agent wallet to place order" });
+      return;
+    }
+
+    try {
+      const currentSize = parseFloat(pos.szi);
+      if (currentSize === 0) {
+        appToast.error({ message: "Position size is zero" });
+        return;
+      }
+
+      // Reverse position: open opposite side with double the size
+      // If current position is long (positive), reverse to short (sell)
+      // If current position is short (negative), reverse to long (buy)
+      const reverseSide = currentSize > 0 ? false : true; // Opposite of current position
+      const reverseSize = Math.abs(currentSize) * 2; // Double the size to reverse
+      
+      // Use mark price from store for reverse order
+      if (!storeMarkPrice || storeMarkPrice <= 0) {
+        appToast.error({ message: "Unable to get mark price, Wait for a while and try again!" });
+        return;
+      }
+      
+      // Calculate slippage amount as percentage of markPrice
+      const slippageAmount = storeMarkPrice * (maxSlippage / 100);
+      
+      // Apply slippage: for buy (long) add slippage, for sell (short) subtract slippage
+      let rawPrice = reverseSide 
+        ? storeMarkPrice + slippageAmount 
+        : storeMarkPrice - slippageAmount;
+      
+      // Format using Hyperliquid's formatPrice utility with szDecimals
+      const reversePrice = formatPrice(String(rawPrice), szDecimals);
+      
+      // Format size
+      const formattedSize = addDecimals(reverseSize, szDecimals).toString();
+
+      // Place reverse order
+      const success = await placeOrderWithAgent({
+        agentPrivateKey: agentPrivateKey,
+        a: pos.coin,
+        b: reverseSide, // Opposite side of current position
+        s: formattedSize,
+        p: reversePrice,
+        r: false, // Not reduce only (opening new position)
+        tif: "FrontendMarket",
+      });
+
+      if (success) {
+        appToast.success({ message: `Reverse position order placed successfully` });
+      }
+    } catch (error) {
+      console.error("Error reversing position:", error);
+      appToast.error({ message: "Failed to reverse position" });
     }
   };
 
@@ -1196,6 +1307,36 @@ const PositionsRow = ({ position, markPrice, agentPrivateKey }: PositionsRowProp
         >
           Market
         </button>
+        <span className="text-gray-600">|</span>
+        <button
+          onClick={handleReversePosition}
+          className="text-green-400 hover:text-green-300 cursor-pointer transition-colors"
+        >
+          Reverse
+        </button>
+      </div>
+
+      {/* TP/SL */}
+      <div className="flex items-center gap-2">
+        {(() => {
+          const tpPrice = positionTpsl.takeProfit?.triggerPx;
+          const slPrice = positionTpsl.stopLoss?.triggerPx;
+          const displayTp = tpPrice ? formatPrice(tpPrice, 2) : "--";
+          const displaySl = slPrice ? formatPrice(slPrice, 2) : "--";
+          return (
+            <>
+              <span className="text-sm text-gray-300">
+                {displayTp} / {displaySl}
+              </span>
+              <button
+                onClick={() => setIsTpslModalOpen(true)}
+                className="text-green-400 hover:text-green-300 transition-colors shrink-0"
+              >
+                <Pencil className="w-4 h-4" />
+              </button>
+            </>
+          );
+        })()}
       </div>
 
       {/* Limit Close Modal */}
@@ -1208,6 +1349,72 @@ const PositionsRow = ({ position, markPrice, agentPrivateKey }: PositionsRowProp
         szDecimals={szDecimals}
         onConfirm={handleClosePositionLimit}
       />
+
+      {/* TP/SL Modal */}
+      {agentPrivateKey && (
+        <PositionTpslModal
+          isOpen={isTpslModalOpen}
+          onClose={() => setIsTpslModalOpen(false)}
+          position={position}
+          onConfirm={async (params) => {
+            if (!agentPrivateKey || !userAddress) {
+              appToast.error({ message: "Missing required information" });
+              return;
+            }
+
+            try {
+              const isLong = parseFloat(pos.szi) > 0;
+              // If orderSize is 0, it means Configure Amount was not selected (use full position)
+              // If orderSize is provided and > 0, use that specific size
+              const sizeStr = params.orderSize === 0 
+                ? "0" 
+                : params.orderSize && params.orderSize > 0
+                  ? addDecimals(params.orderSize, szDecimals)
+                  : "0";
+
+              await placePositionTpslOrder({
+                agentPrivateKey: agentPrivateKey,
+                a: pos.coin,
+                b: isLong,
+                s: sizeStr,
+                takeProfitPrice: params.takeProfitPrice,
+                stopLossPrice: params.stopLossPrice,
+                takeProfitLimitPrice: params.takeProfitLimitPrice,
+                stopLossLimitPrice: params.stopLossLimitPrice,
+              });
+
+              appToast.success({ title: "TP/SL orders placed successfully" });
+            } catch (error: any) {
+              console.error("Error placing TP/SL orders:", error);
+              appToast.error({ message: error?.message || "Failed to place TP/SL orders" });
+              throw error;
+            }
+          }}
+          existingTpsl={positionTpsl}
+          onCancelTpsl={async (type: "tp" | "sl") => {
+            if (!agentPrivateKey || !userAddress) {
+              appToast.error({ message: "Missing required information" });
+              return;
+            }
+
+            try {
+              const orderToCancel = type === "tp" ? positionTpsl.takeProfit : positionTpsl.stopLoss;
+              if (!orderToCancel?.orderId) return;
+
+              await cancelOrdersWithAgent({
+                agentPrivateKey: agentPrivateKey,
+                orders: [{ orderId: orderToCancel.orderId, a: pos.coin }],
+              });
+
+              appToast.success({ title: `${type === "tp" ? "Take Profit" : "Stop Loss"} order canceled` });
+            } catch (error: any) {
+              console.error("Error canceling TP/SL order:", error);
+              appToast.error({ message: error?.message || "Failed to cancel order" });
+              throw error;
+            }
+          }}
+        />
+      )}
     </div>
   );
 };
@@ -1913,6 +2120,7 @@ export const BottomPanel = () => {
                     position={position}
                     markPrice={markPrices[position.position.coin]}
                     agentPrivateKey={agentPrivateKey as `0x${string}` | undefined}
+                    openOrders={userOpenOrders || undefined}
                   />
                 ))}
               </div>

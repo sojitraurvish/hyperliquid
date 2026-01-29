@@ -207,3 +207,80 @@ export const cancelOrdersWithAgent = async ({
     
     return await agentExchangeClient.cancel({ cancels });
   }
+
+export const placePositionTpslOrder = async ({
+    agentPrivateKey,
+    a,
+    b,
+    s,
+    takeProfitPrice,
+    stopLossPrice,
+    takeProfitLimitPrice,
+    stopLossLimitPrice,
+    builderAddress=BUILDER_CONFIG.BUILDER_FEE_ADDRESS,
+    desiredBps=BUILDER_CONFIG.BUILDER_FEE_RATE * 10,
+  }: {
+    agentPrivateKey: string,
+    a: string,
+    b: boolean,
+    s: string,
+    takeProfitPrice?: number,
+    stopLossPrice?: number,
+    takeProfitLimitPrice?: number,
+    stopLossLimitPrice?: number,
+    builderAddress?: `0x${string}`,
+    desiredBps?: number
+  }): Promise<OrderPayload> => {
+    const conv = await getSymbolConverter();
+    const assetId = conv.getAssetId(a);
+    const agentExchangeClient = getAgentExchangeClient(agentPrivateKey as `0x${string}`)
+
+    const orders: any[] = [];
+
+    // Add Stop Loss order if provided
+    if (stopLossPrice !== undefined) {
+      orders.push({
+        a: String(assetId),
+        b: !b, // Opposite side of position
+        p: stopLossLimitPrice !== undefined ? String(stopLossLimitPrice) : String(stopLossPrice),
+        r: true, // Reduce only
+        s: s,
+        t: {
+          trigger: {
+            isMarket: stopLossLimitPrice === undefined,
+            tpsl: "sl",
+            triggerPx: String(stopLossPrice)
+          }
+        }
+      });
+    }
+
+    // Add Take Profit order if provided
+    if (takeProfitPrice !== undefined) {
+      orders.push({
+        a: String(assetId),
+        b: !b, // Opposite side of position
+        p: takeProfitLimitPrice !== undefined ? String(takeProfitLimitPrice) : String(takeProfitPrice),
+        r: true, // Reduce only
+        s: s,
+        t: {
+          trigger: {
+            isMarket: takeProfitLimitPrice === undefined,
+            tpsl: "tp",
+            triggerPx: String(takeProfitPrice)
+          }
+        }
+      });
+    }
+
+    if (orders.length === 0) {
+      throw new Error("At least one TP or SL order must be provided");
+    }
+
+    const res = await agentExchangeClient.order({
+      grouping: "positionTpsl",
+      orders: orders,
+      ...(builderAddress && desiredBps ? { builder: { b: builderAddress, f: desiredBps } } : {})
+    })
+    return res as OrderPayload;
+  }

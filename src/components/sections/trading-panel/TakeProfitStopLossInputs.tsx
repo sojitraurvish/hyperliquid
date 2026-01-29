@@ -28,6 +28,8 @@ type TakeProfitStopLossInputsProps = {
   tpslVariant: "percent" | "dollar"
   setTpslVariant: (value: "percent" | "dollar") => void
   disabled?: boolean
+  hideTakeProfit?: boolean
+  hideStopLoss?: boolean
 }
 
 export function TakeProfitStopLossInputs({
@@ -47,6 +49,8 @@ export function TakeProfitStopLossInputs({
   tpslVariant,
   setTpslVariant,
   disabled = false,
+  hideTakeProfit = false,
+  hideStopLoss = false,
 }: TakeProfitStopLossInputsProps) {
   const entry =
     typeof entryPrice === "number" && Number.isFinite(entryPrice)
@@ -239,35 +243,39 @@ export function TakeProfitStopLossInputs({
 
   return (
     <div className={`space-y-4 ${className || ""}`}>
-      <PnlInput
-        anchorRef={tpAnchorRef}
-        disabled={isDisabled}
-        entry={entry}
-        error={takeProfitError}
-        kind="takeProfit"
-        onPriceChange={onTakeProfitPriceChange}
-        pnlValue={takeProfit}
-        price={takeProfitPrice}
-        setPnLValue={setTakeProfit}
-        setTpslVariant={setTpslVariant}
-        szDecimals={szDecimals}
-        tpslVariant={tpslVariant}
-      />
+      {!hideTakeProfit && (
+        <PnlInput
+          anchorRef={tpAnchorRef}
+          disabled={isDisabled}
+          entry={entry}
+          error={takeProfitError}
+          kind="takeProfit"
+          onPriceChange={onTakeProfitPriceChange}
+          pnlValue={takeProfit}
+          price={takeProfitPrice}
+          setPnLValue={setTakeProfit}
+          setTpslVariant={setTpslVariant}
+          szDecimals={szDecimals}
+          tpslVariant={tpslVariant}
+        />
+      )}
 
-      <PnlInput
-        anchorRef={slAnchorRef}
-        disabled={isDisabled}
-        entry={entry}
-        error={stopLossError}
-        kind="stopLoss"
-        onPriceChange={onStopLossPriceChange}
-        pnlValue={stopLoss}
-        price={stopLossPrice}
-        setPnLValue={setStopLoss}
-        setTpslVariant={setTpslVariant}
-        szDecimals={szDecimals}
-        tpslVariant={tpslVariant}
-      />
+      {!hideStopLoss && (
+        <PnlInput
+          anchorRef={slAnchorRef}
+          disabled={isDisabled}
+          entry={entry}
+          error={stopLossError}
+          kind="stopLoss"
+          onPriceChange={onStopLossPriceChange}
+          pnlValue={stopLoss}
+          price={stopLossPrice}
+          setPnLValue={setStopLoss}
+          setTpslVariant={setTpslVariant}
+          szDecimals={szDecimals}
+          tpslVariant={tpslVariant}
+        />
+      )}
 
       {hasError && (
         <div className="text-xs text-red-400">

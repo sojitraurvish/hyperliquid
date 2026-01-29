@@ -29,8 +29,14 @@ type TradesStore = {
   updateMarginAndLeverage: ({currentCurrency, agentPrivateKey, marginMode, leverage}: {currentCurrency: string, agentPrivateKey: `0x${string}`, marginMode: string, leverage: number}) => Promise<boolean>;
   getMarginAndLeverage: (selectedMarket: string) => MarginLeverageValue | undefined;
 
+  maxSlippage: number;
+  setMaxSlippage: (slippage: number) => void;
+
+  tpslVariant: "percent" | "dollar";
+  setTpslVariant: (variant: "percent" | "dollar") => void;
+
   isPlacingOrderWithAgent: boolean;
-  placeOrderWithAgent: ({agentPrivateKey, a, b, s, p, r, tif}: {agentPrivateKey: `0x${string}`, a: string, b: boolean, s: string, p: string, r: boolean, tif?: "FrontendMarket" | "Gtc" | "Ioc" | "Alo" | "LiquidationMarket"}) => Promise<boolean>;
+  placeOrderWithAgent: ({agentPrivateKey, a, b, s, p, r, tif, takeProfitPrice, stopLossPrice}: {agentPrivateKey: `0x${string}`, a: string, b: boolean, s: string, p: string, r: boolean, tif?: "FrontendMarket" | "Gtc" | "Ioc" | "Alo" | "LiquidationMarket", takeProfitPrice?: number, stopLossPrice?: number}) => Promise<boolean>;
 
 
   isCancellingOrdersWithAgentLoading: boolean;
@@ -79,13 +85,24 @@ export const useTradesStore = create<TradesStore>()(
         return get().marginAndLeverage[selectedMarket] || undefined;
       },
 
+      maxSlippage: 2,
+      setMaxSlippage: (slippage: number) => {
+        // Ensure slippage is between 1 and 100
+        const clampedSlippage = Math.max(1, Math.min(100, Math.round(slippage)));
+        set({ maxSlippage: clampedSlippage });
+      },
+
+      tpslVariant: "percent" as "percent" | "dollar",
+      setTpslVariant: (variant: "percent" | "dollar") => {
+        set({ tpslVariant: variant });
+      },
 
       isPlacingOrderWithAgent: false,
-      placeOrderWithAgent: async ({agentPrivateKey, a, b, s, p, r, tif = "FrontendMarket"}) => {
+      placeOrderWithAgent: async ({agentPrivateKey, a, b, s, p, r, tif = "FrontendMarket", takeProfitPrice, stopLossPrice}) => {
         set({ isPlacingOrderWithAgent: true });
         const loadingToastId = appToast.loading({title:"Order Submitted..."});
         try {
-          const resp = await placeOrderWithAgent({agentPrivateKey, a, b, s, p, r, tif});
+          const resp = await placeOrderWithAgent({agentPrivateKey, a, b, s, p, r, tif, takeProfitPrice, stopLossPrice});
           if (resp.status === "ok") {
             toast.dismiss(loadingToastId);
             resp.response.data.statuses.forEach((status) => {
@@ -145,6 +162,8 @@ export const useTradesStore = create<TradesStore>()(
         storage: createJSONStorage(() => localStorage),
         partialize: (state) => ({
           marginAndLeverage: state.marginAndLeverage,
+          maxSlippage: state.maxSlippage,
+          tpslVariant: state.tpslVariant,
         }),
       }
     )

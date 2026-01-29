@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useMemo, useRef, useCallback } from "react";
+import React, { useState, useEffect, useMemo, useRef, useCallback } from "react";
 import { ChevronDown } from "lucide-react";
 import AppModal from "@/components/ui/modal";
 import { useAccount } from 'wagmi';
@@ -13,9 +13,12 @@ import HydrationGuard from "@/components/ui/hydration-guard";
 import { useBottomPanelStore } from "@/store/bottom-panel";
 import { useTradesStore, TradeData } from "@/store/trades";
 import { useOrderBookStore } from "@/store/orderbook";
+import { useMarketStore } from "@/store/market";
 import { formatDateTimeAccordingToFormat } from "@/lib/date-operation";
 import { formatPrice } from "@nktkas/hyperliquid/utils";
 import { errorHandler } from "@/store/errorHandler";
+import { TakeProfitStopLossInputs } from "./TakeProfitStopLossInputs";
+import { ORDER_DIRECTION, type OrderDirection } from "@/types/tpsl";
 
 // ==================== Modular UI Components ====================
 
@@ -72,23 +75,26 @@ const Button = ({
 };
 
 // Input Component
-interface InputProps extends React.InputHTMLAttributes<HTMLInputElement> {}
+export interface InputProps extends React.InputHTMLAttributes<HTMLInputElement> {}
 
-const Input = ({ className = "", ...props }: InputProps) => {
+export const Input = React.forwardRef<HTMLInputElement, InputProps>(({ className = "", ...props }, ref) => {
   return (
     <input
+      ref={ref}
       className={`flex h-8 w-full rounded-md bg-gray-800/50 border-0 px-3 py-1 text-sm text-white placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-green-400 focus:ring-offset-2 focus:ring-offset-gray-950 disabled:cursor-not-allowed disabled:opacity-50 ${className}`}
       {...props}
     />
   );
-};
+});
+
+Input.displayName = "Input";
 
 // Label Component
-interface LabelProps extends React.LabelHTMLAttributes<HTMLLabelElement> {
+export interface LabelProps extends React.LabelHTMLAttributes<HTMLLabelElement> {
   children: React.ReactNode;
 }
 
-const Label = ({ className = "", children, ...props }: LabelProps) => {
+export const Label = ({ className = "", children, ...props }: LabelProps) => {
   return (
     <label
       className={`text-xs font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 ${className}`}
@@ -885,7 +891,8 @@ const PositionInfo = ({
       <div className="flex justify-between items-center">
         <span className="text-xs text-gray-500">Slippage</span>
         <span className="text-xs sm:text-sm text-white">
-          EST: {slippage || "0.0000%"} MAX: <button onClick={onMaxSlippageClick} className="text-green-400 hover:text-green-300 underline cursor-pointer">{maxSlippage.toFixed(2)}%</button>
+          {/* EST: {slippage || "0.0000%"}  */}
+          MAX: <button onClick={onMaxSlippageClick} className="text-green-400 hover:text-green-300 underline cursor-pointer">{maxSlippage.toFixed(2)}%</button>
         </span>
       </div>
     </div>
@@ -1086,8 +1093,9 @@ export const TradingPanel = ({currentCurrency, currentLeverage}: {currentCurrenc
   // ==================== Hooks ====================
   const { isConnected, address } = useAccount();
   const { userPositions } = useBottomPanelStore();
-  const { trades, setTrades, updateMarginAndLeverage, placeOrderWithAgent } = useTradesStore();
+  const { trades, setTrades, updateMarginAndLeverage, placeOrderWithAgent, maxSlippage, setMaxSlippage } = useTradesStore();
   const { bids, asks } = useOrderBookStore();
+  const { markPrice, setMarkPrice } = useMarketStore();
   const { isApproving: isApprovingAgent, agentPrivateKey, agentWallet, isApproved, checkApprovalStatus, checkAgentApproval } = useApiWallet({userPublicKey: address as `0x${string}`});
   const { isApproving: isApprovingBuilderFee, isChecking: isCheckingBuilderFee, isApproved: isApprovedBuilderFee, checkBuilderFeeStatus } = useBuilderFee({userPublicKey: address as `0x${string}`});
 
@@ -1112,13 +1120,18 @@ export const TradingPanel = ({currentCurrency, currentLeverage}: {currentCurrenc
   const [isMaxSlippageDialogOpen, setIsMaxSlippageDialogOpen] = useState(false);
   const [isEstablishConnectionDialogOpen, setIsEstablishConnectionDialogOpen] = useState(false);
   
-  // Slippage and decimals states
-  const [maxSlippage, setMaxSlippage] = useState<number>(8);
+  // Decimals state
   const [szDecimals, setSzDecimals] = useState<number>(0);
   
   // Price and order states
   const [limitOrderPrice, setLimitOrderPrice] = useState<string>("");
   const [timeInForce, setTimeInForce] = useState<"GTC" | "IOC" | "ALO">("GTC");
+  
+  // TP/SL states
+  const [isTpslEnabled, setIsTpslEnabled] = useState(false);
+  const [takeProfitPrice, setTakeProfitPrice] = useState<number | undefined>(undefined);
+  const [stopLossPrice, setStopLossPrice] = useState<number | undefined>(undefined);
+  const { tpslVariant, setTpslVariant } = useTradesStore();
   
   // Position and trading states
   const [availableToTradeBuy, setAvailableToTradeBuy] = useState(0);
@@ -1234,8 +1247,23 @@ export const TradingPanel = ({currentCurrency, currentLeverage}: {currentCurrenc
     positionDataReadyRef.current = false;
 
     subscriptionClient.webData2({user:address as `0x${string}`}, (data) => {
+      console.log("clearinghouseState",data);
+      const assetCtxs = data.assetCtxs || [];
+      const universe = data.meta?.universe || [];
+
+      // Extract mark price for the current currency
+      // Find the index of currentCurrency in the universe array
+      const currencyIndex = universe.findIndex((u: any) => u?.name === currentCurrency);
+      if (currencyIndex !== -1 && assetCtxs[currencyIndex]) {
+        const ctx = assetCtxs[currencyIndex];
+        // Prefer markPx over midPx (same logic as market-header)
+        const mark = ctx.markPx != null ? Number(ctx.markPx) : ctx.midPx != null ? Number(ctx.midPx) : null;
+        setMarkPrice(mark);
+      } else {
+        setMarkPrice(null);
+      }
+      
       const clearinghouseState = data.clearinghouseState;
-      console.log("clearinghouseState",clearinghouseState);
       
       const positionData = clearinghouseState.assetPositions.filter((position) => position.position.coin === currentCurrency)[0];
       const positionValue = positionData ? Number(positionData.position.szi) : 0;
@@ -1259,7 +1287,10 @@ export const TradingPanel = ({currentCurrency, currentLeverage}: {currentCurrenc
       // Check if all data is ready
       checkAllDataReady();
     });
-  }, [address, currentCurrency, checkAllDataReady]);
+  }, [address, currentCurrency, checkAllDataReady, setMarkPrice]);
+
+  console.log("markPrice",markPrice);
+  
 
   // Calculate mid price from orderbook store (bid + ask) / 2, fallback to currencyPrice
   const currencyPrice = trades[0]?.price || 0;
@@ -1280,26 +1311,25 @@ export const TradingPanel = ({currentCurrency, currentLeverage}: {currentCurrenc
     ? orderValue / currencyPrice 
     : 0;
   
-  // Calculate limit price (p) for market orders
-  // Formula: mid * (1 ± buffer), then round and format according to Hyperliquid rules
-  let limitPrice = null;
-  if (sliderValue > 0 && currencyPrice > 0 && currentCurrency && szDecimals > 0) {
+  // Calculate market price (p) for market orders
+  // Formula: markPrice ± (slippage percentage of markPrice), then format according to Hyperliquid rules
+  let marketPrice = null;
+  if (sliderValue > 0 && markPrice !== null && markPrice > 0 && currentCurrency && szDecimals > 0) {
     try {
-      const buffer = 0.01; // 1% aggressiveness buffer
       const isBuy = activeSide === "buy";
       
-      // Apply buffer: for buy use (1 + buffer), for sell use (1 - buffer)
-      let rawPrice = isBuy 
-        ? currencyPrice * (1 + buffer) 
-        : currencyPrice * (1 - buffer);
+      // Calculate slippage amount as percentage of markPrice
+      const slippageAmount = markPrice * (maxSlippage / 100);
       
-      // Round to guarantee execution: ceil for buy, floor for sell
-      rawPrice = isBuy ? Math.ceil(rawPrice) : Math.floor(rawPrice);
+      // Apply slippage: for buy (long) add slippage, for sell (short) subtract slippage
+      let rawPrice = isBuy 
+        ? markPrice + slippageAmount 
+        : markPrice - slippageAmount;
       
       // Format using Hyperliquid's formatPrice utility with szDecimals
-      limitPrice = formatPrice(String(rawPrice), szDecimals);
+      marketPrice = formatPrice(String(rawPrice), szDecimals);
     } catch (error) {
-      console.error("Error calculating limit price:", error);
+      console.error("Error calculating market price:", error);
     }
   }
 
@@ -1320,7 +1350,11 @@ export const TradingPanel = ({currentCurrency, currentLeverage}: {currentCurrenc
     setSliderValue(0);
     setLimitOrderPrice("");
     setTimeInForce("GTC"); // Reset TIF to default when currency changes
-  }, [currentCurrency]);
+    setMarkPrice(null); // Reset mark price when currency changes
+    setIsTpslEnabled(false); // Reset TP/SL when currency changes
+    setTakeProfitPrice(undefined);
+    setStopLossPrice(undefined);
+  }, [currentCurrency, setMarkPrice]);
 
   // Handle mid price click - set limit order price to mid price
   const handleMidPriceClick = () => {
@@ -1522,6 +1556,56 @@ export const TradingPanel = ({currentCurrency, currentLeverage}: {currentCurrenc
               />
             </div>
           )}
+
+          {/* Reduce Only Checkbox */}
+          {/* <div className="flex items-center gap-2">
+            <Checkbox
+              id="reduce-only"
+              checked={false}
+              onChange={() => {}}
+            />
+            <Label htmlFor="reduce-only" className="text-xs text-gray-400 cursor-pointer">
+              Reduce Only
+            </Label>
+          </div> */}
+
+          {/* Take Profit / Stop Loss Checkbox */}
+          <div className="flex items-center gap-2">
+            <Checkbox
+              id="tpsl-enabled"
+              checked={isTpslEnabled}
+              onChange={(e) => {
+                setIsTpslEnabled(e.target.checked);
+                if (!e.target.checked) {
+                  setTakeProfitPrice(undefined);
+                  setStopLossPrice(undefined);
+                }
+              }}
+            />
+            <Label htmlFor="tpsl-enabled" className="text-xs text-gray-400 cursor-pointer">
+              Take Profit / Stop Loss
+            </Label>
+          </div>
+
+          {/* TP/SL Inputs - Only show when enabled */}
+          {isTpslEnabled && (
+            <TakeProfitStopLossInputs
+              entryPrice={orderType === "Limit" ? parseFloat(limitOrderPrice) || undefined : markPrice || undefined}
+              direction={activeSide === "buy" ? ORDER_DIRECTION.LONG : ORDER_DIRECTION.SHORT}
+              leverage={userLeverage}
+              takeProfitPrice={takeProfitPrice}
+              stopLossPrice={stopLossPrice}
+              onTakeProfitPriceChange={setTakeProfitPrice}
+              onStopLossPriceChange={setStopLossPrice}
+              szDecimals={szDecimals}
+              priceLabel="entry"
+              positionSize={orderValueInCurrency > 0 ? orderValueInCurrency : undefined}
+              thresholdPrice={orderType === "Limit" ? parseFloat(limitOrderPrice) || null : markPrice || null}
+              tpslVariant={tpslVariant}
+              setTpslVariant={setTpslVariant}
+              disabled={isLoadingInitialData || sliderValue === 0}
+            />
+          )}
       </div>
 
       <div className="p-2 sm:p-3 border-b border-gray-800">
@@ -1581,10 +1665,10 @@ export const TradingPanel = ({currentCurrency, currentLeverage}: {currentCurrenc
 
               const s = (addDecimals(orderValueInCurrency, szDecimals)).toString();
               
-              // For limit orders, use the user-entered price; for market orders, use calculated limitPrice
+              // For limit orders, use the user-entered price; for market orders, use calculated marketPrice
               const p = orderType === "Limit" 
                 ? limitOrderPrice || "" 
-                : limitPrice || "";
+                : marketPrice || "";
 
               // Validate limit order price is provided
               if (orderType === "Limit" && !limitOrderPrice) {
@@ -1613,6 +1697,16 @@ export const TradingPanel = ({currentCurrency, currentLeverage}: {currentCurrenc
                 // Add tif only for Limit orders
                 if (orderType === "Limit") {
                   orderParams.tif = tifMap[timeInForce];
+                }
+
+                // Add TP/SL prices if enabled
+                if (isTpslEnabled) {
+                  if (takeProfitPrice !== undefined) {
+                    orderParams.takeProfitPrice = takeProfitPrice;
+                  }
+                  if (stopLossPrice !== undefined) {
+                    orderParams.stopLossPrice = stopLossPrice;
+                  }
                 }
                 
                 placeOrderWithAgent(orderParams);

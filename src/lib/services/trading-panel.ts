@@ -102,7 +102,9 @@ export const placeOrderWithAgent = async ({
     p, // for limit orders
     tif = "FrontendMarket",
     builderAddress=BUILDER_CONFIG.BUILDER_FEE_ADDRESS, // optional
-    desiredBps=BUILDER_CONFIG.BUILDER_FEE_RATE * 10 //  // f uses tenths of bps: 1 bps => 10
+    desiredBps=BUILDER_CONFIG.BUILDER_FEE_RATE * 10, //  // f uses tenths of bps: 1 bps => 10
+    takeProfitPrice,
+    stopLossPrice
   }: {
     agentPrivateKey: string,
     a: string,
@@ -112,25 +114,73 @@ export const placeOrderWithAgent = async ({
     r: boolean,
     tif?: "FrontendMarket" | "Gtc" | "Ioc" | "Alo" | "LiquidationMarket",
     builderAddress?: `0x${string}`,
-    desiredBps?: number
-    
+    desiredBps?: number,
+    takeProfitPrice?: number,
+    stopLossPrice?: number
   }): Promise<OrderPayload> => {
     const conv = await getSymbolConverter();
     const assetId = conv.getAssetId(a);
     const agentExchangeClient = getAgentExchangeClient(agentPrivateKey as `0x${string}`)
 
-    const res = await agentExchangeClient.order({
-      grouping: "na",
-      orders: [
-        {
-          a: String(assetId), // Convert to string as API expects string ID
-          b: b,
-          p: p,
-          r: r,
+    const hasTpsl = takeProfitPrice !== undefined || stopLossPrice !== undefined;
+    
+    // When TP/SL is enabled, main order must use FrontendMarket tif
+    const mainOrderTif = hasTpsl ? "FrontendMarket" : tif;
+    
+    const orders: any[] = [
+      {
+        a: String(assetId), // Convert to string as API expects string ID
+        b: b,
+        p: p,
+        r: r,
+        s: s,
+        t: { limit: { tif: mainOrderTif} }
+      }
+    ];
+
+    // Add TP/SL orders if provided
+    if (hasTpsl) {
+
+      // Add Stop Loss order if provided
+      if (stopLossPrice !== undefined) {
+        orders.push({
+          a: String(assetId),
+          b: !b, // Opposite side of main order
+          p: String(stopLossPrice),
+          r: true, // Reduce only
           s: s,
-          t: { limit: { tif: tif} }
-        }
-      ],
+          t: {
+            trigger: {
+              isMarket: true,
+              tpsl: "sl",
+              triggerPx: String(stopLossPrice)
+            }
+          }
+        });
+      }
+
+      // Add Take Profit order if provided
+      if (takeProfitPrice !== undefined) {
+        orders.push({
+          a: String(assetId),
+          b: !b, // Opposite side of main order
+          p: String(takeProfitPrice),
+          r: true, // Reduce only
+          s: s,
+          t: {
+            trigger: {
+              isMarket: true,
+              tpsl: "tp",
+              triggerPx: String(takeProfitPrice)
+            }
+          }
+        });
+      }
+    }
+
+    const res = await agentExchangeClient.order({
+      grouping: hasTpsl ? "normalTpsl" : "na",
+      orders: orders,
       ...(builderAddress && desiredBps ? { builder: { b: builderAddress, f: desiredBps } } : {})
     })
     return res as OrderPayload;

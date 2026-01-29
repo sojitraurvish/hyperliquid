@@ -7,12 +7,15 @@ type MarketStore = {
   selectedMarket: SelectedMarket | null;
   
   setSelectedMarket: (selectedMarket: SelectedMarket, updateUrl?: boolean) => void;
+  
+  markPrice: number | null;
+  setMarkPrice: (markPrice: number | null) => void;
 };
 
 export const useMarketStore = create<MarketStore>()(
   devtools(
     persist(
-      (set) => ({
+      (set, get) => ({
         selectedMarket: null,
 
         setSelectedMarket: (selectedMarket: SelectedMarket, updateUrl: boolean = true) => {
@@ -32,12 +35,18 @@ export const useMarketStore = create<MarketStore>()(
             }
           }
         },
+
+        markPrice: null,
+        setMarkPrice: (markPrice: number | null) => {
+          set({ markPrice });
+        },
       }),
       {
         name: "market-store",
         storage: createJSONStorage(() => localStorage),
         partialize: (state) => ({
           selectedMarket: state.selectedMarket,
+          // Don't persist markPrice as it is real-time data
         }),
       }
     )

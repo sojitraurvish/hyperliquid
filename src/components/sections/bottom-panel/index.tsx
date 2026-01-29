@@ -890,7 +890,8 @@ const PositionsRow = ({ position, markPrice, agentPrivateKey }: PositionsRowProp
   const pos = position.position;
   const [szDecimals, setSzDecimals] = useState<number>(5); // Default to 5 if not loaded yet
   const [isLimitCloseModalOpen, setIsLimitCloseModalOpen] = useState(false);
-  const { placeOrderWithAgent } = useTradesStore();
+  const { placeOrderWithAgent, maxSlippage } = useTradesStore();
+  const { markPrice: storeMarkPrice } = useMarketStore();
   const { address: userAddress } = useAccount();
   const { agentWallet, checkApprovalStatus } = useApiWallet({userPublicKey: userAddress as `0x${string}`});
   const { checkBuilderFeeStatus } = useBuilderFee({userPublicKey: userAddress as `0x${string}`});
@@ -999,30 +1000,22 @@ const PositionsRow = ({ position, markPrice, agentPrivateKey }: PositionsRowProp
       // Determine if short position: negative size = short position
       const isShortPosition = currentSize < 0;
       
-      // Get current price (mark price or calculate from position)
-      const currentPrice = markPrice 
-        ? parseFloat(markPrice) 
-        : (() => {
-            const posValue = parseFloat(pos.positionValue);
-            return posValue / Math.abs(currentSize);
-          })();
-
-      if (!currentPrice || currentPrice <= 0) {
-        appToast.error({ message: "Unable to get current price" });
+      // Use mark price from store for slippage calculation
+      if (!storeMarkPrice || storeMarkPrice <= 0) {
+        appToast.error({ message: "Unable to get mark price, Wait for a while and try again!" });
         return;
       }
-
-      // Calculate limit price using buffer logic (same as trading panel)
-      const buffer = 0.01; // 1% aggressiveness buffer
-      let rawPrice = isShortPosition 
-        ? currentPrice * (1 + buffer) 
-        : currentPrice * (1 - buffer);
       
-      // Round to guarantee execution: ceil for buy, floor for sell
-      rawPrice = isShortPosition ? Math.ceil(rawPrice) : Math.floor(rawPrice);
+      // Calculate slippage amount as percentage of markPrice
+      const slippageAmount = storeMarkPrice * (maxSlippage / 100);
+      
+      // Apply slippage: for buy (closing short) add slippage, for sell (closing long) subtract slippage
+      let rawPrice = isShortPosition 
+        ? storeMarkPrice + slippageAmount 
+        : storeMarkPrice - slippageAmount;
       
       // Format using Hyperliquid's formatPrice utility with szDecimals
-      const limitPrice = formatPrice(String(rawPrice), szDecimals);
+      const marketPrice = formatPrice(String(rawPrice), szDecimals);
       
       // Get absolute size for the order and format it
       const orderSize = Math.abs(currentSize);
@@ -1036,7 +1029,7 @@ const PositionsRow = ({ position, markPrice, agentPrivateKey }: PositionsRowProp
         a: pos.coin,
         b: currentSize < 0, // true for buy (closing short), false for sell (closing long)
         s: formattedSize,
-        p: limitPrice,
+        p: marketPrice,
         r: true, // reduceOnly = true (closing position, prevent opening opposite position)
       });
 
@@ -1705,6 +1698,8 @@ export const BottomPanel = () => {
   } = useBottomPanelStore();
   const { selectedMarket } = useMarketStore();
 
+  console.log("userPositions",userPositions);
+  
   // Hydration check to prevent SSR/client mismatch
   useEffect(() => {
     setIsHydrated(true);

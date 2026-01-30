@@ -128,14 +128,14 @@ export const placeOrderWithAgent = async ({
     const mainOrderTif = hasTpsl ? "FrontendMarket" : tif;
     
     const orders: any[] = [
-      {
-        a: String(assetId), // Convert to string as API expects string ID
-        b: b,
-        p: p,
-        r: r,
-        s: s,
+        {
+          a: String(assetId), // Convert to string as API expects string ID
+          b: b,
+          p: p,
+          r: r,
+          s: s,
         t: { limit: { tif: mainOrderTif} }
-      }
+        }
     ];
 
     // Add TP/SL orders if provided

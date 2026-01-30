@@ -28,7 +28,7 @@ export const VARIANT_TYPES = {
   
   export type EnvironmentTypes = typeof ENVIRONMENT_TYPES[keyof typeof ENVIRONMENT_TYPES];
   
-  export const ENVIRONMENT = process.env.NEXT_PUBLIC_NODE_ENV || "development";
+  export const ENVIRONMENT = process.env.NEXT_PUBLIC_NODE_ENV || "production";
   
 
   export const ORDER_BOOK_TABS = {

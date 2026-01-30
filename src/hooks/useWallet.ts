@@ -63,7 +63,7 @@ export const useApiWallet = ({userPublicKey}: {userPublicKey: `0x${string}`}) =>
     const agents = await infoClient.extraAgents({ user: userPublicKeyParam });
     const found = agents.find(
       (a: { address: string; validUntil?: number }) =>
-        a.address.toLowerCase() === agentPublicKeyParam.toLowerCase()
+        a.address.toLowerCase() === agentPublicKeyParam?.toLowerCase()
     );
     if(!found) return false;
     return isAgentValid(found);

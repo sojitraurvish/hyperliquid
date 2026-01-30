@@ -1642,6 +1642,10 @@ export const TradingPanel = ({currentCurrency, currentLeverage}: {currentCurrenc
               (orderType === "Limit" && !limitOrderPrice)
             }
             onClick={async () => {
+              if (!isConnected || !address) {
+                appToast.error({ message: "Please connect your wallet first" });
+                return;
+              }
             
               const isApprovedBuilderFee = await checkBuilderFeeStatus({
                 userPublicKeyParam: address as `0x${string}`,

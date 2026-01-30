@@ -1,6 +1,8 @@
 // src/hooks/useBuilderFee.ts
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useAccount, useWalletClient } from 'wagmi'
+import { getWalletClient } from 'wagmi/actions'
+import { config } from '@/lib/config/wallet-adapter/wallet-adapter'
 import { infoClient, getUserExchangeClient } from '@/lib/config/hyperliquied/hyperliquid-client'
 import { BUILDER_CONFIG } from '@/lib/config'
 import { errorHandler } from '@/store/errorHandler'
@@ -76,15 +78,49 @@ export function useBuilderFee({builderPublicKey = BUILDER_CONFIG.BUILDER_FEE_ADD
     [desiredBps]
   )
 
+  // Helper function to reliably get wallet client with retry logic
+  const getReliableWalletClient = async (maxRetries = 3, delay = 200) => {
+    // First try: use hook's walletClient if available
+    if (walletClient && !isWalletClientPending) {
+      return walletClient;
+    }
+
+    // Retry: get wallet client directly from wagmi
+    for (let i = 0; i < maxRetries; i++) {
+      try {
+        const client = await getWalletClient(config);
+        if (client) {
+          return client;
+        }
+      } catch (error) {
+        console.log(`Attempt ${i + 1} to get wallet client failed, retrying...`);
+      }
+      
+      // Wait before retrying (exponential backoff)
+      if (i < maxRetries - 1) {
+        await new Promise(resolve => setTimeout(resolve, delay * (i + 1)));
+      }
+    }
+
+    return null;
+  }
+
   const approveBuilderFee = async ({userPublicKeyParam = userPublicKey, builderPublicKeyParam = builderPublicKey}: {userPublicKeyParam: `0x${string}`, builderPublicKeyParam: `0x${string}`}  ) => {
-    if (!walletClient || !userPublicKeyParam || !builderPublicKeyParam) {
-      appToast.error({ message: "Wallet client not available for builder fee approval"});
-      return;
+    if (!userPublicKeyParam || !builderPublicKeyParam) {
+      appToast.error({ message: "Missing required parameters for builder fee approval"});
+      return false;
+    }
+
+    // Get reliable wallet client
+    const clientToUse = await getReliableWalletClient();
+    if (!clientToUse) {
+      appToast.error({ message: "Wallet client not available. Please ensure your wallet is connected and unlocked, then try again."});
+      return false;
     }
     
     setIsApproving(true)
     try {
-      const exchangeClient = getUserExchangeClient(walletClient);
+      const exchangeClient = getUserExchangeClient(clientToUse);
       const res = await exchangeClient.approveBuilderFee({
         maxFeeRate: desiredPercent,                   // e.g. "0.05%" for 5 bps
         builder: builderPublicKeyParam,                      // your builder address
@@ -129,10 +165,18 @@ export function useBuilderFee({builderPublicKey = BUILDER_CONFIG.BUILDER_FEE_ADD
       appToast.error({ message: 'No userPublicKey or builderPublicKey' });
       return false
     }
+    
+    if (!isConnected) {
+      appToast.error({ message: 'Please connect your wallet first' });
+      return false
+    }
+    
     setIsChecking(true)
     try {
       const approvedBps = await checkBuilderFeeApproval({userPublicKeyParam: userPublicKeyParam, builderPublicKeyParam: builderPublicKeyParam})
-      if(!approvedBps && walletClient && !isWalletClientPending) {
+      
+      if(!approvedBps) {
+        // Use reliable wallet client getter - this will retry if needed
         const approvalResult = await approveBuilderFee({userPublicKeyParam: userPublicKeyParam, builderPublicKeyParam: builderPublicKeyParam})
         
         if(approvalResult) {

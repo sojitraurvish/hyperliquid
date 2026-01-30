@@ -1,6 +1,8 @@
 import { useState, useEffect } from 'react'
 import { Wallet, HDNodeWallet } from 'ethers'
 import { useAccount, useWalletClient } from 'wagmi'
+import { getWalletClient } from 'wagmi/actions'
+import { config } from '@/lib/config/wallet-adapter/wallet-adapter'
 import { getLocalStorage, LOCAL_STORAGE_KEYS, setLocalStorage } from '@/lib/sessions/localstorage'
 import { infoClient, getUserExchangeClient } from '@/lib/config/hyperliquied/hyperliquid-client'
 import { appToast } from '@/components/ui/toast'
@@ -21,15 +23,49 @@ export const useApiWallet = ({userPublicKey}: {userPublicKey: `0x${string}`}) =>
   const {isConnected} = useAccount()
   const { data: walletClient, isPending: isWalletClientPending } = useWalletClient()
 
+  // Helper function to reliably get wallet client with retry logic
+  const getReliableWalletClient = async (maxRetries = 3, delay = 200) => {
+    // First try: use hook's walletClient if available
+    if (walletClient && !isWalletClientPending) {
+      return walletClient;
+    }
+
+    // Retry: get wallet client directly from wagmi
+    for (let i = 0; i < maxRetries; i++) {
+      try {
+        const client = await getWalletClient(config);
+        if (client) {
+          return client;
+        }
+      } catch (error) {
+        console.log(`Attempt ${i + 1} to get wallet client failed, retrying...`);
+      }
+      
+      // Wait before retrying (exponential backoff)
+      if (i < maxRetries - 1) {
+        await new Promise(resolve => setTimeout(resolve, delay * (i + 1)));
+      }
+    }
+
+    return null;
+  }
+
   const approveAgent = async ({agentPublicKeyParam = agentWallet?.address as `0x${string}`, userPublicKeyParam = userPublicKey }: {agentPublicKeyParam?: `0x${string}`, userPublicKeyParam?: `0x${string}`}) => {
-    if (!walletClient || !userPublicKeyParam || !agentPublicKeyParam) {
-      appToast.error({ message: "Wallet client not available for approval"});
-      return;
+    if (!userPublicKeyParam || !agentPublicKeyParam) {
+      appToast.error({ message: "Missing required parameters for agent approval"});
+      return false;
+    }
+
+    // Get reliable wallet client
+    const clientToUse = await getReliableWalletClient();
+    if (!clientToUse) {
+      appToast.error({ message: "Wallet client not available. Please ensure your wallet is connected and unlocked, then try again."});
+      return false;
     }
     
     try {
       setIsApproving(true);
-      const exchangeClient = getUserExchangeClient(walletClient);
+      const exchangeClient = getUserExchangeClient(clientToUse);
       
       const result = await exchangeClient.approveAgent({
         agentAddress: agentPublicKeyParam,
@@ -45,6 +81,7 @@ export const useApiWallet = ({userPublicKey}: {userPublicKey: `0x${string}`}) =>
       }
     } catch (e) {
       appToast.error({ message: errorHandler(e) });
+      return false;
     } finally {
       setIsApproving(false);
     }
@@ -75,9 +112,9 @@ export const useApiWallet = ({userPublicKey}: {userPublicKey: `0x${string}`}) =>
       
       setIsApproved(isApprovedResult);
 
-      // If not approved and wallet client is available, approve the agent
-      if (!isApprovedResult && isConnected && walletClient && !isWalletClientPending) {
-          const approvalResult = await approveAgent({agentPublicKeyParam: agentPublicKeyParam, userPublicKeyParam: userPublicKeyParam});// baki from here
+      // If not approved and wallet is connected, approve the agent (using reliable wallet client getter)
+      if (!isApprovedResult && isConnected) {
+          const approvalResult = await approveAgent({agentPublicKeyParam: agentPublicKeyParam, userPublicKeyParam: userPublicKeyParam});
           
             if(approvalResult){
               const updatedApprovedResult = await checkAgentApproval({agentPublicKeyParam: agentPublicKeyParam, userPublicKeyParam: userPublicKeyParam});

@@ -153,41 +153,42 @@ export const useApiWallet = ({userPublicKey}: {userPublicKey: `0x${string}`}) =>
 
     // If API wallet already exists and is approved or approving, return
     if(agentWallet?.address && (isApproved || isApproving)) return; 
-
+    
     const storedData = getLocalStorage(`${LOCAL_STORAGE_KEYS.HYPERLIQUID_AGENT}${userPublicKeyParam}`)
-
+    
     if (storedData && storedData?.agentPrivateKey) {
       // Use existing API wallet
       try {   
         const wallet = new Wallet(storedData.agentPrivateKey)
         setAgentWallet(wallet)
-
+        
         // Only call checkApprovalStatus if it's not already in progress
         // if (!isCheckingApproval) {
-        //   isCheckingApproval = true
+          //   isCheckingApproval = true
           // checkApprovalStatus({agentPublicKeyParam: wallet.address as `0x${string}`, userPublicKeyParam : userPublicKeyParam})
           //   .finally(() => {
-          //     // Reset flag after completion
-          //     isCheckingApproval = false
-          //   })
-        // }
-        
-      } catch (error) {
-        appToast.error({ message: errorHandler(error) });
-        generateNewApiWallet({userPublicKeyParam: userPublicKeyParam})
+            //     // Reset flag after completion
+            //     isCheckingApproval = false
+            //   })
+            // }
+            
+          } catch (error) {
+            appToast.error({ message: errorHandler(error) });
+            generateNewApiWallet({userPublicKeyParam: userPublicKeyParam})
+          }
+        } else {
+          // Generate new API wallet
+          generateNewApiWallet({userPublicKeyParam: userPublicKeyParam})
+        }
       }
-    } else {
-      // Generate new API wallet
-        generateNewApiWallet({userPublicKeyParam: userPublicKeyParam})
-    }
-  }
-
-  useEffect(() => {
-    if(!userPublicKey) return
-    if(!walletClient?.account.address || isWalletClientPending) return;
-
-    initializeApiWallet({userPublicKeyParam: userPublicKey})
-  }, [userPublicKey, walletClient, isWalletClientPending])
-
-  return { agentWallet, agentPrivateKey: agentWallet?.privateKey, isApproved, isApproving, checkApprovalStatus, checkAgentApproval }
+      
+      useEffect(() => {
+        if(!userPublicKey) return
+        // if(!walletClient?.account.address || isWalletClientPending) return;
+        // console.log("agentWallet?.address", agentWallet?.address)
+        
+        initializeApiWallet({userPublicKeyParam: userPublicKey})
+      }, [userPublicKey, walletClient, isWalletClientPending])
+      
+      return { agentWallet, agentPrivateKey: agentWallet?.privateKey, isApproved, isApproving, checkApprovalStatus, checkAgentApproval }
 }

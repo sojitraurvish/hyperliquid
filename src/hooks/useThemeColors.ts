@@ -5,15 +5,11 @@ import { applyThemeColors } from "@/lib/color-utils";
 /**
  * Hook that applies the user's theme colors to the DOM.
  * Call once at the app root level (_app.tsx).
+ * Persist middleware handles localStorage hydration automatically.
  * Whenever upColor or downColor changes, CSS variables are updated on :root.
  */
 export function useThemeColors() {
-  const { upColor, downColor, hydrate } = useThemeStore();
-
-  // Hydrate store from localStorage on mount (client only)
-  useEffect(() => {
-    hydrate();
-  }, [hydrate]);
+  const { upColor, downColor } = useThemeStore();
 
   // Apply CSS variables whenever colors change
   useEffect(() => {

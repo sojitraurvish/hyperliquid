@@ -1,4 +1,6 @@
 import { create } from "zustand";
+import { createJSONStorage, persist } from "zustand/middleware";
+import { applyThemeColors } from "@/lib/color-utils";
 
 // ==================== Theme Color Presets ====================
 
@@ -20,36 +22,6 @@ export const THEME_PRESETS: ThemePreset[] = [
 const DEFAULT_UP   = "#10b981";
 const DEFAULT_DOWN = "#ef4444";
 
-// ==================== Local Storage Helpers ====================
-
-const STORAGE_KEY = "ht-theme-colors";
-
-interface StoredTheme {
-  upColor: string;
-  downColor: string;
-  activePreset: string | null;
-}
-
-function loadFromStorage(): StoredTheme | null {
-  if (typeof window === "undefined") return null;
-  try {
-    const raw = localStorage.getItem(STORAGE_KEY);
-    if (!raw) return null;
-    return JSON.parse(raw) as StoredTheme;
-  } catch {
-    return null;
-  }
-}
-
-function saveToStorage(data: StoredTheme): void {
-  if (typeof window === "undefined") return;
-  try {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
-  } catch {
-    // Silently fail if storage is full or unavailable
-  }
-}
-
 // ==================== Zustand Store ====================
 
 interface ThemeState {
@@ -58,31 +30,39 @@ interface ThemeState {
   activePreset: string | null;
   setColors: (upColor: string, downColor: string, preset?: string | null) => void;
   resetToDefault: () => void;
-  hydrate: () => void;
 }
 
-const stored = loadFromStorage();
+export const useThemeStore = create<ThemeState>()(
+  persist(
+    (set) => ({
+      upColor: DEFAULT_UP,
+      downColor: DEFAULT_DOWN,
+      activePreset: "Emerald & Red" as string | null,
 
-export const useThemeStore = create<ThemeState>((set, get) => ({
-  upColor:      stored?.upColor      ?? DEFAULT_UP,
-  downColor:    stored?.downColor    ?? DEFAULT_DOWN,
-  activePreset: stored?.activePreset ?? "Emerald & Red",
+      setColors: (upColor, downColor, preset = null) => {
+        set({ upColor, downColor, activePreset: preset });
+      },
 
-  setColors: (upColor, downColor, preset = null) => {
-    set({ upColor, downColor, activePreset: preset });
-    saveToStorage({ upColor, downColor, activePreset: preset });
-  },
-
-  resetToDefault: () => {
-    const data = { upColor: DEFAULT_UP, downColor: DEFAULT_DOWN, activePreset: "Emerald & Red" as string | null };
-    set(data);
-    saveToStorage(data);
-  },
-
-  hydrate: () => {
-    const saved = loadFromStorage();
-    if (saved) {
-      set(saved);
+      resetToDefault: () => {
+        set({ upColor: DEFAULT_UP, downColor: DEFAULT_DOWN, activePreset: "Emerald & Red" });
+      },
+    }),
+    {
+      name: "ht-theme-colors",
+      storage: createJSONStorage(() => localStorage),
+      partialize: (state) => ({
+        upColor: state.upColor,
+        downColor: state.downColor,
+        activePreset: state.activePreset,
+      }),
+      onRehydrateStorage: () => {
+        return (state) => {
+          // Apply CSS variables as soon as persisted state is rehydrated
+          if (state) {
+            applyThemeColors(state.upColor, state.downColor);
+          }
+        };
+      },
     }
-  },
-}));
+  )
+);

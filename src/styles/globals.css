@@ -1,29 +1,20 @@
 @import "tailwindcss";
-/* 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+/* ==================== Modern Trading UI Theme ==================== */
+/* Remap green palette to muted emerald tones for a professional trading look */
+@theme {
+  --color-green-50: #ecfdf5;
+  --color-green-100: #d1fae5;
+  --color-green-200: #a7f3d0;
+  --color-green-300: #6ee7b7;
+  --color-green-400: #34d399;
+  --color-green-500: #10b981;
+  --color-green-600: #059669;
+  --color-green-700: #047857;
+  --color-green-800: #065f46;
+  --color-green-900: #064e3b;
+  --color-green-950: #022c22;
 }
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
-}
-
-body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
-} */
 
 /* Slider styling */
 .slider-input {
@@ -37,7 +28,7 @@ body {
   width: 18px;
   height: 18px;
   border-radius: 50%;
-  background: #2dd4bf;
+  background: var(--color-green-500, #10b981);
   cursor: pointer;
   border: 2px solid #ffffff;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
@@ -47,7 +38,7 @@ body {
   width: 18px;
   height: 18px;
   border-radius: 50%;
-  background: #2dd4bf;
+  background: var(--color-green-500, #10b981);
   cursor: pointer;
   border: 2px solid #ffffff;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
@@ -118,7 +109,7 @@ input[type="range"]::-webkit-slider-thumb {
   width: 20px;
   height: 20px;
   border-radius: 50%;
-  background: #2dd4bf;
+  background: var(--color-green-500, #10b981);
   cursor: grab;
   border: 2px solid #ffffff;
   margin-top: -6px;
@@ -135,7 +126,7 @@ input[type="range"]::-moz-range-thumb {
   width: 20px;
   height: 20px;
   border-radius: 50%;
-  background: #2dd4bf;
+  background: var(--color-green-500, #10b981);
   cursor: grab;
   border: 2px solid #ffffff;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
@@ -143,4 +134,64 @@ input[type="range"]::-moz-range-thumb {
 
 input[type="range"]::-moz-range-thumb:active {
   cursor: grabbing;
+}
+
+/* ==================== React-Toastify Dark Theme Overrides ==================== */
+
+/* Toast body text */
+.Toastify__toast-body {
+  color: inherit;
+  font-size: 0.875rem;
+  padding: 0;
+}
+
+/* Close button */
+.Toastify__close-button {
+  color: #9ca3af !important; /* gray-400 */
+  opacity: 0.7;
+  align-self: flex-start;
+  margin-top: 2px;
+}
+
+.Toastify__close-button:hover {
+  color: #e5e7eb !important; /* gray-200 */
+  opacity: 1;
+}
+
+/* Progress bar track */
+.Toastify__progress-bar {
+  height: 2px !important;
+  opacity: 0.8 !important;
+  background: var(--color-green-500, #10b981) !important;
+}
+
+/* Progress bar colors per toast type */
+.toast--success .Toastify__progress-bar { background: var(--color-green-500, #10b981) !important; }
+.toast--error .Toastify__progress-bar { background: var(--color-red-400, #f87171) !important; }
+.toast--warning .Toastify__progress-bar { background: #facc15 !important; }
+.toast--info .Toastify__progress-bar { background: var(--color-green-500, #10b981) !important; }
+
+/* Toast icons */
+.Toastify__toast-icon {
+  width: 20px;
+  margin-inline-end: 12px;
+}
+
+/* Override default toast backgrounds for dark theme */
+.Toastify__toast-theme--dark {
+  background: #111827 !important; /* gray-900 */
+  border: 1px solid #374151 !important; /* gray-700 */
+  color: #d1d5db !important; /* gray-300 */
+}
+
+/* Remove default colored bar on the left */
+.Toastify__toast::after {
+  display: none;
+}
+
+/* Toast container spacing */
+.Toastify__toast {
+  border-radius: 0.5rem !important;
+  min-height: 48px !important;
+  backdrop-filter: blur(8px);
 }

@@ -5,26 +5,26 @@
   <!-- Main Logo - Hyper Trading -->
   <g>
     <!-- Letter H -->
-    <rect x="80" y="120" width="40" height="272" rx="8" fill="#22c55e"/>
-    <rect x="80" y="240" width="120" height="40" rx="8" fill="#22c55e"/>
-    <rect x="160" y="120" width="40" height="272" rx="8" fill="#22c55e"/>
+    <rect x="80" y="120" width="40" height="272" rx="8" fill="#10b981"/>
+    <rect x="80" y="240" width="120" height="40" rx="8" fill="#10b981"/>
+    <rect x="160" y="120" width="40" height="272" rx="8" fill="#10b981"/>
     
     <!-- Letter T -->
-    <rect x="240" y="120" width="120" height="40" rx="8" fill="#22c55e"/>
-    <rect x="280" y="120" width="40" height="272" rx="8" fill="#22c55e"/>
+    <rect x="240" y="120" width="120" height="40" rx="8" fill="#10b981"/>
+    <rect x="280" y="120" width="40" height="272" rx="8" fill="#10b981"/>
   </g>
   
   <!-- Trading Chart Icon -->
   <g opacity="0.3">
     <path d="M120 320 L160 280 L200 300 L240 260 L280 280 L320 240 L360 260 L400 220" 
-          stroke="#22c55e" stroke-width="8" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
-    <circle cx="120" cy="320" r="6" fill="#22c55e"/>
-    <circle cx="400" cy="220" r="6" fill="#22c55e"/>
+          stroke="#10b981" stroke-width="8" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+    <circle cx="120" cy="320" r="6" fill="#10b981"/>
+    <circle cx="400" cy="220" r="6" fill="#10b981"/>
   </g>
   
   <!-- Tagline -->
   <text x="256" y="440" font-family="Arial, sans-serif" font-size="24" font-weight="bold" 
-        text-anchor="middle" fill="#22c55e">Hyper Trading</text>
+        text-anchor="middle" fill="#10b981">Hyper Trading</text>
   <text x="256" y="470" font-family="Arial, sans-serif" font-size="16" 
         text-anchor="middle" fill="#9ca3af">Advanced Trading Platform</text>
 </svg>

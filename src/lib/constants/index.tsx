@@ -27,8 +27,26 @@ export const VARIANT_TYPES = {
   } as const;
   
   export type EnvironmentTypes = typeof ENVIRONMENT_TYPES[keyof typeof ENVIRONMENT_TYPES];
-  
-  export const ENVIRONMENT = process.env.NEXT_PUBLIC_NODE_ENV || "production";
+
+  /**
+   * Determines the active environment.
+   * On the client, checks localStorage for the user's network preference.
+   * Falls back to the NEXT_PUBLIC_NODE_ENV env var, then to "production".
+   */
+  function resolveEnvironment(): string {
+    if (typeof window !== "undefined") {
+      try {
+        const stored = localStorage.getItem("ht-network");
+        if (stored === "testnet") return ENVIRONMENT_TYPES.DEVELOPMENT;
+        if (stored === "mainnet") return ENVIRONMENT_TYPES.PRODUCTION;
+      } catch {
+        // localStorage may be unavailable
+      }
+    }
+    return process.env.NEXT_PUBLIC_NODE_ENV || "production";
+  }
+
+  export const ENVIRONMENT = resolveEnvironment();
   
 
   export const ORDER_BOOK_TABS = {

@@ -1,6 +1,8 @@
 "use client";
 
-import { Settings, Globe, Bell, Mail } from "lucide-react";
+import { Globe, Bell, Mail } from "lucide-react";
+import { ThemePickerButton, ThemePickerModal } from "@/components/ui/theme-picker";
+import NetworkSwitcher from "@/components/ui/network-switcher";
 import AppButton, { AppButton as Button } from "@/components/ui/button";
 import AppDropdown, { DropdownOption } from "@/components/ui/dropdown";
 import { VARIANT_TYPES } from "@/lib/constants";
@@ -59,6 +61,7 @@ export const Header = () => {
   const [isWalletConnectModalOpen, setIsWalletConnectModalOpen] = useState(false);
   const [isDepositModalOpen, setIsDepositModalOpen] = useState(false);
   const [isWithdrawModalOpen, setIsWithdrawModalOpen] = useState(false);
+  const [isThemePickerOpen, setIsThemePickerOpen] = useState(false);
   const [connectionError, setConnectionError] = useState<string | null>(null);
   const { connectors, connect } = useConnect();
 
@@ -306,12 +309,8 @@ export const Header = () => {
             </AppButton>
           )}
         </HydrationGuard>
-        {/* <AppButton variant={VARIANT_TYPES.PRIMARY}>
-          <Globe className="h-4 w-4 hover:text-green-400" />
-        </AppButton> */}
-        {/* <AppButton variant={VARIANT_TYPES.PRIMARY}>
-          <Settings className="h-4 w-4 hover:text-green-400" />
-        </AppButton> */}
+        <NetworkSwitcher />
+        <ThemePickerButton onClick={() => setIsThemePickerOpen(true)} />
       </div>
     </header>
 
@@ -426,6 +425,11 @@ export const Header = () => {
         isOpen={isWithdrawModalOpen}
         onClose={() => setIsWithdrawModalOpen(false)}
         onSuccess={fetchBalances}
+      />
+
+      <ThemePickerModal
+        isOpen={isThemePickerOpen}
+        onClose={() => setIsThemePickerOpen(false)}
       />
     </>
   );

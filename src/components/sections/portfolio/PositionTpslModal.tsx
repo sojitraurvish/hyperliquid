@@ -92,7 +92,7 @@ const Slider = ({
   return (
     <div className={`relative flex items-center ${className} ${disabled ? 'opacity-50 cursor-not-allowed' : ''}`}>
       <div className="relative w-full h-2 flex items-center bg-gray-800 rounded-lg" style={{
-        background: `linear-gradient(to right, #22c55e 0%, #22c55e ${((currentValue - min) / (max - min)) * 100}%, #1f2937 ${((currentValue - min) / (max - min)) * 100}%, #1f2937 100%)`,
+        background: `linear-gradient(to right, var(--color-green-500, #10b981) 0%, var(--color-green-500, #10b981) ${((currentValue - min) / (max - min)) * 100}%, #1f2937 ${((currentValue - min) / (max - min)) * 100}%, #1f2937 100%)`,
       }}>
         <input
           type="range"

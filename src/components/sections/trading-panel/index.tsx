@@ -186,7 +186,7 @@ const Slider = ({
   return (
     <div className={`relative flex items-center ${className} ${disabled ? 'opacity-50 cursor-not-allowed' : ''}`}>
       <div className="relative w-full h-2 flex items-center bg-gray-800 rounded-lg" style={{
-        background: `linear-gradient(to right, #22c55e 0%, #22c55e ${((currentValue - min) / (max - min)) * 100}%, #1f2937 ${((currentValue - min) / (max - min)) * 100}%, #1f2937 100%)`,
+        background: `linear-gradient(to right, var(--color-green-500, #10b981) 0%, var(--color-green-500, #10b981) ${((currentValue - min) / (max - min)) * 100}%, #1f2937 ${((currentValue - min) / (max - min)) * 100}%, #1f2937 100%)`,
       }}>
         <input
           type="range"
@@ -588,17 +588,48 @@ interface SizeInputProps {
   size: string;
   currency: string;
   onCurrencyChange: () => void;
+  onChange?: (value: string) => void;
+  hasError?: boolean;
+  maxDecimals?: number;
 }
 
-const SizeInput = ({ size, currency, onCurrencyChange}: SizeInputProps) => {
+const SizeInput = ({ size, currency, onCurrencyChange, onChange, hasError, maxDecimals = 2 }: SizeInputProps) => {
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+
+    // Allow empty value
+    if (value === '') {
+      onChange?.(value);
+      return;
+    }
+
+    // Allow only numbers and one decimal point
+    if (!/^\d*\.?\d*$/.test(value)) return;
+
+    // Split by decimal point
+    const parts = value.split('.');
+    const integerPart = parts[0] || '';
+    const decimalPart = parts[1];
+
+    // Limit decimal places based on currency (USDC = 2, market currency = szDecimals)
+    if (decimalPart !== undefined && decimalPart.length > maxDecimals) return;
+
+    // Total digits (excluding decimal point) max 12
+    const totalDigits = integerPart.length + (decimalPart?.length || 0);
+    if (totalDigits > 12) return;
+
+    onChange?.(value);
+  };
+
   return (
     <div className="space-y-2">
       <Label className="text-xs text-gray-500">Size</Label>
       <div className="relative">
         <Input
           value={size}
-          readOnly
-          className="h-8 sm:h-9 text-right font-mono text-sm pr-20 sm:pr-24"
+          onChange={handleChange}
+          placeholder="0.00"
+          className={`h-8 sm:h-9 text-right font-mono text-sm pr-20 sm:pr-24 ${hasError ? 'ring-2 ring-red-500 focus:ring-red-500' : ''}`}
         />
         <button
           onClick={onCurrencyChange}
@@ -607,6 +638,9 @@ const SizeInput = ({ size, currency, onCurrencyChange}: SizeInputProps) => {
           {currency} <ChevronDown className="h-3 w-3" />
         </button>
       </div>
+      {hasError && (
+        <p className="text-xs text-red-400">Size exceeds maximum available</p>
+      )}
     </div>
   );
 };
@@ -617,9 +651,37 @@ interface PriceInputProps {
   onPriceChange: (price: string) => void;
   onMidClick: () => void;
   disabled?: boolean;
+  maxDecimals?: number;
 }
 
-const PriceInput = ({ price, onPriceChange, onMidClick, disabled = false }: PriceInputProps) => {
+const PriceInput = ({ price, onPriceChange, onMidClick, disabled = false, maxDecimals = 2 }: PriceInputProps) => {
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+
+    // Allow empty value
+    if (value === '') {
+      onPriceChange(value);
+      return;
+    }
+
+    // Allow only numbers and one decimal point
+    if (!/^\d*\.?\d*$/.test(value)) return;
+
+    // Split by decimal point
+    const parts = value.split('.');
+    const integerPart = parts[0] || '';
+    const decimalPart = parts[1];
+
+    // Limit decimal places
+    if (decimalPart !== undefined && decimalPart.length > maxDecimals) return;
+
+    // Total digits (excluding decimal point) max 12
+    const totalDigits = integerPart.length + (decimalPart?.length || 0);
+    if (totalDigits > 12) return;
+
+    onPriceChange(value);
+  };
+
   return (
     <div className="space-y-2">
       <Label className="text-xs text-gray-500">Price (USDC)</Label>
@@ -627,7 +689,7 @@ const PriceInput = ({ price, onPriceChange, onMidClick, disabled = false }: Pric
         <Input
           type="text"
           value={price}
-          onChange={(e) => onPriceChange(e.target.value)}
+          onChange={handleChange}
           placeholder="0.00"
           disabled={disabled}
           className="h-8 sm:h-9 text-right font-mono text-sm pr-16 sm:pr-20"
@@ -1109,6 +1171,10 @@ export const TradingPanel = ({currentCurrency, currentLeverage}: {currentCurrenc
   const [currency, setCurrency] = useState("USDC");
   const [mounted, setMounted] = useState(false);
   
+  // Manual size input states
+  const [sizeInputValue, setSizeInputValue] = useState("0.00");
+  const [isManualSizeInput, setIsManualSizeInput] = useState(false);
+  
   // Margin and leverage states
   const [marginMode, setMarginMode] = useState<"Cross" | "Isolated">("Cross");
   const [maxLeverage, setMaxLeverage] = useState<number>(currentLeverage);
@@ -1304,12 +1370,31 @@ export const TradingPanel = ({currentCurrency, currentLeverage}: {currentCurrenc
   
   // Order value (notional) = availableToTrade * userLeverage * percentage
   const availableToTrade = activeSide === "buy" ? availableToTradeBuy : availableToTradeSell;
-  const orderValue = (availableToTrade * userLeverage * sliderValue) / 100;
+  const sliderBasedOrderValue = (availableToTrade * userLeverage * sliderValue) / 100;
   
-  // Prevent division by zero and handle invalid values
-  const orderValueInCurrency = currencyPrice > 0 && isFinite(currencyPrice)
-    ? orderValue / currencyPrice 
-    : 0;
+  // When manual input is active, derive order value from typed value; otherwise use slider
+  let orderValue: number;
+  let orderValueInCurrency: number;
+
+  if (isManualSizeInput && sizeInputValue !== '') {
+    const typedValue = parseFloat(sizeInputValue) || 0;
+    if (currency === 'USDC') {
+      orderValue = typedValue;
+      orderValueInCurrency = currencyPrice > 0 && isFinite(currencyPrice) ? typedValue / currencyPrice : 0;
+    } else {
+      orderValueInCurrency = typedValue;
+      orderValue = typedValue * currencyPrice;
+    }
+  } else {
+    orderValue = sliderBasedOrderValue;
+    orderValueInCurrency = currencyPrice > 0 && isFinite(currencyPrice)
+      ? sliderBasedOrderValue / currencyPrice 
+      : 0;
+  }
+
+  // Max order value for validation (slider at 100%)
+  const maxOrderValueUsdc = availableToTrade * userLeverage;
+  const isSizeExceedsMax = orderValue > maxOrderValueUsdc && orderValue > 0;
   
   // Calculate market price (p) for market orders
   // Formula: markPrice ± (slippage percentage of markPrice), then format according to Hyperliquid rules
@@ -1337,6 +1422,48 @@ export const TradingPanel = ({currentCurrency, currentLeverage}: {currentCurrenc
     setMounted(true);
   }, []);
 
+  // Sync slider → input: when slider changes and not manually editing, update the input display
+  useEffect(() => {
+    if (!isManualSizeInput) {
+      const displayValue = currency === "USDC" 
+        ? addDecimals(sliderBasedOrderValue) 
+        : addDecimals(sliderBasedOrderValue > 0 && currencyPrice > 0 ? sliderBasedOrderValue / currencyPrice : 0, szDecimals);
+      setSizeInputValue(displayValue);
+    }
+  }, [isManualSizeInput, sliderBasedOrderValue, currency, currencyPrice, szDecimals]);
+
+  // Handle manual size input change
+  const handleSizeInputChange = useCallback((value: string) => {
+    setSizeInputValue(value);
+    setIsManualSizeInput(true);
+
+    const numValue = parseFloat(value);
+    if (value === '' || isNaN(numValue) || numValue === 0) {
+      setSliderValue(0);
+      return;
+    }
+
+    // Reverse-calculate slider value from typed value
+    let orderVal: number;
+    if (currency === 'USDC') {
+      orderVal = numValue;
+    } else {
+      orderVal = numValue * currencyPrice;
+    }
+
+    const maxVal = availableToTrade * userLeverage;
+    if (maxVal > 0) {
+      const newSlider = Math.min(100, Math.round((orderVal * 100) / maxVal));
+      setSliderValue(newSlider);
+    }
+  }, [currency, currencyPrice, availableToTrade, userLeverage]);
+
+  // Handle slider change (user drags slider directly)
+  const handleSliderChange = useCallback((value: number) => {
+    setSliderValue(value);
+    setIsManualSizeInput(false);
+  }, []);
+
   // Reset limit price when switching order types
   useEffect(() => {
     if (orderType === "Market") {
@@ -1354,6 +1481,8 @@ export const TradingPanel = ({currentCurrency, currentLeverage}: {currentCurrenc
     setIsTpslEnabled(false); // Reset TP/SL when currency changes
     setTakeProfitPrice(undefined);
     setStopLossPrice(undefined);
+    setSizeInputValue("0.00"); // Reset size input
+    setIsManualSizeInput(false); // Reset manual input flag
   }, [currentCurrency, setMarkPrice]);
 
   // Handle mid price click - set limit order price to mid price
@@ -1418,7 +1547,7 @@ export const TradingPanel = ({currentCurrency, currentLeverage}: {currentCurrenc
     <div className="w-full sm:w-80 lg:w-full bg-gray-950 border-l border-gray-800 flex flex-col text-xs h-full overflow-hidden relative">
       {/* Loading Overlay - Show until all initial data is loaded */}
       {isLoadingInitialData && (
-        <div className="absolute inset-0 bg-gray-950/80 backdrop-blur-sm z-50 flex items-center justify-center">
+        <div className="absolute inset-0 bg-gray-950/80 backdrop-blur-sm z-10 flex items-center justify-center">
           <div className="flex flex-col items-center gap-3">
             <svg className="animate-spin h-8 w-8 text-green-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
               <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
@@ -1540,11 +1669,17 @@ export const TradingPanel = ({currentCurrency, currentLeverage}: {currentCurrenc
 
 
         <SizeInput
-          size={currency === "USDC" ? addDecimals(orderValue) : addDecimals(orderValueInCurrency,szDecimals)}
+          size={sizeInputValue}
           currency={currency}
-          onCurrencyChange={() => setCurrency(currency === "USDC" ? currentCurrency : "USDC")}
-          />
-        <SizeSlider value={sliderValue} onChange={setSliderValue} disabled={isLoadingInitialData} />
+          onCurrencyChange={() => {
+            setCurrency(currency === "USDC" ? currentCurrency : "USDC");
+            setIsManualSizeInput(false);
+          }}
+          onChange={handleSizeInputChange}
+          hasError={isSizeExceedsMax}
+          maxDecimals={currency === "USDC" ? 2 : szDecimals}
+        />
+        <SizeSlider value={sliderValue} onChange={handleSliderChange} disabled={isLoadingInitialData} />
           {/* Time In Force Dropdown for Limit Orders */}
           {orderType === "Limit" && (
             <div className="space-y-2">
@@ -1639,7 +1774,8 @@ export const TradingPanel = ({currentCurrency, currentLeverage}: {currentCurrenc
             isDisabled={
               (isApprovingBuilderFee || isApprovingAgent || isCheckingBuilderFee) || 
               (currency === "USDC" ? orderValue <= 0 : orderValueInCurrency <= 0) ||
-              (orderType === "Limit" && !limitOrderPrice)
+              (orderType === "Limit" && !limitOrderPrice) ||
+              isSizeExceedsMax
             }
             onClick={async () => {
               if (!isConnected || !address) {

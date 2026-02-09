@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { createChart, ColorType, CandlestickSeries, HistogramSeries, CandlestickData, CrosshairMode, IChartApi, ISeriesApi, SeriesMarker, Time, createSeriesMarkers, ISeriesMarkersPluginApi, IPriceLine } from "lightweight-charts";
-import { BarChart3, Maximize2 } from "lucide-react";
+import { BarChart3, Maximize2, Minimize2 } from "lucide-react";
 import { IntervalDropdown, IntervalSection } from "../../ui/dropdown/IntervalDropdown";
 import { Subscription } from "@nktkas/hyperliquid";
 import { infoClient, subscriptionClient } from "@/lib/config/hyperliquied/hyperliquid-client";
@@ -12,6 +12,7 @@ import { useAccount } from "wagmi";
 import { info } from "node:console";
 import { useBottomPanelStore } from "@/store/bottom-panel";
 import { errorHandler } from "@/store/errorHandler";
+import { useThemeStore } from "@/store/theme";
 
 type TimePeriod = {
   title: string;
@@ -86,13 +87,13 @@ const transformCandleData = (apiData: CandleApiData[]): ChartCandleData[] => {
 };
 
 // Transform volume data
-const transformVolumeData = (apiData: CandleApiData[]): ChartVolumeData[] => {
+const transformVolumeData = (apiData: CandleApiData[], themeUpColor = "#10b981", themeDownColor = "#ef4444"): ChartVolumeData[] => {
   return apiData.map((candle) => ({
     time: Math.floor(candle.t / 1000) as Time,
     value: parseFloat(candle.v),
     color: parseFloat(candle.c) > parseFloat(candle.o) 
-      ? "#22c55e80" // green with opacity
-      : "#ef444480", // red with opacity
+      ? (themeUpColor + "80") // up color with opacity
+      : (themeDownColor + "80"), // down color with opacity
   }));
 };
 
@@ -128,7 +129,9 @@ const getCandleTime = (timestamp: number, interval: string): number => {
 const createMarkersFromFills = (
   fills: FillData[],
   interval: string,
-  selectedTimePeriod: TimePeriod | undefined
+  selectedTimePeriod: TimePeriod | undefined,
+  themeUpColor = "#10b981",
+  themeDownColor = "#ef4444"
 ): SeriesMarker<Time>[] => {
   if (!interval || !selectedTimePeriod || fills.length === 0) return [];
 
@@ -183,7 +186,7 @@ const createMarkersFromFills = (
       markers.push({
         time: candleTime as Time,
         position: "aboveBar",
-        color: fill.side === "B" ? "#22c55e" : "#ef4444", // green for buy, red for sell
+        color: fill.side === "B" ? themeUpColor : themeDownColor,
         shape: "circle",
         text: fill.side === "B" ? "B" : "S",
         size: 1.5, // Larger size to ensure text is visible inside circles
@@ -214,6 +217,8 @@ export const TradingChart = ({ currency }: { currency: string }) => {
   const [hoveredCandle, setHoveredCandle] = useState<{ time: number; open: number; high: number; low: number; close: number } | null>(null);
   const [fillsData, setFillsData] = useState<FillData[]>([]);
   const [currentCurrency, setCurrentCurrency] = useState<string | null>(null);
+  const [isFullscreen, setIsFullscreen] = useState(false);
+  const { upColor, downColor } = useThemeStore();
 
   
   const [timePeriods, setTimePeriods] = useState<TimePeriod[]>([
@@ -488,10 +493,10 @@ export const TradingChart = ({ currency }: { currency: string }) => {
       text: "#9ca3af", // gray-400
       grid: "#1f2937", // gray-800
       border: "#374151", // gray-700
-      crosshair: "#22c55e", // green-400
-      upColor: "#22c55e", // green-400
-      downColor: "#ef4444", // red-500
-      volumeBase: "#22c55e", // green-400
+      crosshair: upColor,
+      upColor: upColor,
+      downColor: downColor,
+      volumeBase: upColor,
     };
 
     // Get initial container dimensions
@@ -598,6 +603,35 @@ export const TradingChart = ({ currency }: { currency: string }) => {
       chart.remove();
     };
   }, []);
+
+  // Update chart colors when theme changes
+  useEffect(() => {
+    if (!chartRef.current || !candlestickSeriesRef.current || !volumeSeriesRef.current) return;
+
+    chartRef.current.applyOptions({
+      crosshair: {
+        vertLine: { color: upColor },
+        horzLine: { color: upColor },
+      },
+    });
+
+    candlestickSeriesRef.current.applyOptions({
+      upColor: upColor,
+      downColor: downColor,
+      wickUpColor: upColor,
+      wickDownColor: downColor,
+    });
+
+    volumeSeriesRef.current.applyOptions({
+      color: upColor,
+    });
+
+    // Re-set volume data with new colors
+    if (candleData.length > 0) {
+      const chartVolumeData = transformVolumeData(candleData, upColor, downColor);
+      volumeSeriesRef.current.setData(chartVolumeData);
+    }
+  }, [upColor, downColor]);
 
   // Subscribe to crosshair move events to track hovered candle
   useEffect(() => {
@@ -728,9 +762,11 @@ export const TradingChart = ({ currency }: { currency: string }) => {
     return createMarkersFromFills(
       filteredFills,
       selectedInterval || "15m",
-      selectedTimePeriodObj
+      selectedTimePeriodObj,
+      upColor,
+      downColor
     );
-  }, [filteredFills, selectedInterval, selectedTimePeriodObj]);
+  }, [filteredFills, selectedInterval, selectedTimePeriodObj, upColor, downColor]);
 
   // Update chart when candle data changes
   useEffect(() => {
@@ -746,7 +782,7 @@ export const TradingChart = ({ currency }: { currency: string }) => {
     }
 
     const chartCandleData = transformCandleData(candleData);
-    const chartVolumeData = transformVolumeData(candleData);
+    const chartVolumeData = transformVolumeData(candleData, upColor, downColor);
 
     candlestickSeriesRef.current.setData(chartCandleData);
     volumeSeriesRef.current.setData(chartVolumeData);
@@ -899,6 +935,36 @@ export const TradingChart = ({ currency }: { currency: string }) => {
     setLocalStorage(LOCAL_STORAGE_KEYS.SELECTED_INTERVAL, value);
     saveFavoritesToStorage(updatedInterval);
   };
+
+  // Fullscreen toggle
+  const toggleFullscreen = () => {
+    setIsFullscreen((prev) => !prev);
+  };
+
+  // Close fullscreen on Escape key
+  useEffect(() => {
+    if (!isFullscreen) return;
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") {
+        setIsFullscreen(false);
+      }
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [isFullscreen]);
+
+  // Resize chart when fullscreen changes
+  useEffect(() => {
+    if (chartRef.current) {
+      // Give the DOM a tick to apply the fullscreen styles before resizing
+      setTimeout(() => {
+        chartRef.current?.applyOptions({
+          width: chartContainerRef.current?.clientWidth ?? 0,
+          height: chartContainerRef.current?.clientHeight ?? chartHeight,
+        });
+      }, 50);
+    }
+  }, [isFullscreen]);
 
 
   const favoriteItems = getFavoriteItems();
@@ -1150,7 +1216,7 @@ const positionSize = positionData?.szi || null;
       if (positionData.entryPx) {
         entryPriceLineRef.current = series.createPriceLine({
           price: parseFloat(positionData.entryPx),
-          color: "#22c55e", // green-400 (green)
+          color: upColor,
           lineWidth: 1,
           lineStyle: 2, // dashed
           axisLabelVisible: true,
@@ -1289,7 +1355,7 @@ const positionSize = positionData?.szi || null;
 
 
   return (
-    <div className="flex-1 flex flex-col bg-gray-950 w-full">
+    <div className={`flex-1 flex flex-col bg-gray-950 w-full ${isFullscreen ? 'fixed inset-0 z-9999' : ''}`}>
       {/* Chart toolbar */}
       <div className="flex items-center justify-between px-2 sm:px-3 py-1.5 sm:py-2 border-b border-gray-800">
         <div className="flex items-center gap-0.5 sm:gap-1 overflow-x-auto [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
@@ -1324,8 +1390,16 @@ const positionSize = positionData?.szi || null;
             showFavorites={true}
           />
 
-          <button className="h-6 w-6 sm:h-7 sm:w-7 text-gray-400 hover:text-white hover:bg-gray-900/50 rounded transition-colors flex items-center justify-center">
-            <Maximize2 className="h-3 w-3 sm:h-3.5 sm:w-3.5" />
+          <button
+            onClick={toggleFullscreen}
+            className="h-6 w-6 sm:h-7 sm:w-7 text-gray-400 hover:text-white hover:bg-gray-900/50 rounded transition-colors flex items-center justify-center"
+            title={isFullscreen ? "Exit fullscreen" : "Fullscreen"}
+          >
+            {isFullscreen ? (
+              <Minimize2 className="h-3 w-3 sm:h-3.5 sm:w-3.5" />
+            ) : (
+              <Maximize2 className="h-3 w-3 sm:h-3.5 sm:w-3.5" />
+            )}
           </button>
         </div>
       </div>

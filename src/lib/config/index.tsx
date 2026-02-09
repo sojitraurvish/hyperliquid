@@ -118,6 +118,6 @@ export const SEO_SCHEMA={
   }
 
 export const BUILDER_CONFIG = {
-  BUILDER_FEE_ADDRESS: "0xb5789FbdA5C37267781Df8baD3738E911D5F500d" as `0x${string}`,
+  BUILDER_FEE_ADDRESS: "0x20b627DDd49a2f4C4Df0f87B9a3eB4c92a95aA33" as `0x${string}`,
   BUILDER_FEE_RATE: 10,
 } as const;

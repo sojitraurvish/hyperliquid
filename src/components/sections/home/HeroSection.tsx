@@ -46,12 +46,12 @@ export const HeroSection = () => {
           <defs>
             <linearGradient id="candleGradient" x1="0%" y1="0%" x2="0%" y2="100%">
               <stop offset="0%" stopColor="transparent" />
-              <stop offset="50%" stopColor="#22c55e" stopOpacity="0.8" />
+              <stop offset="50%" stopColor="#10b981" stopOpacity="0.8" />
               <stop offset="100%" stopColor="transparent" />
             </linearGradient>
             <linearGradient id="lineGradient" x1="0%" y1="0%" x2="0%" y2="100%">
-              <stop offset="0%" stopColor="#22c55e" stopOpacity="0.6" />
-              <stop offset="100%" stopColor="#22c55e" stopOpacity="0.2" />
+              <stop offset="0%" stopColor="#10b981" stopOpacity="0.6" />
+              <stop offset="100%" stopColor="#10b981" stopOpacity="0.2" />
             </linearGradient>
             <filter id="glow">
               <feGaussianBlur stdDeviation="0.5" result="coloredBlur" />
@@ -105,7 +105,7 @@ export const HeroSection = () => {
               cx={point.x}
               cy={point.y}
               r="0.4"
-              fill="#22c55e"
+              fill="#10b981"
               opacity="0.8"
               filter="url(#glow)"
             />
@@ -130,7 +130,7 @@ export const HeroSection = () => {
                 y1={candle.y}
                 x2={candle.x}
                 y2={candle.y - 2}
-                stroke="#22c55e"
+                stroke="#10b981"
                 strokeWidth="0.2"
                 opacity="0.6"
               />
@@ -140,7 +140,7 @@ export const HeroSection = () => {
                 y1={candle.y + candle.height}
                 x2={candle.x}
                 y2={candle.y + candle.height + 2}
-                stroke="#22c55e"
+                stroke="#10b981"
                 strokeWidth="0.2"
                 opacity="0.6"
               />

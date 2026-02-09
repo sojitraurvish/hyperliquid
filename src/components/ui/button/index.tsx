@@ -6,11 +6,11 @@ import React, { ReactNode } from "react";
 
 
 const VARIANTS = {
-  [VARIANT_TYPES.NOT_SELECTED]: "",
+  [VARIANT_TYPES.NOT_SELECTED]: "cursor-pointer",
   [VARIANT_TYPES.PRIMARY]: "px-2 py-2 flex items-center justify-center text-gray-300 hover:bg-gray-800 shadow-lg hover:shadow-xl transition-all duration-300 rounded-lg cursor-pointer",
-  [VARIANT_TYPES.SECONDARY]: "w-full flex items-center gap-4 p-4 bg-gray-800/50 hover:bg-gray-700/50 rounded-lg transition-all duration-200 text-white",
-  [VARIANT_TYPES.TERTIARY]: "text-xs h-6 sm:h-7 px-1.5 sm:px-2 text-gray-400 hover:text-white hover:bg-gray-900/50 rounded transition-colors whitespace-nowrap",
-  [VARIANT_TYPES.QUATERNARY]: "text-xs h-5 sm:h-6 px-1.5 sm:px-2 text-gray-400 hover:text-white hover:bg-gray-900/50 rounded transition-colors whitespace-nowrap",
+  [VARIANT_TYPES.SECONDARY]: "w-full flex items-center gap-4 p-4 bg-gray-800/50 hover:bg-gray-700/50 rounded-lg transition-all duration-200 text-white cursor-pointer",
+  [VARIANT_TYPES.TERTIARY]: "text-xs h-6 sm:h-7 px-1.5 sm:px-2 text-gray-400 hover:text-white hover:bg-gray-900/50 rounded transition-colors whitespace-nowrap cursor-pointer",
+  [VARIANT_TYPES.QUATERNARY]: "text-xs h-5 sm:h-6 px-1.5 sm:px-2 text-gray-400 hover:text-white hover:bg-gray-900/50 rounded transition-colors whitespace-nowrap cursor-pointer",
 } as const;
 
 type VariantKeys = keyof typeof VARIANTS;

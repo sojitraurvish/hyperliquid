@@ -5,7 +5,7 @@ import AppModal from "@/components/ui/modal";
 import AppButton from "@/components/ui/button";
 import AppDropdown from "@/components/ui/dropdown";
 import { ENVIRONMENT, ENVIRONMENT_TYPES, VARIANT_TYPES } from "@/lib/constants";
-import {chains} from "@/lib/config/wallet-adapter/wallet-adapter";
+import { activeChain } from "@/lib/config/wallet-adapter/wallet-adapter";
 import { appToast } from "@/components/ui/toast";
 import { Coins } from "lucide-react";
 
@@ -13,7 +13,7 @@ const USDC_DECIMALS = 6;
 
 // Default testnet constants (from Hyperliquid docs)
 // USDC deposits happen on Arbitrum Sepolia, which bridges to Hyperliquid testnet
-const DEFAULT_CHAIN_ID =  chains[0].id // Arbitrum Sepolia chain id (421614)
+const DEFAULT_CHAIN_ID = activeChain.id // Active chain based on current network preference
 const USDC_ADDRESS = ENVIRONMENT === ENVIRONMENT_TYPES.DEVELOPMENT ? "0x1baAbB04529D43a73232B713C0FE471f7c7334d5" : "0xaf88d065e77c8cC2239327C5EDb3A432268e5831" as `0x${string}`;
 const BRIDGE_ADDRESS = ENVIRONMENT === ENVIRONMENT_TYPES.DEVELOPMENT ? "0x08cfc1B6b2dCF36A1480b99353A354AA8AC56f89" : "0x2df1c51e09aecf9cacb7bc98cb1742757f163df7" as `0x${string}`;
 

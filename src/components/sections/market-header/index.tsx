@@ -666,7 +666,7 @@ export const MarketHeader = ({ currency }: { currency: string }) => {
       <div className="border-b border-gray-800 bg-gray-950">
         <div className="px-4 py-2.5 flex items-center gap-3">
           {/* Star Icon */}
-          <button className="text-gray-400 hover:text-yellow-400 transition-colors shrink-0">
+          <button className="text-gray-400 hover:text-yellow-400 transition-colors shrink-0 cursor-pointer">
             <Star fill={favoriteMarkets.length > 0 ? "yellow" : "none"} className="h-4 w-4" />
           </button>
 
@@ -674,7 +674,7 @@ export const MarketHeader = ({ currency }: { currency: string }) => {
           <div className="flex items-center bg-gray-900 rounded-md p-0.5 shrink-0">
             <button
               onClick={() => setViewMode("$")}
-              className={`px-2 py-1 text-xs font-medium rounded transition-colors ${
+              className={`px-2 py-1 text-xs font-medium rounded transition-colors cursor-pointer ${
                 viewMode === "$"
                   ? "bg-green-500/20 text-green-400"
                   : "text-gray-400 hover:text-gray-300"
@@ -684,7 +684,7 @@ export const MarketHeader = ({ currency }: { currency: string }) => {
             </button>
             <button
               onClick={() => setViewMode("%")}
-              className={`px-2 py-1 text-xs font-medium rounded transition-colors ${
+              className={`px-2 py-1 text-xs font-medium rounded transition-colors cursor-pointer ${
                 viewMode === "%"
                   ? "bg-green-500/20 text-green-400"
                   : "text-gray-400 hover:text-gray-300"
@@ -698,7 +698,7 @@ export const MarketHeader = ({ currency }: { currency: string }) => {
           {hasOverflow && canScrollLeft && (
             <button 
               onClick={scrollLeft}
-              className="text-gray-400 hover:text-gray-300 transition-colors shrink-0"
+              className="text-gray-400 hover:text-gray-300 transition-colors shrink-0 cursor-pointer"
             >
               <ChevronLeft className="h-4 w-4" />
             </button>
@@ -724,7 +724,7 @@ export const MarketHeader = ({ currency }: { currency: string }) => {
                   <button
                     key={market.symbol}
                     onClick={() => handleMarketSelect(market.symbol)}
-                    className="text-sm font-medium hover:bg-gray-900/50 px-2 py-1 rounded transition-colors shrink-0 whitespace-nowrap"
+                    className="text-sm font-medium hover:bg-gray-800 px-2 py-1 rounded transition-colors shrink-0 whitespace-nowrap cursor-pointer"
                   >
                     <span className="text-white">{market.symbol}</span>
                     <span className={`ml-2 ${isPositive ? "text-green-500" : "text-red-500"}`}>
@@ -740,7 +740,7 @@ export const MarketHeader = ({ currency }: { currency: string }) => {
           {hasOverflow && canScrollRight && (
             <button 
               onClick={scrollRight}
-              className="text-gray-400 hover:text-gray-300 transition-colors shrink-0"
+              className="text-gray-400 hover:text-gray-300 transition-colors shrink-0 cursor-pointer"
             >
               <ChevronRight className="h-4 w-4" />
             </button>
@@ -756,7 +756,7 @@ export const MarketHeader = ({ currency }: { currency: string }) => {
                 <button 
                   ref={marketButtonRefDesktop}
                   onClick={handleDropdownToggle}
-                  className="text-white hover:bg-gray-900/50 p-2 h-auto rounded transition-colors shrink-0"
+                  className="text-white hover:bg-gray-900/50 p-2 h-auto rounded transition-colors shrink-0 cursor-pointer"
                 >
                   <div className="flex items-center gap-2">
                     <img 
@@ -794,7 +794,7 @@ export const MarketHeader = ({ currency }: { currency: string }) => {
                       {searchQuery && (
                         <button
                           onClick={() => setSearchQuery("")}
-                          className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-white"
+                          className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-white cursor-pointer"
                         >
                           <X className="h-4 w-4" />
                         </button>
@@ -811,7 +811,7 @@ export const MarketHeader = ({ currency }: { currency: string }) => {
                     ) : (
                       <div className="min-w-full">
                         {/* Table Header */}
-                        <div className="sticky top-0 bg-gray-900 border-b border-gray-800 px-4 py-2 grid grid-cols-[2fr_1fr_1.5fr_1fr_1fr_1fr] gap-4 text-xs font-medium text-gray-400">
+                        <div className="sticky top-0 bg-gray-900 border-b border-gray-800 px-4 py-2 grid grid-cols-[minmax(0,2fr)_minmax(0,1fr)_minmax(0,1.5fr)_minmax(0,0.8fr)_minmax(0,1.2fr)_minmax(0,1.5fr)] gap-4 text-xs font-medium text-gray-400">
                           <div>Symbol</div>
                           <div className="text-right">Last Price</div>
                           <div className="text-right">24H Change</div>
@@ -833,7 +833,7 @@ export const MarketHeader = ({ currency }: { currency: string }) => {
                               key={market.symbol}
                               type="button"
                               onClick={(e) => handleMarketSelect(market.symbol, e)}
-                              className={`w-full px-4 py-2.5 grid grid-cols-[2fr_1fr_1.5fr_1fr_1fr_1fr] gap-4 items-center hover:bg-gray-800/50 transition-colors border-b border-gray-800/50 last:border-b-0 text-xs ${
+                              className={`w-full cursor-pointer px-4 py-2.5 grid grid-cols-[minmax(0,2fr)_minmax(0,1fr)_minmax(0,1.5fr)_minmax(0,0.8fr)_minmax(0,1.2fr)_minmax(0,1.5fr)] gap-4 items-center hover:bg-gray-800 transition-colors border-b border-gray-800/50 last:border-b-0 text-xs ${
                                 isSelected ? 'bg-gray-800/30' : ''
                               }`}
                             >
@@ -841,7 +841,7 @@ export const MarketHeader = ({ currency }: { currency: string }) => {
                                 <button
                                   type="button"
                                   onClick={(e) => handleToggleFavorite(market.symbol, e)}
-                                  className="shrink-0 hover:scale-110 transition-transform"
+                                  className="shrink-0 hover:scale-110 transition-transform cursor-pointer"
                                 >
                                   <Star
                                     fill={isFavorite ? "yellow" : "none"}
@@ -868,19 +868,19 @@ export const MarketHeader = ({ currency }: { currency: string }) => {
                                   <div className="w-1.5 h-1.5 rounded-full bg-green-400 shrink-0"></div>
                                 )}
                               </div>
-                              <div className="text-right font-medium tabular-nums text-white">
+                              <div className="text-right font-medium tabular-nums text-white whitespace-nowrap overflow-hidden text-ellipsis">
                                 {market.lastPrice != null ? market.lastPrice.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : "—"}
                               </div>
-                              <div className={`text-right font-medium tabular-nums ${isPositive ? "text-green-500" : "text-red-500"}`}>
+                              <div className={`text-right font-medium tabular-nums whitespace-nowrap overflow-hidden text-ellipsis ${isPositive ? "text-green-500" : "text-red-500"}`}>
                                 {market.change24h != null ? `${isPositive ? "+" : ""}${market.change24h.toFixed(2)}` : "—"} / {market.change24hPer != null ? `${isPositive ? "+" : ""}${market.change24hPer.toFixed(2)}%` : "—"}
                               </div>
-                              <div className={`text-right font-medium tabular-nums ${(funding8hValue ?? 0) >= 0 ? "text-white" : "text-red-500"}`}>
+                              <div className={`text-right font-medium tabular-nums whitespace-nowrap overflow-hidden text-ellipsis ${(funding8hValue ?? 0) >= 0 ? "text-white" : "text-red-500"}`}>
                                 {funding8hDisplay}
                               </div>
-                              <div className="text-right font-medium tabular-nums text-white">
+                              <div className="text-right font-medium tabular-nums text-white whitespace-nowrap overflow-hidden text-ellipsis">
                                 {market.volume24h != null ? `$${market.volume24h.toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 0 })}` : "—"}
                               </div>
-                              <div className="text-right font-medium tabular-nums text-white">
+                              <div className="text-right font-medium tabular-nums text-white whitespace-nowrap overflow-hidden text-ellipsis">
                                 {market.openInterest != null ? `$${market.openInterest.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` : "—"}
                               </div>
                             </button>
@@ -952,7 +952,7 @@ export const MarketHeader = ({ currency }: { currency: string }) => {
                 <button 
                   ref={marketButtonRefMobile}
                   onClick={handleDropdownToggle}
-                  className="text-white hover:bg-gray-900/50 p-2 h-auto rounded transition-colors"
+                  className="text-white hover:bg-gray-900/50 p-2 h-auto rounded transition-colors cursor-pointer"
                 >
                   <div className="flex items-center gap-2">
                     <img 
@@ -990,7 +990,7 @@ export const MarketHeader = ({ currency }: { currency: string }) => {
                       {searchQuery && (
                         <button
                           onClick={() => setSearchQuery("")}
-                          className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-white"
+                          className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-white cursor-pointer"
                         >
                           <X className="h-4 w-4" />
                         </button>
@@ -1015,7 +1015,7 @@ export const MarketHeader = ({ currency }: { currency: string }) => {
                             key={market.symbol}
                             type="button"
                             onClick={(e) => handleMarketSelect(market.symbol, e)}
-                            className={`w-full px-4 py-3 flex items-center justify-between hover:bg-gray-800/50 transition-colors border-b border-gray-800/50 last:border-b-0 ${
+                            className={`w-full  px-4 py-3 flex items-center justify-between hover:bg-gray-800/50 transition-colors border-b border-gray-800/50 last:border-b-0 cursor-pointer ${
                               isSelected ? 'bg-gray-800/30' : ''
                             }`}
                           >
@@ -1032,7 +1032,7 @@ export const MarketHeader = ({ currency }: { currency: string }) => {
                                 <button
                                   type="button"
                                   onClick={(e) => handleToggleFavorite(market.symbol, e)}
-                                  className="shrink-0 hover:scale-110 transition-transform"
+                                  className="shrink-0 hover:scale-110 transition-transform cursor-pointer"
                                 >
                                   <Star
                                     fill={isFavorite ? "yellow" : "none"}
@@ -1081,7 +1081,7 @@ export const MarketHeader = ({ currency }: { currency: string }) => {
           </div>
           <button
             onClick={() => setIsExpanded(!isExpanded)}
-            className="ml-2 p-2 hover:bg-gray-900/50 rounded transition-colors"
+            className="ml-2 p-2 hover:bg-gray-900/50 rounded transition-colors cursor-pointer"
           >
             {isExpanded ? (
               <ChevronUp className="h-4 w-4 text-gray-400" />

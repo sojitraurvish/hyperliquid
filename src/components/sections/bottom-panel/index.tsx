@@ -4,7 +4,9 @@ import { useState, useEffect, useMemo } from "react";
 import { ChevronDown, ExternalLink, Pencil } from "lucide-react";
 import { infoClient , subscriptionClient, transport, getSymbolConverter} from "@/lib/config/hyperliquied/hyperliquid-client";
 import { Subscription } from "@nktkas/hyperliquid";
-import { useAccount } from "wagmi";
+import { useAccount, useWalletClient } from "wagmi";
+import { getWalletClient } from "wagmi/actions";
+import { config } from "@/lib/config/wallet-adapter/wallet-adapter";
 import { useApiWallet } from "@/hooks/useWallet";
 import { useBuilderFee } from "@/hooks/useBuilderFee";
 import { useBottomPanelStore } from "@/store/bottom-panel";
@@ -22,6 +24,7 @@ import { useMarketStore } from "@/store/market";
 import { errorHandler } from "@/store/errorHandler";
 import { PositionTpslModal } from "@/components/sections/portfolio/PositionTpslModal";
 import { placePositionTpslOrder, cancelOrdersWithAgent } from "@/lib/services/trading-panel";
+import { transferUsdcBetweenAccounts } from "@/lib/services/bottom-panel";
 // ==================== Types ====================
 
 type TabValue = "balances" | "positions" | "openorders" | "tradehistory" | "fundinghistory" | "orderhistory";
@@ -66,6 +69,15 @@ interface BalancesData {
   timestamp: number;
   error?: unknown;
 }
+
+// ==================== Grid Template Constants ====================
+// Shared grid templates ensure header, row, and shimmer always align
+
+const BALANCES_GRID = '1.5fr 1.5fr 1.5fr 1fr 1fr';
+const TRADE_HISTORY_GRID = '2fr 0.8fr 1fr 1.2fr 1.5fr 1.5fr 1.2fr 1.2fr';
+const FUNDING_HISTORY_GRID = '2fr 0.8fr 1.5fr 1fr 1fr 1fr';
+const OPEN_ORDERS_GRID = '2fr 0.8fr 0.8fr 0.8fr 1fr 1fr 1.2fr 1fr 0.8fr 1.2fr 0.8fr 0.8fr';
+const ORDER_HISTORY_GRID = '2fr 1fr 0.8fr 0.8fr 1fr 1fr 1.2fr 1fr 0.8fr 0.8fr 1fr 1fr';
 
 // ==================== Modular UI Components ====================
 
@@ -267,47 +279,34 @@ const PositionsTableHeader = () => {
 
 // Balances Table Header Component
 const BalancesTableHeader = () => {
-  const headers = [
-    { label: "Coin", className: "col-span-1" },
-    { label: "Total Balance", className: "col-span-1" },
-    { label: "Available Balance", className: "col-span-1" },
-    { label: "USDC Value", icon: true, className: "hidden md:col-span-1 md:block" },
-  ];
+  const headers = ["Coin", "Total Balance", "Available Balance", "USDC Value", "Transfer"];
 
   return (
-    <div className="grid grid-cols-3 md:grid-cols-4 gap-1 sm:gap-2 px-2 sm:px-3 py-2 text-xs text-gray-400 border-b border-gray-800">
-      {headers.map((header, index) => (
-        <div
-          key={index}
-          className={`flex items-center ${header.icon ? "gap-1.5" : ""} ${header.className}`}
-        >
-          <span className="leading-none">{header.label}</span>
-          {/* {header.icon && <ChevronDown className="h-3 w-3 shrink-0 mt-0.5" />} */}
+    <div
+      className="grid gap-2 sm:gap-4 px-2 sm:px-3 py-2 text-xs text-gray-400 border-b border-gray-800"
+      style={{ gridTemplateColumns: BALANCES_GRID }}
+    >
+      {headers.map((label, index) => (
+        <div key={index} className="truncate">
+          {label}
         </div>
       ))}
     </div>
   );
 };
 
-// Orders Table Header Component
+// Orders Table Header Component (legacy - kept for compatibility)
 const OrdersTableHeader = () => {
-  const headers = [
-    { label: "Time", className: "col-span-2 sm:col-span-1" },
-    { label: "Pair", className: "col-span-2 sm:col-span-1" },
-    { label: "Type", className: "col-span-2 sm:col-span-1" },
-    { label: "Side", className: "hidden sm:col-span-1 sm:block" },
-    { label: "Price", className: "hidden md:col-span-1 md:block" },
-    { label: "Amount", className: "hidden lg:col-span-1 lg:block" },
-    { label: "Filled", className: "hidden xl:col-span-1 xl:block" },
-    { label: "Status", className: "hidden xl:col-span-1 xl:block" },
-    { label: "Actions", className: "col-span-2 sm:col-span-1" },
-  ];
+  const headers = ["Time", "Pair", "Type", "Side", "Price", "Amount", "Filled", "Status", "Actions"];
 
   return (
-    <div className="grid grid-cols-6 sm:grid-cols-7 md:grid-cols-8 lg:grid-cols-9 xl:grid-cols-10 gap-2 sm:gap-4 px-2 sm:px-3 py-2 text-xs text-gray-400 border-b border-gray-800">
-      {headers.map((header, index) => (
-        <div key={index} className={header.className}>
-          {header.label}
+    <div
+      className="grid gap-2 sm:gap-4 px-2 sm:px-3 py-2 text-xs text-gray-400 border-b border-gray-800"
+      style={{ gridTemplateColumns: '2fr 1fr 1fr 1fr 1fr 1fr 1fr 1fr 1fr' }}
+    >
+      {headers.map((label, index) => (
+        <div key={index} className="truncate">
+          {label}
         </div>
       ))}
     </div>
@@ -316,27 +315,16 @@ const OrdersTableHeader = () => {
 
 // Open Orders Table Header Component
 const OpenOrdersTableHeader = () => {
-  const headers = [
-    { label: "Time" },
-    { label: "Type" },
-    { label: "Coin" },
-    { label: "Direction" },
-    { label: "Size" },
-    { label: "Original Size" },
-    { label: "Order Value", icon: true },
-    { label: "Price" },
-    { label: "Reduce Only" },
-    { label: "Trigger Conditions" },
-    { label: "TP/SL" },
-    { label: "" }, // Empty column for actions
-  ];
+  const headers = ["Time", "Type", "Coin", "Direction", "Size", "Original Size", "Order Value", "Price", "Reduce Only", "Trigger Conditions", "TP/SL", ""];
 
   return (
-    <div className="sticky top-0 z-50 bg-gray-950 backdrop-blur-sm grid gap-1 px-2 sm:px-3 py-2 text-xs text-gray-400 border-b border-gray-800" style={{ gridTemplateColumns: 'repeat(12, 1fr)' }}>
-      {headers.map((header, index) => (
-        <div key={index} className="flex items-center gap-1 truncate">
-          <span>{header.label}</span>
-          {header.icon && <ChevronDown className="h-3 w-3 shrink-0" />}
+    <div
+      className="sticky top-0 z-50 bg-gray-950 backdrop-blur-sm grid gap-2 sm:gap-3 px-2 sm:px-3 py-2 text-xs text-gray-400 border-b border-gray-800"
+      style={{ gridTemplateColumns: OPEN_ORDERS_GRID }}
+    >
+      {headers.map((label, index) => (
+        <div key={index} className="truncate">
+          {label}
         </div>
       ))}
     </div>
@@ -345,26 +333,16 @@ const OpenOrdersTableHeader = () => {
 
 // Order History Table Header Component
 const OrderHistoryTableHeader = () => {
-  const headers = [
-    { label: "Date and Time" },
-    { label: "Order Type" },
-    { label: "Coin" },
-    { label: "Direction" },
-    { label: "Size" },
-    { label: "Filled Size" },
-    { label: "Order Value" },
-    { label: "Price" },
-    { label: "Reduce Only" },
-    { label: "Tp/SL" },
-    { label: "Status" },
-    { label: "Order ID" },
-  ];
+  const headers = ["Date and Time", "Order Type", "Coin", "Direction", "Size", "Filled Size", "Order Value", "Price", "Reduce Only", "Tp/SL", "Status", "Order ID"];
 
   return (
-    <div className="sticky top-0 z-50 bg-gray-950 grid gap-1 px-2 sm:px-3 py-2 text-xs text-gray-400 border-b border-gray-800 backdrop-blur-sm" style={{ gridTemplateColumns: '2fr repeat(11, 1fr)' }}>
-      {headers.map((header, index) => (
+    <div
+      className="sticky top-0 z-50 bg-gray-950 grid gap-2 sm:gap-3 px-2 sm:px-3 py-2 text-xs text-gray-400 border-b border-gray-800 backdrop-blur-sm"
+      style={{ gridTemplateColumns: ORDER_HISTORY_GRID }}
+    >
+      {headers.map((label, index) => (
         <div key={index} className="truncate">
-          {header.label}
+          {label}
         </div>
       ))}
     </div>
@@ -373,24 +351,16 @@ const OrderHistoryTableHeader = () => {
 
 // Funding History Table Header Component
 const FundingHistoryTableHeader = () => {
-  const headers = [
-    { label: "Time", icon: true },
-    { label: "Coin" },
-    { label: "Size" },
-    { label: "Position Side" },
-    { label: "Payment" },
-    { label: "Rate" },
-  ];
+  const headers = ["Time", "Coin", "Size", "Position Side", "Payment", "Rate"];
 
   return (
-    <div className="sticky top-0 z-50 bg-gray-950 backdrop-blur-sm grid grid-cols-6 gap-2 sm:gap-4 px-2 sm:px-3 py-2 text-xs text-gray-400 border-b border-gray-800">
-      {headers.map((header, index) => (
-        <div
-          key={index}
-          className="flex items-center gap-1"
-        >
-          <span>{header.label}</span>
-          {header.icon && <ChevronDown className="h-3 w-3 shrink-0" />}
+    <div
+      className="sticky top-0 z-50 bg-gray-950 backdrop-blur-sm grid gap-2 sm:gap-4 px-2 sm:px-3 py-2 text-xs text-gray-400 border-b border-gray-800"
+      style={{ gridTemplateColumns: FUNDING_HISTORY_GRID }}
+    >
+      {headers.map((label, index) => (
+        <div key={index} className="truncate">
+          {label}
         </div>
       ))}
     </div>
@@ -399,22 +369,16 @@ const FundingHistoryTableHeader = () => {
 
 // Trade History Table Header Component
 const TradeHistoryTableHeader = () => {
-  const headers = [
-    { label: "Time", className: "col-span-2 sm:col-span-1" },
-    { label: "Coin", className: "col-span-1" },
-    { label: "Direction", className: "col-span-1" },
-    { label: "Price", className: "col-span-1" },
-    { label: "Size", className: "col-span-1" },
-    { label: "Trade Value", className: "col-span-1" },
-    { label: "Fee", className: "col-span-1" },
-    { label: "Closed PNL", className: "col-span-1" },
-  ];
+  const headers = ["Time", "Coin", "Direction", "Price", "Size", "Trade Value", "Fee", "Closed PNL"];
 
   return (
-    <div className="sticky top-0 z-50 bg-gray-950 backdrop-blur-sm grid grid-cols-8 gap-2 sm:gap-4 px-2 sm:px-3 py-2 text-xs text-gray-400 border-b border-gray-800">
-      {headers.map((header, index) => (
-        <div key={index} className={header.className}>
-          {header.label}
+    <div
+      className="sticky top-0 z-50 bg-gray-950 backdrop-blur-sm grid gap-2 sm:gap-4 px-2 sm:px-3 py-2 text-xs text-gray-400 border-b border-gray-800"
+      style={{ gridTemplateColumns: TRADE_HISTORY_GRID }}
+    >
+      {headers.map((label, index) => (
+        <div key={index} className="truncate">
+          {label}
         </div>
       ))}
     </div>
@@ -446,7 +410,10 @@ const FundingHistoryRow = ({ funding }: FundingHistoryRowProps) => {
   const positionSide = "Long";
 
   return (
-    <div className="grid grid-cols-6 gap-2 sm:gap-4 px-2 sm:px-3 py-2 text-xs sm:text-sm border-b border-gray-800 hover:bg-gray-900/50 transition-colors">
+    <div
+      className="grid gap-2 sm:gap-4 px-2 sm:px-3 py-2 text-xs sm:text-sm border-b border-gray-800 hover:bg-gray-900/50 transition-colors"
+      style={{ gridTemplateColumns: FUNDING_HISTORY_GRID }}
+    >
       <div className="text-gray-300 truncate" title={formattedDateTime}>
         {formattedDateTime}
       </div>
@@ -557,8 +524,11 @@ const TradeHistoryRow = ({ trade }: TradeHistoryRowProps) => {
   const closedPnlColor = closedPnl >= 0 ? "text-green-500" : "text-red-500";
 
   return (
-    <div className="grid grid-cols-8 gap-2 sm:gap-4 px-2 sm:px-3 py-2 text-xs sm:text-sm border-b border-gray-800 hover:bg-gray-900/50 transition-colors">
-      <div className="col-span-2 sm:col-span-1 flex items-center gap-1">
+    <div
+      className="grid gap-2 sm:gap-4 px-2 sm:px-3 py-2 text-xs sm:text-sm border-b border-gray-800 hover:bg-gray-900/50 transition-colors"
+      style={{ gridTemplateColumns: TRADE_HISTORY_GRID }}
+    >
+      <div className="flex items-center gap-1">
         <span className="text-gray-300 truncate" title={formattedDateTime}>
           {formattedDateTime}
         </span>
@@ -593,14 +563,6 @@ const TradeHistoryRow = ({ trade }: TradeHistoryRowProps) => {
         <span className={`${closedPnlColor} truncate`} title={formattedClosedPnl}>
           {formattedClosedPnl}
         </span>
-        <a
-          href={`${EXPLORER_TX_URL}/${trade.hash}`}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="inline-flex items-center shrink-0 cursor-pointer"
-        >
-          {/* <ExternalLink className="h-3 w-3 text-gray-500 hover:text-green-400 transition-colors" /> */}
-        </a>
       </div>
     </div>
   );
@@ -1468,9 +1430,10 @@ const BalancesTableShimmer = () => {
       {[1, 2, 3].map((index) => (
         <div
           key={index}
-          className="grid grid-cols-3 md:grid-cols-4 gap-1 sm:gap-2 px-2 sm:px-3 py-2 sm:py-3 text-xs sm:text-sm border-b border-gray-800"
+          className="grid gap-2 sm:gap-4 px-2 sm:px-3 py-2 sm:py-3 text-xs sm:text-sm border-b border-gray-800"
+          style={{ gridTemplateColumns: BALANCES_GRID }}
         >
-          {[1, 2, 3, 4].map((colIndex) => (
+          {[1, 2, 3, 4, 5].map((colIndex) => (
             <ShimmerSkeleton key={colIndex} className="h-4 sm:h-5" />
           ))}
         </div>
@@ -1486,8 +1449,8 @@ const OpenOrdersTableShimmer = () => {
       {[1, 2, 3].map((index) => (
         <div
           key={index}
-          className="grid gap-1 px-2 sm:px-3 py-2 text-xs border-b border-gray-800"
-          style={{ gridTemplateColumns: 'repeat(12, 1fr)' }}
+          className="grid gap-2 sm:gap-3 px-2 sm:px-3 py-2 text-xs border-b border-gray-800"
+          style={{ gridTemplateColumns: OPEN_ORDERS_GRID }}
         >
           {Array.from({ length: 12 }).map((_, colIndex) => (
             <ShimmerSkeleton key={colIndex} className="h-4" />
@@ -1505,7 +1468,8 @@ const TradeHistoryTableShimmer = () => {
       {[1, 2, 3].map((index) => (
         <div
           key={index}
-          className="grid grid-cols-8 gap-2 sm:gap-4 px-2 sm:px-3 py-2 text-xs sm:text-sm border-b border-gray-800"
+          className="grid gap-2 sm:gap-4 px-2 sm:px-3 py-2 text-xs sm:text-sm border-b border-gray-800"
+          style={{ gridTemplateColumns: TRADE_HISTORY_GRID }}
         >
           {Array.from({ length: 8 }).map((_, colIndex) => (
             <ShimmerSkeleton key={colIndex} className="h-4 sm:h-5" />
@@ -1523,7 +1487,8 @@ const FundingHistoryTableShimmer = () => {
       {[1, 2, 3].map((index) => (
         <div
           key={index}
-          className="grid grid-cols-6 gap-2 sm:gap-4 px-2 sm:px-3 py-2 text-xs sm:text-sm border-b border-gray-800"
+          className="grid gap-2 sm:gap-4 px-2 sm:px-3 py-2 text-xs sm:text-sm border-b border-gray-800"
+          style={{ gridTemplateColumns: FUNDING_HISTORY_GRID }}
         >
           {Array.from({ length: 6 }).map((_, colIndex) => (
             <ShimmerSkeleton key={colIndex} className="h-4 sm:h-5" />
@@ -1541,8 +1506,8 @@ const OrderHistoryTableShimmer = () => {
       {[1, 2, 3].map((index) => (
         <div
           key={index}
-          className="grid gap-1 px-2 sm:px-3 py-2 text-xs border-b border-gray-800"
-          style={{ gridTemplateColumns: '2fr repeat(11, 1fr)' }}
+          className="grid gap-2 sm:gap-3 px-2 sm:px-3 py-2 text-xs border-b border-gray-800"
+          style={{ gridTemplateColumns: ORDER_HISTORY_GRID }}
         >
           {Array.from({ length: 12 }).map((_, colIndex) => (
             <ShimmerSkeleton key={colIndex} className="h-4" />
@@ -1555,29 +1520,58 @@ const OrderHistoryTableShimmer = () => {
 
 
 
+interface BalanceRowProps extends Balance {
+  onTransfer?: (direction: "toPerp" | "toSpot") => void;
+}
+
 const BalanceRow = ({ 
   coin,
   total_balance,
   available_balance,
   usdc_value,
-}: Balance) => {
+  onTransfer,
+}: BalanceRowProps) => {
   // Check if available balance equals total balance (for underline styling)
   const isAvailableEqualTotal = available_balance === total_balance;
-  
-  
+
+  // Determine which transfer direction to show based on the row type
+  const isPerps = coin.toLowerCase().includes("perps");
+  const isSpot = coin.toLowerCase().includes("spot");
+
   return (
-    <div className="grid grid-cols-3 md:grid-cols-4 gap-1 sm:gap-2 px-2 sm:px-3 py-2 sm:py-3 text-xs sm:text-sm border-b border-gray-800 hover:bg-gray-900/50 transition-colors">
-      <div className="col-span-1 text-gray-300 font-medium">
+    <div
+      className="grid gap-2 sm:gap-4 px-2 sm:px-3 py-2 sm:py-3 text-xs sm:text-sm border-b border-gray-800 hover:bg-gray-900/50 transition-colors items-center"
+      style={{ gridTemplateColumns: BALANCES_GRID }}
+    >
+      <div className="text-gray-300 font-medium truncate">
         {coin}
       </div>
-      <div className="col-span-1 text-gray-300">
+      <div className="text-gray-300 truncate">
         {total_balance}
       </div>
-      <div className={`col-span-1 text-gray-300 ${isAvailableEqualTotal ? "decoration-dotted underline" : ""}`}>
+      <div className={`text-gray-300 truncate ${isAvailableEqualTotal ? "decoration-dotted underline" : ""}`}>
         {available_balance}
       </div>
-      <div className="hidden md:col-span-1 md:block text-gray-300">
-        {usdc_value}
+      <div className="text-gray-300 truncate">
+        ${usdc_value}
+      </div>
+      <div className="truncate">
+        {isPerps && onTransfer && (
+          <button
+            onClick={() => onTransfer("toSpot")}
+            className="text-green-400 hover:text-green-300 text-xs font-medium cursor-pointer transition-colors"
+          >
+            Transfer to Spot
+          </button>
+        )}
+        {isSpot && onTransfer && (
+          <button
+            onClick={() => onTransfer("toPerp")}
+            className="text-green-400 hover:text-green-300 text-xs font-medium cursor-pointer transition-colors"
+          >
+            Transfer to Perps
+          </button>
+        )}
       </div>
     </div>
   );
@@ -1721,7 +1715,10 @@ const OrderHistoryRow = ({
   const reduceOnlyText = reduceOnly ? "Yes" : "No" ;
   
   return (
-    <div className="grid gap-1 px-2 sm:px-3 py-2 text-xs border-b border-gray-800 hover:bg-gray-900/50 transition-colors" style={{ gridTemplateColumns: '2fr repeat(11, 1fr)' }}>
+    <div
+      className="grid gap-2 sm:gap-3 px-2 sm:px-3 py-2 text-xs border-b border-gray-800 hover:bg-gray-900/50 transition-colors"
+      style={{ gridTemplateColumns: ORDER_HISTORY_GRID }}
+    >
       <div className="text-gray-300 truncate" title={formattedDateTime}>
         {formattedDateTime}
       </div>
@@ -1815,7 +1812,10 @@ const OpenOrdersRow = ({ order, onCancel }: OpenOrdersRowProps) => {
   const orderType = order.orderType || "Limit";
 
   return (
-    <div className="grid gap-1 px-2 sm:px-3 py-2 text-xs border-b border-gray-800 hover:bg-gray-900/50 transition-colors" style={{ gridTemplateColumns: 'repeat(12, 1fr)' }}>
+    <div
+      className="grid gap-2 sm:gap-3 px-2 sm:px-3 py-2 text-xs border-b border-gray-800 hover:bg-gray-900/50 transition-colors"
+      style={{ gridTemplateColumns: OPEN_ORDERS_GRID }}
+    >
       <div className="text-gray-300 truncate" title={formattedDateTime}>
         {formattedDateTime}
       </div>
@@ -1868,6 +1868,143 @@ const OnlineIndicator = () => {
   );
 };
 
+// ==================== Transfer Modal ====================
+
+interface TransferModalProps {
+  isOpen: boolean;
+  onClose: () => void;
+  direction: "toPerp" | "toSpot";       // initial direction
+  perpsAvailable: string;               // max transferable from perps
+  spotAvailable: string;                // max transferable from spot
+  onConfirm: (amount: string, toPerp: boolean) => Promise<void>;
+}
+
+const TransferModal = ({
+  isOpen,
+  onClose,
+  direction: initialDirection,
+  perpsAvailable,
+  spotAvailable,
+  onConfirm,
+}: TransferModalProps) => {
+  const [direction, setDirection] = useState<"toPerp" | "toSpot">(initialDirection);
+  const [amount, setAmount] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  // Sync direction when modal opens with a new direction
+  useEffect(() => {
+    if (isOpen) {
+      setDirection(initialDirection);
+      setAmount("");
+    }
+  }, [isOpen, initialDirection]);
+
+  const toPerp = direction === "toPerp";
+  const fromLabel = toPerp ? "Spot" : "Perps";
+  const toLabel = toPerp ? "Perps" : "Spot";
+  const maxAmount = toPerp ? spotAvailable : perpsAvailable;
+
+  const handleMaxClick = () => {
+    setAmount(maxAmount);
+  };
+
+  const handleSwapDirection = () => {
+    setDirection((d) => (d === "toPerp" ? "toSpot" : "toPerp"));
+    setAmount("");
+  };
+
+  const handleAmountChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    if (value === "") { setAmount(value); return; }
+    // Allow numbers with up to 2 decimal places
+    if (!/^\d*\.?\d*$/.test(value)) return;
+    const parts = value.split(".");
+    if (parts[1] !== undefined && parts[1].length > 2) return;
+    setAmount(value);
+  };
+
+  const handleConfirm = async () => {
+    if (!amount || parseFloat(amount) <= 0) return;
+    setIsSubmitting(true);
+    try {
+      await onConfirm(amount, toPerp);
+      setAmount("");
+      onClose();
+    } catch {
+      // Error handling is done in the parent via toast
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const isValid = amount !== "" && parseFloat(amount) > 0 && parseFloat(amount) <= parseFloat(maxAmount);
+
+  return (
+    <AppModal
+      isOpen={isOpen}
+      onClose={onClose}
+      className="max-w-sm"
+    >
+      <div className="flex flex-col items-center gap-5">
+        {/* Title */}
+        <div className="text-center">
+          <h2 className="text-lg font-semibold text-white">Transfer USDC</h2>
+          <p className="text-xs text-gray-400 mt-1">
+            Transfer USDC between your Perps and Spot balances.
+          </p>
+        </div>
+
+        {/* Direction Toggle */}
+        <button
+          onClick={handleSwapDirection}
+          className="flex items-center gap-2 px-4 py-2 rounded-full bg-gray-800 border border-gray-700 hover:border-gray-600 transition-colors cursor-pointer"
+        >
+          <span className="text-sm font-medium text-white">{fromLabel}</span>
+          <svg className="w-4 h-4 text-green-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4" />
+          </svg>
+          <span className="text-sm font-medium text-white">{toLabel}</span>
+        </button>
+
+        {/* Amount Input */}
+        <div className="w-full">
+          <div className="flex items-center bg-gray-800/50 rounded-lg border border-gray-700 focus-within:border-green-500/50 transition-colors">
+            <input
+              type="text"
+              inputMode="decimal"
+              value={amount}
+              onChange={handleAmountChange}
+              placeholder="0.00"
+              className="flex-1 bg-transparent px-3 py-3 text-sm text-white placeholder:text-gray-500 focus:outline-none font-mono"
+            />
+            <button
+              onClick={handleMaxClick}
+              className="px-3 py-1 mr-2 text-xs font-medium text-green-400 hover:text-green-300 cursor-pointer transition-colors"
+            >
+              MAX: {addDecimals(maxAmount)}
+            </button>
+          </div>
+        </div>
+
+        {/* Confirm Button */}
+        <button
+          onClick={handleConfirm}
+          disabled={!isValid || isSubmitting}
+          className="w-full h-11 rounded-lg bg-green-500 text-white font-medium text-sm hover:bg-green-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer flex items-center justify-center gap-2"
+        >
+          {isSubmitting && (
+            <svg className="animate-spin h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+              <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+            </svg>
+          )}
+          {isSubmitting ? "Confirming..." : "Confirm"}
+        </button>
+      </div>
+    </AppModal>
+  );
+};
+
 // ==================== Main Component ====================
 
 export const BottomPanel = () => {
@@ -1875,8 +2012,13 @@ export const BottomPanel = () => {
   const [markPrices, setMarkPrices] = useState<Record<string, string>>({});
   const [isHydrated, setIsHydrated] = useState(false);
   const { address: userAddress } = useAccount();
+  const { data: walletClient } = useWalletClient();
   const { agentPrivateKey, agentWallet, checkApprovalStatus } = useApiWallet({userPublicKey: userAddress as `0x${string}`});
   const { checkBuilderFeeStatus } = useBuilderFee({userPublicKey: userAddress as `0x${string}`});
+
+  // Transfer modal state
+  const [isTransferModalOpen, setIsTransferModalOpen] = useState(false);
+  const [transferDirection, setTransferDirection] = useState<"toPerp" | "toSpot">("toSpot");
   const { 
     setBalances,
     setUserPositions,
@@ -1913,6 +2055,57 @@ export const BottomPanel = () => {
   }, []);
 
   const openOrdersCount = userOpenOrders?.length || 0;
+
+  // Parse available amounts for transfer modal
+  const parseAvailableAmount = (balanceStr: string | undefined): string => {
+    if (!balanceStr) return "0";
+    const match = balanceStr.match(/^([\d.]+)/);
+    return match ? match[1] : "0";
+  };
+
+  const perpsBalance = balances?.find((b) => b.coin.toLowerCase().includes("perps"));
+  const spotBalance = balances?.find((b) => b.coin.toLowerCase().includes("spot"));
+  const perpsAvailable = parseAvailableAmount(perpsBalance?.available_balance);
+  const spotAvailable = parseAvailableAmount(spotBalance?.available_balance);
+
+  const handleOpenTransferModal = (direction: "toPerp" | "toSpot") => {
+    setTransferDirection(direction);
+    setIsTransferModalOpen(true);
+  };
+
+  const handleTransferConfirm = async (amount: string, toPerp: boolean) => {
+    // Use the reliable wallet client getter (same pattern as useWallet.ts)
+    let clientToUse = walletClient;
+    if (!clientToUse) {
+      try {
+        clientToUse = await getWalletClient(config);
+      } catch {
+        // ignore, will check below
+      }
+    }
+    if (!clientToUse) {
+      appToast.error({ message: "Wallet client not available. Please ensure your wallet is connected and unlocked, then try again." });
+      return;
+    }
+    try {
+      const result = await transferUsdcBetweenAccounts({ walletClient: clientToUse, amount, toPerp });
+      if (result.status === "ok") {
+        appToast.success({
+          title: "Transfer Successful",
+          message: `Transferred $${amount} from ${toPerp ? "Spot" : "Perps"} to ${toPerp ? "Perps" : "Spot"}`,
+        });
+        // Refresh balances after successful transfer
+        if (userAddress) {
+          getAllBalances({ publicKey: userAddress as `0x${string}` });
+        }
+      } else {
+        appToast.error({ message: errorHandler((result as any)?.response || "Transfer failed") });
+      }
+    } catch (error) {
+      appToast.error({ message: errorHandler(error) });
+      throw error; // re-throw so the modal knows it failed
+    }
+  };
   
   // Filter positions by selected market coin - if market is selected, show only that market's positions
   // If no market is selected, show no positions
@@ -1926,7 +2119,7 @@ export const BottomPanel = () => {
   const positionsCount = userPositions?.length || 0;
   
   const tabs: Tab[] = [
-    { label: "Balances", value: "balances", count: 1 },
+    { label: "Balances", value: "balances", count: balances?.length || undefined },
     { label: "Positions", value: "positions", count: positionsCount > 0 ? positionsCount : undefined },
     { label: "Open Orders", value: "openorders", count: openOrdersCount > 0 ? openOrdersCount : undefined },
     { label: "Trade History", value: "tradehistory" },
@@ -1975,12 +2168,19 @@ export const BottomPanel = () => {
 
     const setupSubscriptions = async () => {
       try {
-        // WebData2 subscription for balances
+        // WebData2 subscription for balances (includes both Perps and Spot)
         webDataSubscription = await subscriptionClient.webData2(
           { user: userAddress as `0x${string}` },
           (resp) => {
             const ch = resp?.clearinghouseState ?? {};
             const marginSummary = ch?.marginSummary ?? {};
+
+            // Extract spot USDC balance from spotState
+            const spotBalances = (resp as any)?.spotState?.balances ?? [];
+            const spotUsdc = spotBalances.find((b: { coin: string }) => b.coin === "USDC");
+            const spotTotal = spotUsdc ? parseFloat(spotUsdc.total ?? "0") : 0;
+            const spotHold = spotUsdc ? parseFloat(spotUsdc.hold ?? "0") : 0;
+            const spotAvailable = spotTotal - spotHold;
 
             const rows: Balance[] = [
               {
@@ -1990,6 +2190,15 @@ export const BottomPanel = () => {
                 usdc_value: addDecimals(marginSummary?.accountValue ?? 0),
               },
             ];
+
+            if (spotTotal > 0) {
+              rows.push({
+                coin: "USDC (Spot)",
+                total_balance: `${addDecimals(spotTotal)} USDC`,
+                available_balance: `${addDecimals(spotAvailable)} USDC`,
+                usdc_value: addDecimals(spotTotal),
+              });
+            }
 
             setBalances(rows);
           }
@@ -2146,7 +2355,7 @@ export const BottomPanel = () => {
                   total_balance={`${balance.total_balance}`}
                   available_balance={balance.available_balance}
                   usdc_value={balance.usdc_value}
-
+                  onTransfer={userAddress ? handleOpenTransferModal : undefined}
                 />
               ))}
             </div>
@@ -2327,6 +2536,16 @@ export const BottomPanel = () => {
 
       {/* Online Indicator */}
       <OnlineIndicator />
+
+      {/* Transfer Modal */}
+      <TransferModal
+        isOpen={isTransferModalOpen}
+        onClose={() => setIsTransferModalOpen(false)}
+        direction={transferDirection}
+        perpsAvailable={perpsAvailable}
+        spotAvailable={spotAvailable}
+        onConfirm={handleTransferConfirm}
+      />
     </div>
   );
 };

@@ -1,27 +1,31 @@
 import { http, createConfig } from 'wagmi'
-import { Chain, defineChain } from 'viem'
+import { Chain } from 'viem'
 import { injected } from 'wagmi/connectors'
-import { arbitrum, arbitrumSepolia, hyperliquidEvmTestnet } from 'viem/chains'
+import { arbitrum, arbitrumSepolia } from 'viem/chains'
 import { ENVIRONMENT, ENVIRONMENT_TYPES } from '@/lib/constants'
 
+// Both chains are available so the user can switch between mainnet and testnet
+// at runtime. The active chain is determined by ENVIRONMENT (which reads localStorage).
+export const allChains = [arbitrum, arbitrumSepolia] as const
 
-// pick the chain(s) our app will support
-export const chains = ENVIRONMENT === ENVIRONMENT_TYPES.DEVELOPMENT
-  ? [arbitrumSepolia]    // Hyperliquid testnet and Arbitrum Sepolia for USDC
-  : [arbitrum]           // USDC on Arbitrum One for Hyperliquid mainnet
+// The "active" chain is the first one based on environment.
+// Used by components that need the default chain (Deposit, Withdraw, etc.).
+export const activeChain = ENVIRONMENT === ENVIRONMENT_TYPES.DEVELOPMENT
+  ? arbitrumSepolia
+  : arbitrum
+
+// Legacy alias kept for compatibility
+export const chains = [activeChain]
 
 export const config = createConfig({
-  chains: chains as unknown as readonly [Chain, ...Chain[]],
+  chains: allChains as unknown as readonly [Chain, ...Chain[]],
   connectors: [
     injected(),
   ],
-  transports: ENVIRONMENT === ENVIRONMENT_TYPES.DEVELOPMENT
-    ? {
-        [arbitrumSepolia.id]: http(),
-      }
-    : {
-        [arbitrum.id]: http(),
-      },
-});
+  transports: {
+    [arbitrum.id]: http(),
+    [arbitrumSepolia.id]: http(),
+  },
+})
 
 

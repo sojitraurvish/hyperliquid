@@ -77,12 +77,12 @@ export const ContactForm = () => {
   };
 
   return (
-    <div>
-      <h2 className="text-2xl sm:text-3xl font-bold text-white mb-6">
+    <div className="bg-gray-900/30 backdrop-blur-sm rounded-2xl sm:rounded-3xl border border-gray-800/50 p-5 sm:p-8">
+      <h2 className="text-2xl sm:text-3xl font-bold text-white mb-6 tracking-tight">
         Send Us a Message
       </h2>
 
-      <form onSubmit={handleSubmit} className="space-y-4 sm:space-y-6">
+      <form onSubmit={handleSubmit} className="space-y-4 sm:space-y-5">
         {/* First Name and Last Name */}
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div>
@@ -97,7 +97,7 @@ export const ContactForm = () => {
               onChange={handleChange}
               placeholder="John"
               required
-              className="w-full px-4 py-3 bg-gray-900 border border-gray-800 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-green-400 focus:border-transparent transition-colors"
+              className="w-full px-4 py-3 bg-gray-800/40 border border-gray-700/50 rounded-xl text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-green-500/30 focus:border-green-500/30 transition-all"
             />
           </div>
           <div>
@@ -112,7 +112,7 @@ export const ContactForm = () => {
               onChange={handleChange}
               placeholder="Doe"
               required
-              className="w-full px-4 py-3 bg-gray-900 border border-gray-800 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-green-400 focus:border-transparent transition-colors"
+              className="w-full px-4 py-3 bg-gray-800/40 border border-gray-700/50 rounded-xl text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-green-500/30 focus:border-green-500/30 transition-all"
             />
           </div>
         </div>
@@ -130,7 +130,7 @@ export const ContactForm = () => {
             onChange={handleChange}
             placeholder="john@example.com"
             required
-            className="w-full px-4 py-3 bg-gray-900 border border-gray-800 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-green-400 focus:border-transparent transition-colors"
+            className="w-full px-4 py-3 bg-gray-800/40 border border-gray-700/50 rounded-xl text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-green-500/30 focus:border-green-500/30 transition-all"
           />
         </div>
 
@@ -146,7 +146,7 @@ export const ContactForm = () => {
             value={formData.company}
             onChange={handleChange}
             placeholder="Your company"
-            className="w-full px-4 py-3 bg-gray-900 border border-gray-800 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-green-400 focus:border-transparent transition-colors"
+            className="w-full px-4 py-3 bg-gray-800/40 border border-gray-700/50 rounded-xl text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-green-500/30 focus:border-green-500/30 transition-all"
           />
         </div>
 
@@ -160,7 +160,7 @@ export const ContactForm = () => {
             name="subject"
             value={formData.subject}
             onChange={handleChange}
-            className="w-full px-4 py-3 bg-gray-900 border border-gray-800 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-green-400 focus:border-transparent transition-colors"
+            className="w-full px-4 py-3 bg-gray-800/40 border border-gray-700/50 rounded-xl text-white focus:outline-none focus:ring-2 focus:ring-green-500/30 focus:border-green-500/30 transition-all"
           >
             <option value="general">General Inquiry</option>
             <option value="support">Technical Support</option>
@@ -183,7 +183,7 @@ export const ContactForm = () => {
             placeholder="How can we help you?"
             required
             rows={6}
-            className="w-full px-4 py-3 bg-gray-900 border border-gray-800 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-green-400 focus:border-transparent transition-colors resize-none"
+            className="w-full px-4 py-3 bg-gray-800/40 border border-gray-700/50 rounded-xl text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-green-500/30 focus:border-green-500/30 transition-all resize-none"
           />
         </div>
 
@@ -191,7 +191,7 @@ export const ContactForm = () => {
         <AppButton
           type="submit"
           variant={VARIANT_TYPES.NOT_SELECTED}
-          className="w-full bg-green-500 text-white hover:bg-green-600 px-6 py-3 text-base font-medium rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+          className="w-full bg-green-500 hover:bg-green-400 text-white px-6 py-3.5 text-base font-semibold rounded-xl transition-all shadow-[0_0_25px_rgba(16,185,129,0.2)] hover:shadow-[0_0_40px_rgba(16,185,129,0.35)] disabled:opacity-50 disabled:cursor-not-allowed"
           disabled={isSubmitting}
           isLoading={isSubmitting}
         >

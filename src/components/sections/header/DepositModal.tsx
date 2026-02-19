@@ -257,128 +257,117 @@ export const DepositModal: React.FC<DepositModalProps> = ({ isOpen, onClose, onS
     <AppModal
       isOpen={isOpen}
       onClose={onClose}
-      title={
-        <div className="flex items-center gap-3 pl-2">
-          <div className="w-6 h-6 bg-blue-500 rounded-full flex items-center justify-center">
-            <Coins className="text-white w-4 h-4" />
-          </div>
-          <span>Deposit USDC to Hyperliquid</span>
-        </div>
-      }
+      title="Deposit USDC"
       variant={VARIANT_TYPES.PRIMARY}
       closeOnOutsideClick={true}
       closeOnEscape={true}
       showCloseButton={true}
-      headerClassName="relative flex items-center justify-between p-4 border-b border-gray-800"
-      contentClassName="px-6 pb-6 pt-4"
+      contentClassName="space-y-5"
     >
-      <div className="space-y-6 pb-2"></div>
-        {/* Custom Header with Icon and Title */}
-     
-
         <form onSubmit={handleDeposit} className="space-y-4">
-          {/* Asset Dropdown */}
-          <div className="space-y-2">
-            <label className="block text-sm font-medium text-white">
-              Asset
-            </label>
-            <AppDropdown
-              variant={VARIANT_TYPES.NOT_SELECTED}
-              options={assetOptions}
-              value={selectedAsset}
-              onChange={(value) => setSelectedAsset(value)}
-              dropdownClassName="!bg-gray-800 !border !border-gray-700 !text-gray-300 hover:!bg-gray-750 rounded-lg shadow-none"
-              optionClassName="!bg-gray-800 hover:!bg-gray-700 !text-white !shadow-none"
-              className="w-full"
-            />
-          </div>
-
-          {/* Deposit Chain Dropdown */}
-          <div className="space-y-2">
-            <label className="block text-sm font-medium text-white">
-              Deposit Chain
-            </label>
-            <AppDropdown
-              variant={VARIANT_TYPES.NOT_SELECTED}
-              options={chainOptions}
-              value={selectedChain}
-              onChange={(value) => setSelectedChain(value)}
-              dropdownClassName="!bg-gray-800 !border !border-gray-700 !text-gray-300 hover:!bg-gray-750 rounded-lg shadow-none"
-              optionClassName="!bg-gray-800 hover:!bg-gray-700 !text-white !shadow-none"
-              className="w-full"
-            />
+          {/* Asset & Chain Row */}
+          <div className="grid grid-cols-2 gap-3">
+            <div className="space-y-1.5">
+              <span className="text-xs text-gray-500 font-medium">Asset</span>
+              <AppDropdown
+                variant={VARIANT_TYPES.NOT_SELECTED}
+                options={assetOptions}
+                value={selectedAsset}
+                onChange={(value) => setSelectedAsset(value)}
+                dropdownClassName="!bg-gray-800/60 !border !border-gray-700/50 !text-gray-300 hover:!bg-gray-800 rounded-xl shadow-none"
+                optionClassName="!bg-gray-800 hover:!bg-gray-700 !text-white !shadow-none !rounded-lg"
+                className="w-full"
+              />
+            </div>
+            <div className="space-y-1.5">
+              <span className="text-xs text-gray-500 font-medium">Chain</span>
+              <AppDropdown
+                variant={VARIANT_TYPES.NOT_SELECTED}
+                options={chainOptions}
+                value={selectedChain}
+                onChange={(value) => setSelectedChain(value)}
+                dropdownClassName="!bg-gray-800/60 !border !border-gray-700/50 !text-gray-300 hover:!bg-gray-800 rounded-xl shadow-none"
+                optionClassName="!bg-gray-800 hover:!bg-gray-700 !text-white !shadow-none !rounded-lg"
+                className="w-full"
+              />
+            </div>
           </div>
 
           {/* Amount Input */}
-          <div className="space-y-2">
-            <label className="block text-sm font-medium text-white">
-              Amount
-            </label>
-            <div className="relative w-full">
+          <div className="space-y-1.5">
+            <div className="flex items-center justify-between">
+              <span className="text-xs text-gray-500 font-medium">Amount (USDC)</span>
+              <button
+                type="button"
+                onClick={handleMaxClick}
+                className="text-[11px] font-medium text-green-400 hover:text-green-300 cursor-pointer transition-colors"
+                disabled={!balance || isPending || isConfirming}
+              >
+                Max: {maxBalance}
+              </button>
+            </div>
+            <div className="flex items-center bg-gray-800/40 rounded-xl border border-gray-700/50 focus-within:border-green-500/40 transition-colors">
               <input
                 type="text"
                 inputMode="decimal"
                 min="0"
                 value={amount}
                 onChange={handleAmountChange}
-                className="w-full px-4 py-3 pr-24 bg-gray-800 border border-gray-700 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                className="flex-1 bg-transparent px-4 py-3 text-sm text-white placeholder:text-gray-600 focus:outline-none font-mono [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                 placeholder="0.00"
                 disabled={isPending || isConfirming}
               />
-              <button
-                type="button"
-                onClick={handleMaxClick}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-green-400 hover:text-green-300 text-sm font-medium cursor-pointer"
-                disabled={!balance || isPending || isConfirming}
-              >
-                MAX: {maxBalance}
-              </button>
+              <span className="pr-4 text-xs font-medium text-gray-500">USDC</span>
             </div>
           </div>
 
           {/* Status Messages */}
           {status && (
-            <div className="p-3 bg-blue-500/10 border border-blue-500/20 rounded-lg">
-              <p className="text-blue-400 text-sm wrap-break-word whitespace-pre-wrap">{status}</p>
+            <div className="flex items-start gap-2 p-3 bg-blue-500/5 border border-blue-500/15 rounded-xl">
+              <svg className="w-4 h-4 text-blue-400 shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+              <p className="text-blue-400 text-xs leading-relaxed wrap-break-word">{status}</p>
             </div>
           )}
           {belowMinimum && (
-            <div className="p-3 bg-red-500/10 border border-red-500/20 rounded-lg">
-              <p className="text-red-400 text-xs wrap-break-word whitespace-pre-wrap">Minimum deposit: 5 USDC</p>
-            </div>  
+            <div className="flex items-center gap-2 p-3 bg-red-500/5 border border-red-500/15 rounded-xl">
+              <svg className="w-4 h-4 text-red-400 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126z" /></svg>
+              <p className="text-red-400 text-xs">Minimum deposit: 5 USDC</p>
+            </div>
           )}
           {exceedsBalance && (
-            <div className="p-3 bg-red-500/10 border border-red-500/20 rounded-lg">
-              <p className="text-red-400 text-sm wrap-break-word whitespace-pre-wrap">Insufficient balance. You have {maxBalance} USDC available.</p>
+            <div className="flex items-center gap-2 p-3 bg-red-500/5 border border-red-500/15 rounded-xl">
+              <svg className="w-4 h-4 text-red-400 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126z" /></svg>
+              <p className="text-red-400 text-xs">Insufficient balance. You have {maxBalance} USDC available.</p>
             </div>
           )}
 
           {/* Deposit Button */}
-          <AppButton
+          <button
             type="submit"
-            variant={VARIANT_TYPES.SECONDARY}
-            isDisabled={
-              !address || 
-              !isValidAmount || 
-              isPending || 
-              isConfirming || 
-              isSwitchingChain
-            }
-            isLoading={isPending || isConfirming || isSwitchingChain}
-            className="w-full mt-7 bg-green-500 text-white hover:bg-green-600 disabled:bg-gray-700 disabled:cursor-not-allowed py-3 text-base font-medium justify-center"
+            disabled={!address || !isValidAmount || isPending || isConfirming || isSwitchingChain}
+            className={`w-full h-11 rounded-xl font-semibold text-sm transition-colors cursor-pointer flex items-center justify-center gap-2 ${
+              !address || !isValidAmount || isPending || isConfirming || isSwitchingChain
+                ? "bg-gray-800 text-gray-500 cursor-not-allowed"
+                : "bg-green-500 hover:bg-green-400 text-white"
+            }`}
           >
+            {(isPending || isConfirming || isSwitchingChain) && (
+              <svg className="animate-spin h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+              </svg>
+            )}
             {isSwitchingChain 
               ? "Switching Network..." 
               : isPending 
-                ? "Waiting for MetaMask..." 
+                ? "Waiting for Wallet..." 
                 : isConfirming
-                  ? "Confirming Transaction..."
+                  ? "Confirming..."
                   : chainId !== DEFAULT_CHAIN_ID 
-                    ? `Switch to ${ENVIRONMENT === ENVIRONMENT_TYPES.DEVELOPMENT ? "Arbitrum Sepolia" : "Arbitrum"} (${DEFAULT_CHAIN_ID})` 
+                    ? `Switch to ${ENVIRONMENT === ENVIRONMENT_TYPES.DEVELOPMENT ? "Arbitrum Sepolia" : "Arbitrum"}` 
                     : "Deposit"}
-          </AppButton>
+          </button>
         </form>
-
     </AppModal>
   );
 };

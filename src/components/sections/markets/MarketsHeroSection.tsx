@@ -1,11 +1,8 @@
 export const MarketsHeroSection = () => {
-  // Generate candlestick data for background
   const generateCandlesticks = () => {
-    const candlesticks = [];
-    const baseHeight = 40;
     const positions = Array.from({ length: 50 }, (_, i) => ({
       x: (i * 2) + 10,
-      height: baseHeight + Math.random() * 60,
+      height: 40 + Math.random() * 60,
       y: 30 + Math.random() * 40,
       width: 1.5,
     }));
@@ -14,7 +11,6 @@ export const MarketsHeroSection = () => {
 
   const candlesticks = generateCandlesticks();
 
-  // Generate line graph points
   const generateLinePoints = () => {
     const points = [];
     let y = 50;
@@ -29,15 +25,10 @@ export const MarketsHeroSection = () => {
   const linePoints = generateLinePoints();
 
   return (
-    <section className="relative w-full min-h-[400px] sm:min-h-[500px] md:min-h-[600px] flex items-center justify-center overflow-hidden bg-gray-950">
+    <section className="relative w-full min-h-[280px] sm:min-h-[340px] md:min-h-[420px] lg:min-h-[480px] flex items-center justify-center overflow-hidden bg-gray-950">
       {/* Chart Background Pattern */}
-      <div className="absolute inset-0 opacity-30 overflow-hidden">
-        <svg
-          className="w-full h-full"
-          viewBox="0 0 100 100"
-          preserveAspectRatio="none"
-        >
-          {/* Grid lines */}
+      <div className="absolute inset-0 opacity-25 overflow-hidden">
+        <svg className="w-full h-full" viewBox="0 0 100 100" preserveAspectRatio="none">
           <defs>
             <linearGradient id="marketsCandleGradient" x1="0%" y1="0%" x2="0%" y2="100%">
               <stop offset="0%" stopColor="transparent" />
@@ -57,122 +48,51 @@ export const MarketsHeroSection = () => {
             </filter>
           </defs>
 
-          {/* Horizontal grid lines */}
           {[20, 40, 60, 80].map((y) => (
-            <line
-              key={`h-${y}`}
-              x1="0"
-              y1={y}
-              x2="100"
-              y2={y}
-              stroke="#1f2937"
-              strokeWidth="0.1"
-            />
+            <line key={`h-${y}`} x1="0" y1={y} x2="100" y2={y} stroke="#1f2937" strokeWidth="0.1" />
           ))}
-
-          {/* Vertical grid lines */}
           {[10, 30, 50, 70, 90].map((x) => (
-            <line
-              key={`v-${x}`}
-              x1={x}
-              y1="0"
-              x2={x}
-              y2="100"
-              stroke="#1f2937"
-              strokeWidth="0.1"
-            />
+            <line key={`v-${x}`} x1={x} y1="0" x2={x} y2="100" stroke="#1f2937" strokeWidth="0.1" />
           ))}
 
-          {/* Line graph */}
           <polyline
-            points={linePoints.map((p, i) => `${p.x},${p.y}`).join(' ')}
+            points={linePoints.map((p) => `${p.x},${p.y}`).join(' ')}
             fill="none"
             stroke="url(#marketsLineGradient)"
             strokeWidth="0.3"
             filter="url(#marketsGlow)"
             className="animate-pulse"
           />
-
-          {/* Line graph markers */}
           {linePoints.filter((_, i) => i % 10 === 0).map((point, i) => (
-            <circle
-              key={`marker-${i}`}
-              cx={point.x}
-              cy={point.y}
-              r="0.4"
-              fill="#10b981"
-              opacity="0.8"
-              filter="url(#marketsGlow)"
-            />
+            <circle key={`marker-${i}`} cx={point.x} cy={point.y} r="0.4" fill="#10b981" opacity="0.8" filter="url(#marketsGlow)" />
           ))}
 
-          {/* Candlesticks */}
           {candlesticks.map((candle, i) => (
             <g key={`candle-${i}`}>
-              {/* Candle body */}
-              <rect
-                x={candle.x - candle.width / 2}
-                y={candle.y}
-                width={candle.width}
-                height={candle.height}
-                fill="url(#marketsCandleGradient)"
-                filter="url(#marketsGlow)"
-                opacity="0.7"
-              />
-              {/* Top wick */}
-              <line
-                x1={candle.x}
-                y1={candle.y}
-                x2={candle.x}
-                y2={candle.y - 2}
-                stroke="#10b981"
-                strokeWidth="0.2"
-                opacity="0.6"
-              />
-              {/* Bottom wick */}
-              <line
-                x1={candle.x}
-                y1={candle.y + candle.height}
-                x2={candle.x}
-                y2={candle.y + candle.height + 2}
-                stroke="#10b981"
-                strokeWidth="0.2"
-                opacity="0.6"
-              />
+              <rect x={candle.x - candle.width / 2} y={candle.y} width={candle.width} height={candle.height} fill="url(#marketsCandleGradient)" filter="url(#marketsGlow)" opacity="0.7" />
+              <line x1={candle.x} y1={candle.y} x2={candle.x} y2={candle.y - 2} stroke="#10b981" strokeWidth="0.2" opacity="0.6" />
+              <line x1={candle.x} y1={candle.y + candle.height} x2={candle.x} y2={candle.y + candle.height + 2} stroke="#10b981" strokeWidth="0.2" opacity="0.6" />
             </g>
           ))}
         </svg>
       </div>
 
-      {/* Additional animated vertical lines for depth */}
-      <div className="absolute inset-0 opacity-10 overflow-hidden">
-        <div className="absolute inset-0">
-          {Array.from({ length: 15 }).map((_, i) => (
-            <div
-              key={i}
-              className="absolute w-px h-full bg-gradient-to-b from-transparent via-green-400 to-transparent"
-              style={{
-                left: `${(i * 6.5) + 5}%`,
-                animation: `chartPulse 4s ease-in-out infinite ${i * 0.15}s`,
-              }}
-            />
-          ))}
-        </div>
-      </div>
+      {/* Background gradient orbs */}
+      <div className="absolute top-[-20%] left-[-10%] w-[500px] h-[500px] bg-green-500/6 rounded-full blur-3xl pointer-events-none" />
+      <div className="absolute bottom-[-20%] right-[-10%] w-[400px] h-[400px] bg-emerald-500/5 rounded-full blur-3xl pointer-events-none" />
+
+      {/* Radial overlay */}
+      <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,transparent_0%,rgba(3,7,18,0.6)_60%,rgba(3,7,18,0.95)_100%)]" />
 
       {/* Content */}
       <div className="relative z-10 max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-        {/* Markets Label */}
-        <div className="mb-4">
-          <span className="text-sm sm:text-base text-gray-400 font-medium">Markets</span>
-        </div>
-
-        {/* Main Heading */}
-        <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-bold text-white mb-6 leading-tight">
-          Trade 100+ Markets
+        <span className="inline-block text-sm font-semibold text-green-400 tracking-widest uppercase mb-4 px-4 py-1.5 bg-green-500/10 rounded-full border border-green-500/20">
+          Markets
+        </span>
+        <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl xl:text-7xl font-bold text-white mb-6 leading-tight tracking-tight">
+          Trade 100+{' '}
+          <span className="bg-linear-to-r from-green-400 to-emerald-300 bg-clip-text text-transparent">Markets</span>
         </h1>
-
-        {/* Subtitle */}
         <p className="text-lg sm:text-xl md:text-2xl text-gray-400 max-w-3xl mx-auto leading-relaxed">
           Access perpetual futures on all major cryptocurrencies with deep liquidity and tight spreads.
         </p>
@@ -180,8 +100,3 @@ export const MarketsHeroSection = () => {
     </section>
   );
 };
-
-
-
-
-

@@ -6,9 +6,9 @@ import { X } from "lucide-react";
 
 const MODAL_VARIANTS = {
   [VARIANT_TYPES.NOT_SELECTED]: "",
-  [VARIANT_TYPES.PRIMARY]: "bg-gray-900 border border-gray-800 shadow-2xl max-w-md",
-  [VARIANT_TYPES.SECONDARY]: "bg-white shadow-2xl max-w-md",
-  [VARIANT_TYPES.TERTIARY]: "bg-gradient-to-br from-purple-900 to-gray-900 border border-purple-700 shadow-2xl max-w-md",
+  [VARIANT_TYPES.PRIMARY]: "bg-gray-900 border border-gray-800/60 shadow-2xl shadow-black/60 w-full max-w-md",
+  [VARIANT_TYPES.SECONDARY]: "bg-gray-900 border border-gray-800/60 shadow-2xl shadow-black/60 w-full max-w-md",
+  [VARIANT_TYPES.TERTIARY]: "bg-gray-900 border border-gray-800/60 shadow-2xl shadow-black/60 w-full max-w-md",
 } as const;
 
 type VariantKeys = keyof typeof MODAL_VARIANTS;
@@ -42,7 +42,6 @@ export const AppModal: React.FC<Props> = ({
 }) => {
   const modalClassName = MODAL_VARIANTS[variant] || MODAL_VARIANTS[VARIANT_TYPES.PRIMARY];
 
-  // Handle escape key press
   useEffect(() => {
     if (!isOpen || !closeOnEscape) return;
 
@@ -56,7 +55,6 @@ export const AppModal: React.FC<Props> = ({
     return () => document.removeEventListener("keydown", handleEscape);
   }, [isOpen, closeOnEscape, onClose]);
 
-  // Prevent body scroll when modal is open
   useEffect(() => {
     if (isOpen) {
       document.body.style.overflow = "hidden";
@@ -80,46 +78,56 @@ export const AppModal: React.FC<Props> = ({
   return (
     <Portal overlay={false} zIndex={9999}>
       <div
-        className="fixed inset-0 flex items-center justify-center p-4 transition-all duration-300 bg-black/50 backdrop-blur-sm"
+        className="fixed inset-0 overflow-y-auto transition-all duration-300 bg-black/70 backdrop-blur-sm"
         onClick={handleBackdropClick}
       >
-        <div
-          className={cn(
-            "relative w-full rounded-2xl transform transition-all duration-300 ease-out",
-            "animate-in fade-in zoom-in-95",
-            modalClassName,
-            className
-          )}
-          onClick={(e) => e.stopPropagation()}
-        >
-          {/* Header */}
-          {(title || showCloseButton) && (
-            <div
-              className={cn(
-                "flex items-center justify-between p-6 border-b border-gray-800",
-                headerClassName
-              )}
-            >
-              {title && (
-                <div className="text-xl font-semibold text-white">
+        <div className="min-h-full flex items-center justify-center p-4">
+          <div
+            className={cn(
+              "relative w-full rounded-2xl transform transition-all duration-300 ease-out my-auto overflow-hidden",
+              "animate-in fade-in zoom-in-95",
+              modalClassName,
+              className
+            )}
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Green accent line at top */}
+            <div className="h-[2px] w-full bg-linear-to-r from-transparent via-green-500/60 to-transparent" />
+
+            {/* Header */}
+            {(title || showCloseButton) && (
+              <div
+                className={cn(
+                  "flex items-center justify-between px-6 py-5 sticky top-0 z-10 bg-gray-900 rounded-t-2xl",
+                  headerClassName
+                )}
+              >
+                {title && (
+                <div className="text-lg font-bold text-white tracking-tight">
                   {title}
                 </div>
-              )}
-              {showCloseButton && (
-                <button
-                  onClick={onClose}
-                  className="ml-auto p-2 rounded-lg hover:bg-gray-800 transition-colors duration-200 text-gray-400 hover:text-white cursor-pointer"
-                  aria-label="Close modal"
-                >
-                  <X size={20} />
-                </button>
-              )}
-            </div>
-          )}
+                )}
+                {showCloseButton && (
+                  <button
+                    onClick={onClose}
+                    className="ml-auto w-8 h-8 flex items-center justify-center rounded-full bg-gray-800 hover:bg-gray-700 transition-colors duration-200 text-gray-400 hover:text-white cursor-pointer"
+                    aria-label="Close modal"
+                  >
+                    <X size={14} />
+                  </button>
+                )}
+              </div>
+            )}
 
-          {/* Content */}
-          <div className={cn("p-6", contentClassName)}>
-            {children}
+            {/* Separator */}
+            {(title || showCloseButton) && (
+              <div className="mx-6 h-px bg-gray-800/80" />
+            )}
+
+            {/* Content */}
+            <div className={cn("px-6 py-5", contentClassName)}>
+              {children}
+            </div>
           </div>
         </div>
       </div>
@@ -128,4 +136,3 @@ export const AppModal: React.FC<Props> = ({
 };
 
 export default AppModal;
-

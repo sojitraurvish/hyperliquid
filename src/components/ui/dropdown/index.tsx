@@ -153,7 +153,7 @@ export const AppDropdown = <T extends string | number>({
 
           <svg
             className={cn(
-              "w-5 h-5 transition-transform duration-200",
+              "w-3.5 h-3.5 opacity-50 transition-transform duration-200",
               isOpen && "transform rotate-180"
             )}
             fill="none"
@@ -172,51 +172,51 @@ export const AppDropdown = <T extends string | number>({
         {isOpen && !isLoading && (
           <div
             className={cn(
-              "absolute z-50 w-full mt-2 rounded-lg shadow-xl max-h-60 overflow-y-auto overflow-x-hidden",
-              optionClassName ? "bg-gray-800 border border-gray-700" : "bg-white border-2 border-gray-200",
+              "absolute z-50 mt-1.5 rounded-xl shadow-2xl shadow-black/40 max-h-60 overflow-y-auto overflow-x-hidden",
+              "bg-gray-900/95 backdrop-blur-xl border border-gray-700/50 min-w-40",
               optionClassName
             )}
             role="listbox"
           >
             {options.length === 0 ? (
-              <div className="px-4 py-3 text-gray-500 text-center">
+              <div className="px-4 py-3 text-gray-500 text-center text-sm">
                 No options available
               </div>
             ) : (
-              options.map((option, index) => (
-                <AppButton
-                  variant={VARIANT_TYPES.NOT_SELECTED}
-                  key={index}
-                  type="button"
-                  onClick={() => !option.disabled && handleSelect(option)}
-                  disabled={option.disabled}
-                  className={cn(
-                    "w-full px-4 py-3 text-left flex items-center gap-2 transition-colors duration-150 cursor-pointer",
-                    "hover:bg-purple-50 focus:bg-purple-50 focus:outline-none",
-                    option.value === value && "bg-purple-100 font-semibold text-purple-700",
-                    option.disabled && "opacity-50 cursor-not-allowed",
-                    optionClassName
-                  )}
-                  role="option"
-                  aria-selected={option.value === value}
-                >
-                  {option.icon && <span className="shrink-0">{option.icon}</span>}
-                  <span className="truncate flex-1 min-w-0">{option.label}</span>
-                  {(option.value === value && showRightIcon) && (
-                    rightIcon ? rightIcon : <svg
-                      className="w-5 h-5 ml-auto text-purple-600 shrink-0"
-                      fill="currentColor"
-                      viewBox="0 0 20 20"
-                    >
-                      <path
-                        fillRule="evenodd"
-                        d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
-                        clipRule="evenodd"
-                      />
-                    </svg>
-                  )}
-                </AppButton>
-              ))
+              <div className="p-1">
+                {options.map((option, index) => (
+                  <AppButton
+                    variant={VARIANT_TYPES.NOT_SELECTED}
+                    key={index}
+                    type="button"
+                    onClick={() => !option.disabled && handleSelect(option)}
+                    disabled={option.disabled}
+                    className={cn(
+                      "w-full px-3 py-2 text-left flex items-center gap-2 transition-all duration-150 cursor-pointer rounded-lg text-sm",
+                      option.value === value
+                        ? "bg-gray-800 text-white font-medium"
+                        : "text-gray-300 hover:bg-gray-800/70 hover:text-white",
+                      option.disabled && "opacity-50 cursor-not-allowed",
+                    )}
+                    role="option"
+                    aria-selected={option.value === value}
+                  >
+                    {option.icon && <span className="shrink-0">{option.icon}</span>}
+                    <span className="truncate flex-1 min-w-0">{option.label}</span>
+                    {(option.value === value && showRightIcon) && (
+                      rightIcon ? rightIcon : <svg
+                        className="w-4 h-4 ml-auto text-green-400 shrink-0"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                        stroke="currentColor"
+                        strokeWidth={2}
+                      >
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                      </svg>
+                    )}
+                  </AppButton>
+                ))}
+              </div>
             )}
           </div>
         )}

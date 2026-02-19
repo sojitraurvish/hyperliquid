@@ -38,6 +38,8 @@ type BottomPanelStore = {
     // Load all data in parallel
     getAllData: (params: {publicKey: `0x${string}`}) => Promise<void>;
     isLoading: boolean;
+
+    clearAllData: () => void;
 };
 
 export const useBottomPanelStore = create<BottomPanelStore>()(
@@ -204,6 +206,18 @@ export const useBottomPanelStore = create<BottomPanelStore>()(
           isUserPositionsLoading: false,
         });
       }
+    },
+    
+    clearAllData: () => {
+      set({
+        balances: null,
+        userPositions: [],
+        userOpenOrders: [],
+        historicalOrders: null,
+        userFundings: [],
+        tradeHistory: [],
+        isError: null,
+      });
     },
     
   }),{

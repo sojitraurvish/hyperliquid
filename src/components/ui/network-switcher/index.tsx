@@ -87,17 +87,17 @@ export const NetworkSwitcher = () => {
       <button
         onClick={() => setIsOpen((o) => !o)}
         className={`
-          flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-medium
-          transition-all cursor-pointer border
-          ${active.badgeBg} ${active.badgeText} border-transparent
-          hover:border-gray-700
+          flex items-center gap-1.5 px-2 py-1.5 rounded-lg text-[11px] font-medium
+          transition-all cursor-pointer
+          bg-gray-900/60 border border-gray-800/40 ${active.badgeText}
+          hover:bg-gray-800/60 hover:border-gray-700/50
         `}
         title={`Network: ${active.label} (${active.chainLabel})`}
       >
-        <span className={`w-2 h-2 rounded-full ${active.dotColor} animate-pulse`} />
+        <span className={`w-1.5 h-1.5 rounded-full ${active.dotColor}`} />
         {active.label}
         <svg
-          className={`w-3.5 h-3.5 transition-transform ${isOpen ? "rotate-180" : ""}`}
+          className={`w-3 h-3 opacity-40 transition-transform ${isOpen ? "rotate-180" : ""}`}
           fill="none"
           stroke="currentColor"
           viewBox="0 0 24 24"
@@ -108,15 +108,13 @@ export const NetworkSwitcher = () => {
 
       {/* Dropdown */}
       {isOpen && (
-        <div className="absolute right-0 mt-2 w-56 rounded-xl bg-gray-900 border border-gray-800 shadow-xl shadow-black/30 z-50 overflow-hidden">
-          {/* Header */}
-          <div className="px-3 py-2 border-b border-gray-800">
+        <div className="absolute right-0 mt-1.5 w-52 rounded-xl bg-gray-900/95 backdrop-blur-xl border border-gray-700/50 shadow-2xl shadow-black/40 z-50 overflow-hidden">
+          <div className="px-3 py-2 border-b border-gray-800/50">
             <span className="text-[10px] text-gray-500 font-medium uppercase tracking-wider">
-              Select Network
+              Network
             </span>
           </div>
 
-          {/* Options */}
           <div className="p-1">
             {NETWORKS.map((network) => {
               const isActive = network.mode === currentNetwork;
@@ -125,23 +123,21 @@ export const NetworkSwitcher = () => {
                   key={network.mode}
                   onClick={() => handleSelect(network)}
                   className={`
-                    w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-left
-                    transition-all cursor-pointer
+                    w-full flex items-center gap-2.5 px-2.5 py-2 rounded-lg text-left
+                    transition-all cursor-pointer text-sm
                     ${isActive
-                      ? "bg-gray-800 border border-gray-700"
-                      : "hover:bg-gray-800/60 border border-transparent"
+                      ? "bg-gray-800/80 text-white"
+                      : "text-gray-400 hover:bg-gray-800/50 hover:text-white"
                     }
                   `}
                 >
-                  <span className={`w-2.5 h-2.5 rounded-full shrink-0 ${network.dotColor} ${isActive ? "animate-pulse" : ""}`} />
+                  <span className={`w-2 h-2 rounded-full shrink-0 ${network.dotColor}`} />
                   <div className="flex-1 min-w-0">
-                    <div className={`text-sm font-medium ${isActive ? "text-white" : "text-gray-300"}`}>
-                      {network.label}
-                    </div>
+                    <div className="font-medium text-[13px]">{network.label}</div>
                     <div className="text-[10px] text-gray-500">{network.chainLabel}</div>
                   </div>
                   {isActive && (
-                    <svg className="w-4 h-4 text-green-400 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                    <svg className="w-3.5 h-3.5 text-green-400 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                       <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
                     </svg>
                   )}
@@ -150,10 +146,9 @@ export const NetworkSwitcher = () => {
             })}
           </div>
 
-          {/* Footer info */}
-          <div className="px-3 py-2 border-t border-gray-800">
+          <div className="px-3 py-2 border-t border-gray-800/50">
             <p className="text-[10px] text-gray-500 leading-relaxed">
-              Switching networks will disconnect your wallet and reload the page.
+              Switching disconnects wallet and reloads.
             </p>
           </div>
         </div>

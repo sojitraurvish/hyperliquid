@@ -76,27 +76,28 @@ const privacySections: PrivacySectionData[] = [
 
 export const PrivacyContent = () => {
   return (
-    <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-12 lg:py-16">
-      {/* Header Section */}
-      <div className="mb-8 sm:mb-12">
-        <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold text-white mb-4">
-          Privacy Policy
-        </h1>
-        <p className="text-gray-400 text-sm sm:text-base">
-          Last updated: January 22, 2026
-        </p>
-      </div>
+    <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-10 sm:py-16 lg:py-20 relative">
+      <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[500px] h-[300px] bg-green-500/3 rounded-full blur-3xl pointer-events-none" />
 
-      {/* Privacy Sections */}
-      <div className="space-y-8 sm:space-y-10">
-        {privacySections.map((section) => (
-          <PrivacySection key={section.number} section={section} />
-        ))}
+      <div className="relative">
+        <div className="mb-10 sm:mb-14">
+          <span className="inline-block text-sm font-semibold text-green-400 tracking-widest uppercase mb-4 px-4 py-1.5 bg-green-500/10 rounded-full border border-green-500/20">
+            Legal
+          </span>
+          <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold text-white mb-4 tracking-tight">
+            Privacy Policy
+          </h1>
+          <p className="text-gray-500 text-sm sm:text-base">
+            Last updated: January 22, 2026
+          </p>
+        </div>
+
+        <div className="space-y-5 sm:space-y-8 md:space-y-10">
+          {privacySections.map((section) => (
+            <PrivacySection key={section.number} section={section} />
+          ))}
+        </div>
       </div>
     </div>
   );
 };
-
-
-
-

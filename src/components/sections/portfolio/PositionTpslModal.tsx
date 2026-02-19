@@ -266,43 +266,42 @@ export function PositionTpslModal({
       isOpen={isOpen}
       onClose={onClose}
       title="TP/SL for Position"
-      className="max-w-2xl"
+      className="w-full max-w-2xl"
       contentClassName="space-y-6"
     >
       {/* Position Details */}
-      <div className="grid grid-cols-2 gap-4 text-sm">
-        <div>
-          <span className="text-gray-400">Coin:</span>
-          <span className="text-white ml-2">{coin}</span>
+      <div className="grid grid-cols-2 gap-2.5 p-3.5 bg-gray-800/30 rounded-xl border border-gray-800/50">
+        <div className="space-y-0.5">
+          <span className="text-[10px] text-gray-500 uppercase tracking-wider">Coin</span>
+          <div className="text-sm text-white font-semibold">{coin}</div>
         </div>
-        <div>
-          <span className="text-gray-400">Position:</span>
-          <span className={`ml-2 ${parseFloat(pos.szi) < 0 ? "text-red-500" : "text-green-500"}`}>
+        <div className="space-y-0.5">
+          <span className="text-[10px] text-gray-500 uppercase tracking-wider">Position</span>
+          <div className={`text-sm font-semibold ${parseFloat(pos.szi) < 0 ? "text-red-400" : "text-green-400"}`}>
             {addDecimals(Math.abs(parseFloat(pos.szi)), szDecimals)} {coin}
-          </span>
+          </div>
         </div>
-        <div>
-          <span className="text-gray-400">Entry Price:</span>
-          <span className="text-white ml-2">${addDecimals(entryPrice || 0, 2)}</span>
+        <div className="space-y-0.5">
+          <span className="text-[10px] text-gray-500 uppercase tracking-wider">Entry Price</span>
+          <div className="text-sm text-white font-mono">${addDecimals(entryPrice || 0, 2)}</div>
         </div>
-        <div>
-          <span className="text-gray-400">Mark Price:</span>
-          <span className="text-white ml-2">${addDecimals(markPrice || 0, 2)}</span>
+        <div className="space-y-0.5">
+          <span className="text-[10px] text-gray-500 uppercase tracking-wider">Mark Price</span>
+          <div className="text-sm text-white font-mono">${addDecimals(markPrice || 0, 2)}</div>
         </div>
       </div>
 
       {/* Existing TP/SL Display */}
       {existingTpsl && (
-        <div className="space-y-3 border-t border-gray-800 pt-4">
+        <div className="space-y-2.5">
           {existingTpsl.takeProfit && (
-            <div className="flex items-center justify-between">
+            <div className="flex items-center justify-between p-3 bg-green-500/5 border border-green-500/15 rounded-xl">
               <div>
-                <div className="text-sm text-white">
-                  Take Profit: Price {direction === ORDER_DIRECTION.LONG ? "above" : "below"}{" "}
-                  {existingTpsl.takeProfit.triggerPx}
+                <div className="text-sm text-white font-medium">
+                  Take Profit: {existingTpsl.takeProfit.triggerPx}
                 </div>
-                <div className="text-xs text-gray-400 mt-1">
-                  Expected profit: {calculateExpectedProfitLoss(
+                <div className="text-xs text-green-400/70 mt-0.5">
+                  {calculateExpectedProfitLoss(
                     existingTpsl.takeProfit.triggerPx,
                     entryPrice || 0,
                     direction,
@@ -314,21 +313,20 @@ export function PositionTpslModal({
               <button
                 onClick={handleCancelTp}
                 disabled={isSubmitting}
-                className="text-green-400 hover:text-green-300 text-sm disabled:opacity-50"
+                className="text-xs text-red-400 hover:text-red-300 font-medium cursor-pointer disabled:opacity-50 px-2.5 py-1 rounded-lg hover:bg-red-500/10 transition-colors"
               >
                 Cancel
               </button>
             </div>
           )}
           {existingTpsl.stopLoss && (
-            <div className="flex items-center justify-between">
+            <div className="flex items-center justify-between p-3 bg-red-500/5 border border-red-500/15 rounded-xl">
               <div>
-                <div className="text-sm text-white">
-                  Stop Loss: Price {direction === ORDER_DIRECTION.LONG ? "above" : "below"}{" "}
-                  {existingTpsl.stopLoss.triggerPx}
+                <div className="text-sm text-white font-medium">
+                  Stop Loss: {existingTpsl.stopLoss.triggerPx}
                 </div>
-                <div className="text-xs text-gray-400 mt-1">
-                  Expected loss: {calculateExpectedProfitLoss(
+                <div className="text-xs text-red-400/70 mt-0.5">
+                  {calculateExpectedProfitLoss(
                     existingTpsl.stopLoss.triggerPx,
                     entryPrice || 0,
                     direction,
@@ -340,7 +338,7 @@ export function PositionTpslModal({
               <button
                 onClick={handleCancelSl}
                 disabled={isSubmitting}
-                className="text-green-400 hover:text-green-300 text-sm disabled:opacity-50"
+                className="text-xs text-red-400 hover:text-red-300 font-medium cursor-pointer disabled:opacity-50 px-2.5 py-1 rounded-lg hover:bg-red-500/10 transition-colors"
               >
                 Cancel
               </button>
@@ -372,19 +370,24 @@ export function PositionTpslModal({
       )}
 
       {/* Configure Amount */}
-      <div className="space-y-3 border-t border-gray-800 pt-4">
-        <div className="flex items-center gap-2">
-          <Checkbox
-            id="configure-amount"
-            checked={isConfigureAmountEnabled}
-            onChange={(e) => setIsConfigureAmountEnabled(e.target.checked)}
-          />
-          <Label htmlFor="configure-amount" className="text-sm text-gray-400 cursor-pointer">
-            Configure Amount
-          </Label>
-        </div>
+      <div className="space-y-3">
+        <button
+          onClick={() => setIsConfigureAmountEnabled(!isConfigureAmountEnabled)}
+          className="flex items-center gap-2.5 cursor-pointer"
+        >
+          <div className={`w-5 h-5 rounded-md border-2 flex items-center justify-center shrink-0 transition-colors ${
+            isConfigureAmountEnabled ? "border-green-400 bg-green-400" : "border-gray-600"
+          }`}>
+            {isConfigureAmountEnabled && (
+              <svg className="w-3 h-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+              </svg>
+            )}
+          </div>
+          <span className="text-sm text-gray-400">Configure Amount</span>
+        </button>
         {isConfigureAmountEnabled && (
-          <div className="space-y-2">
+          <div className="space-y-2 pl-7.5">
             <div className="flex items-center gap-2">
               <Slider
                 value={[orderSizePercent]}
@@ -393,11 +396,11 @@ export function PositionTpslModal({
                 step={1}
                 className="flex-1 py-1"
               />
-              <div className="text-xs text-white min-w-16 text-right">
+              <div className="text-xs text-white font-mono min-w-14 text-right font-medium">
                 {orderSizePercent}%
               </div>
             </div>
-            <div className="text-xs text-gray-400">
+            <div className="text-xs text-gray-500">
               {addDecimals(calculatedOrderSize, szDecimals)} {coin}
             </div>
           </div>
@@ -405,65 +408,66 @@ export function PositionTpslModal({
       </div>
 
       {/* Limit Price */}
-      <div className="space-y-3 border-t border-gray-800 pt-4">
-        <div className="flex items-center gap-2">
-          <Checkbox
-            id="limit-price"
-            checked={isLimitPriceEnabled}
-            onChange={(e) => setIsLimitPriceEnabled(e.target.checked)}
-          />
-          <Label htmlFor="limit-price" className="text-sm text-gray-400 cursor-pointer">
-            Limit Price
-          </Label>
-        </div>
+      <div className="space-y-3">
+        <button
+          onClick={() => setIsLimitPriceEnabled(!isLimitPriceEnabled)}
+          className="flex items-center gap-2.5 cursor-pointer"
+        >
+          <div className={`w-5 h-5 rounded-md border-2 flex items-center justify-center shrink-0 transition-colors ${
+            isLimitPriceEnabled ? "border-green-400 bg-green-400" : "border-gray-600"
+          }`}>
+            {isLimitPriceEnabled && (
+              <svg className="w-3 h-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+              </svg>
+            )}
+          </div>
+          <span className="text-sm text-gray-400">Limit Price</span>
+        </button>
         {isLimitPriceEnabled && (
-          <div className="grid grid-cols-2 gap-3">
-            <div className="space-y-1">
-              <Label className="text-xs text-gray-500">TP Limit Price</Label>
+          <div className="grid grid-cols-2 gap-3 pl-7.5">
+            <div className="space-y-1.5">
+              <span className="text-xs text-gray-500 font-medium">TP Limit Price</span>
               <Input
                 type="text"
                 value={takeProfitLimitPrice}
                 onChange={(e) => setTakeProfitLimitPrice(e.target.value)}
                 placeholder="0.00"
-                className="h-8 text-right font-mono text-sm"
+                className="h-9 text-right font-mono text-sm bg-gray-800/40 border-gray-700/50 rounded-xl"
               />
             </div>
-            <div className="space-y-1">
-              <Label className="text-xs text-gray-500">SL Limit Price</Label>
+            <div className="space-y-1.5">
+              <span className="text-xs text-gray-500 font-medium">SL Limit Price</span>
               <Input
                 type="text"
                 value={stopLossLimitPrice}
                 onChange={(e) => setStopLossLimitPrice(e.target.value)}
                 placeholder="0.00"
-                className="h-8 text-right font-mono text-sm"
+                className="h-9 text-right font-mono text-sm bg-gray-800/40 border-gray-700/50 rounded-xl"
               />
             </div>
           </div>
         )}
       </div>
 
-      {/* Confirm Button - Only show if at least one TP/SL is not set */}
+      {/* Confirm Button */}
       {(!existingTpsl?.takeProfit || !existingTpsl?.stopLoss) && (
         <button
           onClick={handleConfirm}
           disabled={isSubmitting || (!takeProfitPrice && !stopLossPrice)}
-          className="w-full bg-green-400 text-white py-3 rounded-md font-medium hover:bg-green-500 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+          className={`w-full h-11 rounded-xl font-semibold text-sm transition-colors cursor-pointer ${
+            isSubmitting || (!takeProfitPrice && !stopLossPrice)
+              ? "bg-gray-800 text-gray-500 cursor-not-allowed"
+              : "bg-green-500 hover:bg-green-400 text-white"
+          }`}
         >
           {isSubmitting ? "Processing..." : "Confirm"}
         </button>
       )}
 
       {/* Info Text */}
-      <div className="text-xs text-gray-400 space-y-2 border-t border-gray-800 pt-4">
-        <p>
-          By default take-profit and stop-loss orders apply to the entire position. Take-profit and
-          stop-loss automatically cancel after closing the position. A market order is triggered when
-          the stop loss or take profit price is reached.
-        </p>
-        <p>
-          If the order size is configured above, the TP/SL order will be for that size no matter how
-          the position changes in the future.
-        </p>
+      <div className="text-[11px] text-gray-500 leading-relaxed p-3 bg-gray-800/20 rounded-xl">
+        TP/SL orders apply to the entire position by default and auto-cancel after closing. A market order triggers at the set price. Configured sizes apply regardless of future position changes.
       </div>
     </AppModal>
   )

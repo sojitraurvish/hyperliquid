@@ -527,7 +527,7 @@ export async function calculateOrderMetrics(params: {
   price: number;
   side: "buy" | "sell";
   leverage: number;
-  marginMode: "Cross" | "Isolated";
+  marginMode: "cross" | "isolated";
   orderBook: { bids: OrderBookLevel[]; asks: OrderBookLevel[] };
   coin: string;
   // For existing positions
@@ -587,7 +587,7 @@ export async function calculateOrderMetrics(params: {
     const positionSizeAbs = Math.abs(existingPositionSize);
     const entryPrice = existingEntryPrice ?? markPrice;
 
-    if (marginMode === "Cross" && accountValue !== undefined && totalMaintenanceMargin !== undefined) {
+    if (marginMode === "cross" && accountValue !== undefined && totalMaintenanceMargin !== undefined) {
       liquidationPrice = calculateCrossMarginLiquidationPrice(
         entryPrice,
         positionSide,
@@ -596,7 +596,7 @@ export async function calculateOrderMetrics(params: {
         positionSizeAbs,
         marginTable || undefined
       );
-    } else if (marginMode === "Isolated" && isolatedMargin !== undefined) {
+    } else if (marginMode === "isolated" && isolatedMargin !== undefined) {
       liquidationPrice = calculateIsolatedMarginLiquidationPrice(
         entryPrice,
         positionSide,
@@ -610,7 +610,7 @@ export async function calculateOrderMetrics(params: {
     // For new orders
     const orderSide = side === "buy" ? 1 : -1;
 
-    if (marginMode === "Cross" && accountValue !== undefined && totalMaintenanceMargin !== undefined) {
+    if (marginMode === "cross" && accountValue !== undefined && totalMaintenanceMargin !== undefined) {
       // Estimate new position after order
       const newPositionSize = sizeBase;
       const newOrderValue = calculateOrderValue(newPositionSize, markPrice);
@@ -627,7 +627,7 @@ export async function calculateOrderMetrics(params: {
         newPositionSize,
         marginTable || undefined
       );
-    } else if (marginMode === "Isolated") {
+    } else if (marginMode === "isolated") {
       liquidationPrice = calculateIsolatedMarginLiquidationPrice(
         markPrice,
         orderSide,

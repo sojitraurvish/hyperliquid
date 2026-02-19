@@ -444,107 +444,54 @@ console.log("signature", signature);
     <AppModal
       isOpen={isOpen}
       onClose={onClose}
-      title={
-        <div className="flex items-center gap-3 pl-2">
-          <div className="w-6 h-6 bg-blue-500 rounded-full flex items-center justify-center">
-            <Coins className="text-white w-4 h-4" />
-          </div>
-          <span>Withdraw USDC to {chainDisplayName}</span>
-        </div>
-      }
+      title="Withdraw USDC"
       variant={VARIANT_TYPES.PRIMARY}
       closeOnOutsideClick={true}
       closeOnEscape={true}
       showCloseButton={true}
-      headerClassName="relative flex items-center justify-between p-4 border-b border-gray-800"
-      contentClassName="px-6 pb-6 pt-4"
+      contentClassName="space-y-5"
     >
-      <div className="space-y-6 pb-2">
-        <div className="space-y-2">
-          <p className="text-gray-400 text-sm">
-            USDC will be sent over the {chainDisplayName} network to your wallet address.
-            Withdrawals should arrive within 5 minutes.
-          </p>
-          <p className="text-gray-400 text-sm">
-            A 1 USDC fee will be deducted from the USDC withdrawn.
-          </p>
-          <p className="text-gray-400 text-sm">
-          </p>
-        </div>
-        
-        {/* {address && (
-          <div className="p-3 bg-gray-800/50 border border-gray-700 rounded-lg space-y-2">
-            <div>
-              <p className="text-xs text-gray-400 mb-1">Signing Account:</p>
-              <p className="text-xs font-mono text-gray-300 break-all">{address}</p>
-            </div>
-            {connectedAddress && connectedAddress.toLowerCase() !== address.toLowerCase() && (
-              <div className="pt-2 border-t border-gray-700">
-                <p className="text-xs text-yellow-400 mb-1">⚠️ Warning: Account Mismatch</p>
-                <p className="text-xs text-gray-400 mb-1">Connected Account:</p>
-                <p className="text-xs font-mono text-gray-300 break-all">{connectedAddress}</p>
-                <p className="text-xs text-yellow-400 mt-2">Your wallet will sign with the account shown above. Make sure this is the correct account.</p>
-              </div>
-            )}
+        <div className="flex items-start gap-2.5 p-3 bg-gray-800/30 border border-gray-800/50 rounded-xl">
+          <svg className="w-4 h-4 text-gray-400 shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+          <div className="text-xs text-gray-400 leading-relaxed">
+            <p>USDC sent via {chainDisplayName}. Arrives within ~5 minutes.</p>
+            <p className="text-gray-500 mt-0.5">A 1 USDC fee is deducted from the withdrawal.</p>
           </div>
-        )} */}
+        </div>
 
         <form onSubmit={handleWithdraw} className="space-y-4">
-          <div className="space-y-2">
-            <label className="block text-sm font-medium text-white">Asset</label>
-            <AppDropdown
-              variant={VARIANT_TYPES.NOT_SELECTED}
-              options={[{ label: "USDC", value: "USDC" }]}
-              value={selectedAsset}
-              onChange={(value) => setSelectedAsset(value)}
-              dropdownClassName="!bg-gray-800 !border !border-gray-700 !text-gray-300 hover:!bg-gray-750 rounded-lg shadow-none"
-              optionClassName="!bg-gray-800 hover:!bg-gray-700 !text-white !shadow-none"
-              className="w-full"
-            />
-          </div>
-
-          <div className="space-y-2">
-            <label className="block text-sm font-medium text-white">Withdrawal Chain</label>
-            <AppDropdown
-              variant={VARIANT_TYPES.NOT_SELECTED}
-              options={[{ label: chainDisplayName, value: selectedChain }]}
-              value={selectedChain}
-              onChange={(value) => setSelectedChain(value)}
-              dropdownClassName="!bg-gray-800 !border !border-gray-700 !text-gray-300 hover:!bg-gray-750 rounded-lg shadow-none"
-              optionClassName="!bg-gray-800 hover:!bg-gray-700 !text-white !shadow-none"
-              className="w-full"
-            />
-          </div>
-
-          <div className="space-y-2">
-            <label className="block text-sm font-medium text-white">Amount</label>
-            <div className="relative w-full">
-              {isLoadingBalance && (
-                <div className="absolute inset-0 bg-gray-800 rounded-lg overflow-hidden">
-                  <div className="absolute inset-0 bg-gradient-to-r from-transparent via-gray-700/50 to-transparent animate-shimmer" />
-                </div>
-              )}
-              <input
-                type="text"
-                inputMode="decimal"
-                value={amount}
-                onChange={(e) => {
-                  const value = e.target.value;
-                  // Allow empty input
-                  if (value === "") {
-                    setAmount("");
-                    return;
-                  }
-                  // Check if the value matches the pattern: optional digits, optional decimal point, and up to 2 decimal digits
-                  const regex = /^\d*\.?\d{0,2}$/;
-                  if (regex.test(value)) {
-                    setAmount(value);
-                  }
-                }}
-                placeholder="0.00"
-                className="w-full px-4 py-3 pr-24 bg-gray-800 border border-gray-700 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none relative z-10"
-                disabled={isSubmitting}
+          {/* Asset & Chain Row */}
+          <div className="grid grid-cols-2 gap-3">
+            <div className="space-y-1.5">
+              <span className="text-xs text-gray-500 font-medium">Asset</span>
+              <AppDropdown
+                variant={VARIANT_TYPES.NOT_SELECTED}
+                options={[{ label: "USDC", value: "USDC" }]}
+                value={selectedAsset}
+                onChange={(value) => setSelectedAsset(value)}
+                dropdownClassName="!bg-gray-800/60 !border !border-gray-700/50 !text-gray-300 hover:!bg-gray-800 rounded-xl shadow-none"
+                optionClassName="!bg-gray-800 hover:!bg-gray-700 !text-white !shadow-none !rounded-lg"
+                className="w-full"
               />
+            </div>
+            <div className="space-y-1.5">
+              <span className="text-xs text-gray-500 font-medium">Chain</span>
+              <AppDropdown
+                variant={VARIANT_TYPES.NOT_SELECTED}
+                options={[{ label: chainDisplayName, value: selectedChain }]}
+                value={selectedChain}
+                onChange={(value) => setSelectedChain(value)}
+                dropdownClassName="!bg-gray-800/60 !border !border-gray-700/50 !text-gray-300 hover:!bg-gray-800 rounded-xl shadow-none"
+                optionClassName="!bg-gray-800 hover:!bg-gray-700 !text-white !shadow-none !rounded-lg"
+                className="w-full"
+              />
+            </div>
+          </div>
+
+          {/* Amount Input */}
+          <div className="space-y-1.5">
+            <div className="flex items-center justify-between">
+              <span className="text-xs text-gray-500 font-medium">Amount (USDC)</span>
               {!isLoadingBalance && withdrawableBalance !== null && (
                 <button
                   type="button"
@@ -552,19 +499,42 @@ console.log("signature", signature);
                     const maxAmount = Math.floor(withdrawableBalance * 100) / 100;
                     setAmount(maxAmount.toFixed(2));
                   }}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-green-400 hover:text-green-300 text-sm font-medium cursor-pointer z-20"
+                  className="text-[11px] font-medium text-green-400 hover:text-green-300 cursor-pointer transition-colors"
                   disabled={isSubmitting || withdrawableBalance === null}
                 >
-                  MAX: {formattedBalance}
+                  Max: {formattedBalance}
                 </button>
               )}
             </div>
-            <div className="flex items-center justify-between text-xs">
-              <span className="text-gray-400">
+            <div className="relative">
+              {isLoadingBalance && (
+                <div className="absolute inset-0 bg-gray-800/40 rounded-xl overflow-hidden z-10">
+                  <div className="absolute inset-0 bg-linear-to-r from-transparent via-gray-700/50 to-transparent animate-shimmer" />
+                </div>
+              )}
+              <div className="flex items-center bg-gray-800/40 rounded-xl border border-gray-700/50 focus-within:border-green-500/40 transition-colors">
+                <input
+                  type="text"
+                  inputMode="decimal"
+                  value={amount}
+                  onChange={(e) => {
+                    const value = e.target.value;
+                    if (value === "") { setAmount(""); return; }
+                    const regex = /^\d*\.?\d{0,2}$/;
+                    if (regex.test(value)) setAmount(value);
+                  }}
+                  placeholder="0.00"
+                  className="flex-1 bg-transparent px-4 py-3 text-sm text-white placeholder:text-gray-600 focus:outline-none font-mono [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none relative z-10"
+                  disabled={isSubmitting}
+                />
+                <span className="pr-4 text-xs font-medium text-gray-500 relative z-10">USDC</span>
+              </div>
+            </div>
+            <div className="flex items-center justify-between text-[11px]">
+              <span className="text-gray-500">
                 Available: {isLoadingBalance ? (
                   <span className="inline-flex items-center gap-1">
-                    <div className="w-3 h-3 border-2 border-gray-400 border-t-transparent rounded-full animate-spin" />
-                    Loading...
+                    <div className="w-2.5 h-2.5 border-2 border-gray-500 border-t-transparent rounded-full animate-spin" />
                   </span>
                 ) : withdrawableBalance !== null ? (
                   `${formattedBalance} USDC`
@@ -572,42 +542,49 @@ console.log("signature", signature);
                   "—"
                 )}
               </span>
-              <span className="text-gray-500">Minimum: {MIN_WITHDRAWAL_AMOUNT} USDC</span>
+              <span className="text-gray-600">Min: {MIN_WITHDRAWAL_AMOUNT} USDC</span>
             </div>
           </div>
 
-          {status && <div className="p-3 bg-blue-500/10 border border-blue-500/20 rounded-lg"><p className="text-blue-400 text-sm">{status}</p></div>}
+          {status && (
+            <div className="flex items-start gap-2 p-3 bg-blue-500/5 border border-blue-500/15 rounded-xl">
+              <svg className="w-4 h-4 text-blue-400 shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+              <p className="text-blue-400 text-xs leading-relaxed wrap-break-word">{status}</p>
+            </div>
+          )}
           
           {belowMinimum && amountNum > 0 && (
-            <div className="p-3 bg-red-500/10 border border-red-500/20 rounded-lg">
-              <p className="text-red-400 text-sm">Minimum withdrawal: {MIN_WITHDRAWAL_AMOUNT} USDC</p>
+            <div className="flex items-center gap-2 p-3 bg-red-500/5 border border-red-500/15 rounded-xl">
+              <svg className="w-4 h-4 text-red-400 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126z" /></svg>
+              <p className="text-red-400 text-xs">Minimum withdrawal: {MIN_WITHDRAWAL_AMOUNT} USDC</p>
             </div>
           )}
           
           {exceedsBalance && (
-            <div className="p-3 bg-red-500/10 border border-red-500/20 rounded-lg">
-              <p className="text-red-400 text-sm">Insufficient balance. You have {formattedBalance} USDC available.</p>
+            <div className="flex items-center gap-2 p-3 bg-red-500/5 border border-red-500/15 rounded-xl">
+              <svg className="w-4 h-4 text-red-400 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126z" /></svg>
+              <p className="text-red-400 text-xs">Insufficient balance. You have {formattedBalance} USDC available.</p>
             </div>
           )}
 
-          {/* {apiResponse && (
-            <div className={`p-3 border rounded-lg ${apiResponse.status === 200 ? "bg-green-500/10 border-green-500/20" : "bg-red-500/10 border-red-500/20"}`}>
-              <p className="text-xs font-mono">{`API Response (${apiResponse.status}):`}</p>
-              <pre className="text-xs text-gray-300 mt-2 overflow-auto max-h-40">{JSON.stringify(apiResponse.body, null, 2)}</pre>
-            </div>
-          )} */}
-
-          <AppButton 
-            type="submit" 
-            variant={VARIANT_TYPES.SECONDARY} 
-            isDisabled={!canSubmit} 
-            isLoading={isSubmitting} 
-            className="w-full mt-7 bg-green-500 text-white hover:bg-green-600 disabled:bg-gray-700 disabled:cursor-not-allowed py-3 text-base font-medium justify-center"
+          <button
+            type="submit"
+            disabled={!canSubmit}
+            className={`w-full h-11 rounded-xl font-semibold text-sm transition-colors cursor-pointer flex items-center justify-center gap-2 ${
+              !canSubmit
+                ? "bg-gray-800 text-gray-500 cursor-not-allowed"
+                : "bg-green-500 hover:bg-green-400 text-white"
+            }`}
           >
+            {isSubmitting && (
+              <svg className="animate-spin h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+              </svg>
+            )}
             {isSubmitting ? "Processing..." : `Withdraw to ${chainDisplayName}`}
-          </AppButton>
+          </button>
         </form>
-      </div>
     </AppModal>
   );
 };

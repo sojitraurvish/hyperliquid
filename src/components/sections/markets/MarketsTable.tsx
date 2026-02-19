@@ -306,36 +306,38 @@ export const MarketsTable = () => {
   const filterTabs: FilterType[] = ['All', 'Favorites', 'Top Gainers', 'Top Losers'];
 
   return (
-    <div className="w-full bg-gray-950 py-8 sm:py-12">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <div className="w-full bg-gray-950 py-8 sm:py-12 relative overflow-hidden">
+      <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[800px] h-[300px] bg-green-500/3 rounded-full blur-3xl pointer-events-none" />
+
+      <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Section Heading */}
-        <h2 className="text-2xl sm:text-3xl font-bold text-white mb-6">Available Markets</h2>
+        <h2 className="text-2xl sm:text-3xl font-bold text-white mb-6 tracking-tight">Available Markets</h2>
         
         {/* Search and Filter Section */}
         <div className="flex flex-col sm:flex-row items-center justify-between gap-4 mb-6">
           {/* Search Bar */}
           <div className="relative w-full sm:w-auto sm:flex-1 max-w-md">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
+            <Search className="absolute left-3.5 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-500" />
             <input
               type="text"
-              placeholder="Q Search markets..."
+              placeholder="Search markets..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full pl-10 pr-4 py-2.5 bg-gray-900 border border-gray-800 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent"
+              className="w-full pl-10 pr-4 py-3 bg-gray-900/60 backdrop-blur-sm border border-gray-800/60 rounded-xl text-sm sm:text-base text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-green-500/40 focus:border-green-500/30 transition-all"
             />
           </div>
 
           {/* Filter Tabs */}
-          <div className="flex items-center gap-2 flex-wrap">
+          <div className="flex items-center gap-1.5 sm:gap-2 flex-wrap">
             {filterTabs.map((filter) => (
               <AppButton
                 key={filter}
                 variant={VARIANT_TYPES.NOT_SELECTED}
                 onClick={() => setActiveFilter(filter)}
-                className={`px-4 py-2 text-sm font-medium rounded-lg transition-all ${
+                className={`px-3 sm:px-4 py-2.5 text-xs sm:text-sm font-medium rounded-xl transition-all ${
                   activeFilter === filter
-                    ? 'bg-gray-800 text-white'
-                    : 'bg-transparent text-gray-400 hover:text-white hover:bg-gray-800/50'
+                    ? 'bg-green-500/15 text-green-400 border border-green-500/25'
+                    : 'bg-transparent text-gray-400 hover:text-white hover:bg-gray-800/50 border border-transparent'
                 }`}
               >
                 {filter}
@@ -344,36 +346,112 @@ export const MarketsTable = () => {
           </div>
         </div>
 
-        {/* Markets Table */}
-        <div className="bg-gray-900 rounded-lg border border-gray-800 overflow-hidden">
+        {/* Mobile Card Layout */}
+        <div className="sm:hidden space-y-2">
+          {isLoading ? (
+            <div className="py-12 text-center text-gray-400 text-sm">Loading markets...</div>
+          ) : filteredMarkets.length === 0 ? (
+            <div className="py-12 text-center text-gray-400 text-sm">No markets found</div>
+          ) : (
+            filteredMarkets.map((market) => {
+              const isPositive = (market.change24hPer ?? 0) >= 0;
+              return (
+                <div
+                  key={market.symbol}
+                  className="bg-gray-900/50 border border-gray-800/40 rounded-xl overflow-hidden active:bg-gray-800/40 transition-colors px-3.5 py-3"
+                >
+                  {/* Top row: Coin info + Price */}
+                  <div className="flex items-center justify-between mb-2.5">
+                    <div className="flex items-center gap-2.5">
+                      <button
+                        onClick={() => toggleFavorite(market.symbol)}
+                        className="p-1 -ml-1 text-gray-600 hover:text-yellow-400 transition-colors shrink-0"
+                      >
+                        <Star className={`h-3.5 w-3.5 ${market.isFavorite ? 'fill-yellow-400 text-yellow-400' : ''}`} />
+                      </button>
+                      <div className="w-8 h-8 rounded-lg bg-gray-800/80 flex items-center justify-center text-[10px] font-bold text-white shrink-0">
+                        {getCoinInitials(market.coin)}
+                      </div>
+                      <div>
+                        <div className="text-white text-sm font-semibold leading-tight">{market.coin}</div>
+                        <div className="flex items-center gap-1.5 mt-0.5">
+                          <span className="text-[10px] text-gray-500">Perp</span>
+                          {market.leverage && (
+                            <span className="text-[9px] font-semibold text-green-400/80 bg-green-500/10 px-1 py-px rounded">{market.leverage}</span>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                    <div className="text-right">
+                      <div className="text-white text-sm font-mono font-semibold">
+                        {market.lastPrice !== null ? `$${formatNumber(market.lastPrice, 2)}` : '—'}
+                      </div>
+                      {market.change24hPer !== null ? (
+                        <div className={`flex items-center justify-end gap-0.5 text-[11px] font-medium mt-0.5 ${isPositive ? 'text-green-400' : 'text-red-400'}`}>
+                          {isPositive ? <ArrowUp className="h-2.5 w-2.5" /> : <ArrowDown className="h-2.5 w-2.5" />}
+                          {isPositive ? '+' : ''}{market.change24hPer.toFixed(2)}%
+                        </div>
+                      ) : (
+                        <div className="text-[11px] text-gray-500 mt-0.5">0.00%</div>
+                      )}
+                    </div>
+                  </div>
+                  {/* Bottom row: Volume + Trade */}
+                  <div className="flex items-center justify-between pt-2 border-t border-gray-800/30">
+                    <div className="flex items-center gap-4 text-[11px]">
+                      <div>
+                        <span className="text-gray-500">Vol </span>
+                        <span className="text-gray-300 font-mono">{formatLargeNumber(market.volume)}</span>
+                      </div>
+                      <div>
+                        <span className="text-gray-500">OI </span>
+                        <span className="text-gray-300 font-mono">{formatLargeNumber(market.openInterest)}</span>
+                      </div>
+                    </div>
+                    <AppButton
+                      variant={VARIANT_TYPES.NOT_SELECTED}
+                      onClick={() => handleTrade(market)}
+                      className="bg-green-500/10 hover:bg-green-500/20 text-green-400 px-4 py-1.5 text-xs font-semibold rounded-lg border border-green-500/20 shrink-0"
+                    >
+                      Trade
+                    </AppButton>
+                  </div>
+                </div>
+              );
+            })
+          )}
+        </div>
+
+        {/* Desktop Table Layout */}
+        <div className="hidden sm:block bg-gray-900/40 backdrop-blur-sm rounded-2xl border border-gray-800/50 overflow-hidden">
           <div className="overflow-x-auto scrollbar-hide">
-            <table className="w-full min-w-[800px]">
-              <thead className="bg-gray-900 border-b border-gray-800">
+            <table className="w-full">
+              <thead className="bg-gray-900/60 border-b border-gray-800/50">
                 <tr>
-                  <th className="px-3 sm:px-4 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">
+                  <th className="px-5 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                     Market
                   </th>
-                  <th className="px-3 sm:px-4 py-3 text-right text-xs font-medium text-gray-400 uppercase tracking-wider">
+                  <th className="px-5 py-4 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
                     Price
                   </th>
-                  <th className="px-3 sm:px-4 py-3 text-right text-xs font-medium text-gray-400 uppercase tracking-wider">
+                  <th className="px-5 py-4 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
                     24h Change
                   </th>
-                  <th className="px-3 sm:px-4 py-3 text-right text-xs font-medium text-gray-400 uppercase tracking-wider hidden md:table-cell">
+                  <th className="px-5 py-4 text-right text-xs font-medium text-gray-500 uppercase tracking-wider hidden md:table-cell">
                     24h Volume
                   </th>
-                  <th className="px-3 sm:px-4 py-3 text-right text-xs font-medium text-gray-400 uppercase tracking-wider hidden lg:table-cell">
+                  <th className="px-5 py-4 text-right text-xs font-medium text-gray-500 uppercase tracking-wider hidden lg:table-cell">
                     Open Interest
                   </th>
-                  <th className="px-3 sm:px-4 py-3 text-right text-xs font-medium text-gray-400 uppercase tracking-wider">
+                  <th className="px-5 py-4 text-right text-xs font-medium text-gray-500 uppercase tracking-wider hidden lg:table-cell">
                     Max Leverage
                   </th>
-                  <th className="px-3 sm:px-4 py-3 text-right text-xs font-medium text-gray-400 uppercase tracking-wider">
+                  <th className="px-5 py-4 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
                     Action
                   </th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-gray-800">
+              <tbody className="divide-y divide-gray-800/40">
                 {isLoading ? (
                   <tr>
                     <td colSpan={7} className="px-4 py-8 text-center text-gray-400">
@@ -398,90 +476,90 @@ export const MarketsTable = () => {
                     return (
                       <tr
                         key={market.symbol}
-                        className="hover:bg-gray-800/50 transition-colors"
+                        className="hover:bg-gray-800/30 transition-colors group"
                       >
                         {/* Market */}
-                        <td className="px-3 sm:px-4 py-4">
-                          <div className="flex items-center gap-2 sm:gap-3">
+                        <td className="px-5 py-4">
+                          <div className="flex items-center gap-3">
                             <button
                               onClick={() => toggleFavorite(market.symbol)}
-                              className="text-gray-400 hover:text-yellow-400 transition-colors flex-shrink-0"
+                              className="p-1.5 -ml-1.5 text-gray-600 hover:text-yellow-400 transition-colors shrink-0 rounded-lg"
                             >
                               <Star
                                 className={`h-4 w-4 ${market.isFavorite ? 'fill-yellow-400 text-yellow-400' : ''}`}
                               />
                             </button>
-                            <div className="flex items-center gap-2 min-w-0">
-                              <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-gray-800 flex items-center justify-center text-xs font-semibold text-white flex-shrink-0">
+                            <div className="flex items-center gap-2.5 min-w-0">
+                              <div className="w-8 h-8 rounded-xl bg-gray-800/80 flex items-center justify-center text-xs font-semibold text-white shrink-0">
                                 {getCoinInitials(market.coin)}
                               </div>
                               <div className="min-w-0">
-                                <div className="text-white font-medium text-sm sm:text-base truncate">{market.symbol}</div>
-                                <div className="text-xs text-gray-400 truncate">{market.coin}</div>
+                                <div className="text-white font-medium text-base truncate">{market.symbol}</div>
+                                <div className="text-xs text-gray-500 truncate">{market.coin}</div>
                               </div>
                             </div>
                           </div>
                         </td>
 
                         {/* Price */}
-                        <td className="px-3 sm:px-4 py-4 text-right">
-                          <div className="text-white font-medium text-sm sm:text-base">
+                        <td className="px-5 py-4 text-right">
+                          <div className="text-white font-medium text-base font-mono">
                             {market.lastPrice !== null ? `$${formatNumber(market.lastPrice, 2)}` : '—'}
                           </div>
                         </td>
 
                         {/* 24h Change */}
-                        <td className="px-3 sm:px-4 py-4 text-right">
+                        <td className="px-5 py-4 text-right">
                           {market.change24hPer !== null ? (
-                            <div className={`flex items-center justify-end gap-1 ${
-                              isPositive ? 'text-green-400' : 'text-red-400'
+                            <div className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-lg text-sm font-medium ${
+                              isPositive ? 'text-green-400 bg-green-500/10' : 'text-red-400 bg-red-500/10'
                             }`}>
                               {changeIcon}
-                              <span className="font-medium text-sm sm:text-base">
+                              <span>
                                 {isPositive ? '+' : ''}{market.change24hPer.toFixed(2)}%
                               </span>
                             </div>
                           ) : (
-                            <div className="flex items-center justify-end gap-1 text-gray-400">
+                            <div className="inline-flex items-center gap-1 text-gray-500 text-sm">
                               <Minus className="h-3 w-3" />
-                              <span className="text-sm sm:text-base">0.00%</span>
+                              <span>0.00%</span>
                             </div>
                           )}
                         </td>
 
                         {/* 24h Volume */}
-                        <td className="px-3 sm:px-4 py-4 text-right hidden md:table-cell">
-                          <div className="text-gray-300 text-sm sm:text-base">
+                        <td className="px-5 py-4 text-right hidden md:table-cell">
+                          <div className="text-gray-300 text-base font-mono">
                             {formatLargeNumber(market.volume)}
                           </div>
                         </td>
 
                         {/* Open Interest */}
-                        <td className="px-3 sm:px-4 py-4 text-right hidden lg:table-cell">
-                          <div className="text-gray-300 text-sm sm:text-base">
+                        <td className="px-5 py-4 text-right hidden lg:table-cell">
+                          <div className="text-gray-300 text-base font-mono">
                             {formatLargeNumber(market.openInterest)}
                           </div>
                         </td>
 
                         {/* Max Leverage */}
-                        <td className="px-3 sm:px-4 py-4 text-right">
+                        <td className="px-5 py-4 text-right hidden lg:table-cell">
                           {market.leverage ? (
-                            <span className="inline-block px-2 py-1 bg-green-500/20 text-green-400 text-xs font-medium rounded">
+                            <span className="inline-block px-2.5 py-1 bg-green-500/10 text-green-400 text-xs font-semibold rounded-lg border border-green-500/20">
                               {market.leverage}
                             </span>
                           ) : (
-                            <span className="text-gray-400">—</span>
+                            <span className="text-gray-500">—</span>
                           )}
                         </td>
 
                         {/* Action */}
-                        <td className="px-3 sm:px-4 py-4 text-right">
+                        <td className="px-5 py-4 text-right">
                           <AppButton
                             variant={VARIANT_TYPES.NOT_SELECTED}
                             onClick={() => handleTrade(market)}
-                            className="bg-transparent hover:bg-gray-800 text-white px-3 sm:px-4 py-2 text-xs sm:text-sm font-medium rounded transition-colors whitespace-nowrap"
+                            className="bg-green-500/10 hover:bg-green-500/20 text-green-400 hover:text-green-300 px-4 py-2 text-sm font-medium rounded-lg transition-all whitespace-nowrap border border-green-500/20 hover:border-green-500/30"
                           >
-                            Trade →
+                            Trade
                           </AppButton>
                         </td>
                       </tr>

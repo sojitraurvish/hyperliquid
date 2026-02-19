@@ -1,12 +1,12 @@
 "use client";
 
-import { Globe, Bell, Mail } from "lucide-react";
+import { Globe, Bell, Mail, Menu, X, HelpCircle, Headphones, FileText, Shield, ChevronDown } from "lucide-react";
 import { ThemePickerButton, ThemePickerModal } from "@/components/ui/theme-picker";
 import NetworkSwitcher from "@/components/ui/network-switcher";
 import AppButton, { AppButton as Button } from "@/components/ui/button";
 import AppDropdown, { DropdownOption } from "@/components/ui/dropdown";
 import { VARIANT_TYPES } from "@/lib/constants";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useState, useRef } from "react";
 import AppModal from "@/components/ui/modal";
 import { useAccount, useConnect, useDisconnect, useWalletClient, type Connector } from 'wagmi';
 import HydrationGuard from "@/components/ui/hydration-guard";
@@ -24,19 +24,11 @@ import { useRouter } from "next/router";
 import { ROUTES } from "@/lib/config";
 
 const MORE_MENU_ITEMS = [
-  { label: "FAQ", route: ROUTES.FAQ },
-  { label: "Support", route: ROUTES.SUPPORT },
-  { label: "Terms of Service", route: ROUTES.TERMS },
-  { label: "Privacy Policy", route: ROUTES.PRIVACY },
+  { label: "FAQ", route: ROUTES.FAQ, icon: HelpCircle },
+  { label: "Support", route: ROUTES.SUPPORT, icon: Headphones },
+  { label: "Terms of Service", route: ROUTES.TERMS, icon: FileText },
+  { label: "Privacy Policy", route: ROUTES.PRIVACY, icon: Shield },
 ];
-
-const moreDropdownOptions: DropdownOption[] = MORE_MENU_ITEMS.map((item) => ({
-  label: item.label,
-  value: item.route,
-  onClick: () => {
-    window.location.href = item.route;
-  },
-}));
 
 import { EXTERNAL_URLS } from "@/lib/config";
 
@@ -63,6 +55,9 @@ export const Header = () => {
   const [isWithdrawModalOpen, setIsWithdrawModalOpen] = useState(false);
   const [isThemePickerOpen, setIsThemePickerOpen] = useState(false);
   const [connectionError, setConnectionError] = useState<string | null>(null);
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [isMoreMenuOpen, setIsMoreMenuOpen] = useState(false);
+  const moreMenuRef = React.useRef<HTMLDivElement>(null);
   const { connectors, connect } = useConnect();
 
   const { data: walletClient } = useWalletClient();
@@ -161,6 +156,17 @@ export const Header = () => {
     fetchBalances();
   }, [fetchBalances]);
 
+  // Close "More" menu on outside click
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (moreMenuRef.current && !moreMenuRef.current.contains(e.target as Node)) {
+        setIsMoreMenuOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
   // Extract numeric values from balance strings (format: "10.92 USDC")
   const parseBalanceValue = (balanceStr: string | undefined): number => {
     if (!balanceStr) return 0;
@@ -180,33 +186,32 @@ export const Header = () => {
   
   return (
     <>
-    <header className="h-14 border-b border-gray-800 bg-gray-950 flex items-center justify-between px-4">
-      <div className="flex items-center gap-6">
-        <Link href={ROUTES.HOME} className="flex items-center gap-2 cursor-pointer hover:opacity-80 transition-opacity">
-          <div className="w-6 h-6 bg-green-500 rounded-lg flex items-center justify-center">
+    <header className="h-14 border-b border-gray-800/60 bg-gray-950/80 backdrop-blur-xl flex items-center justify-between px-3 sm:px-5 relative z-40">
+      <div className="flex items-center gap-2 sm:gap-5">
+        <Link href={ROUTES.HOME} className="flex items-center gap-2 cursor-pointer group shrink-0">
+          <div className="w-7 h-7 bg-linear-to-br from-green-400 to-emerald-600 rounded-lg flex items-center justify-center shadow-md shadow-green-500/20 group-hover:shadow-green-500/30 transition-shadow">
             <span className="text-white font-bold text-sm">H</span>
           </div>
-          <span className="font-semibold text-lg text-white">Hypertrading</span>
+          <span className="font-semibold text-base text-white hidden sm:inline tracking-tight">Hypertrading</span>
         </Link>
         
-        <nav className="flex items-center gap-1">
+        {/* Desktop nav */}
+        <nav className="hidden md:flex items-center bg-gray-900/50 rounded-lg p-0.5 border border-gray-800/40">
           {[
             { label: "Trade", route: ROUTES.TRADE },
             { label: "Markets", route: ROUTES.MARKETS },
             { label: "Portfolio", route: ROUTES.PORTFOLIO },
-            { label: "Blog", route: ROUTES.BLOG },
           ].map((item) => {
-            // Check if route matches (including dynamic routes like /trade/[id])
             const isActive = router.pathname === item.route || 
               (item.route === ROUTES.TRADE && router.pathname.startsWith('/trade'));
             return (
               <Link key={item.label} href={item.route}>
                 <Button
                   variant={VARIANT_TYPES.NOT_SELECTED}
-                  className={`text-sm px-2 py-2 flex items-center justify-center hover:text-green-400 hover:bg-gray-800 shadow-lg hover:shadow-xl transition-all duration-300 rounded-lg cursor-pointer ${
+                  className={`text-[13px] px-3.5 py-1.5 flex items-center justify-center transition-all duration-200 rounded-md cursor-pointer font-medium ${
                     isActive
-                      ? "text-white bg-gray-800"
-                      : "text-gray-300"
+                      ? "text-white bg-gray-800 shadow-sm"
+                      : "text-gray-400 hover:text-white"
                   }`}
                 >
                   {item.label}
@@ -214,104 +219,206 @@ export const Header = () => {
               </Link>
             );
           })}
-          <AppDropdown
-            variant={VARIANT_TYPES.PRIMARY}
-            options={moreDropdownOptions}
-            placeholder="More"
-            className="w-auto"
-                dropdownClassName="text-gray-300 hover:text-green-400 bg-transparent hover:bg-gray-800 text-sm border-0 !bg-gray-900 !border-gray-700"
-            optionClassName="w-40 bg-gray-900 text-gray-300 hover:bg-gray-800 hover:text-white border-gray-700"
-          />
+          <div ref={moreMenuRef} className="relative">
+            <button
+              onClick={() => setIsMoreMenuOpen(!isMoreMenuOpen)}
+              className={`text-[13px] px-3 py-1.5 flex items-center gap-1 transition-all duration-200 rounded-md cursor-pointer font-medium ${
+                isMoreMenuOpen ? "text-white" : "text-gray-400 hover:text-white"
+              }`}
+            >
+              More
+              <ChevronDown className={`w-3 h-3 opacity-50 transition-transform duration-200 ${isMoreMenuOpen ? "rotate-180" : ""}`} />
+            </button>
+            {isMoreMenuOpen && (
+              <div className="absolute top-full left-0 mt-2 w-52 rounded-xl bg-gray-900/95 backdrop-blur-xl border border-gray-700/50 shadow-2xl shadow-black/40 z-50 overflow-hidden">
+                <div className="p-1.5">
+                  {MORE_MENU_ITEMS.map((item) => {
+                    const Icon = item.icon;
+                    const isActive = router.pathname === item.route;
+                    return (
+                      <Link key={item.label} href={item.route} onClick={() => setIsMoreMenuOpen(false)}>
+                        <div className={`flex items-center gap-2.5 px-3 py-2 rounded-lg text-[13px] transition-all cursor-pointer ${
+                          isActive
+                            ? "text-white bg-gray-800/80"
+                            : "text-gray-400 hover:text-white hover:bg-gray-800/50"
+                        }`}>
+                          <Icon className="w-3.5 h-3.5 opacity-60" />
+                          {item.label}
+                        </div>
+                      </Link>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+          </div>
         </nav>
       </div>
 
-      <div className="flex items-center gap-3">
+      <div className="flex items-center gap-1.5 sm:gap-2">
+        {/* Network switcher - always visible on sm+ */}
+        <div className="hidden sm:block">
+          <NetworkSwitcher />
+        </div>
+
         <HydrationGuard
           fallback={
             <AppButton 
               variant={VARIANT_TYPES.NOT_SELECTED} 
-              className="bg-green-600 text-white hover:bg-green-700 px-4 py-2 text-sm font-medium rounded transition-colors"
+              className="bg-green-500 text-white hover:bg-green-400 px-4 py-1.5 text-xs font-semibold rounded-lg transition-all"
             >
               Connect Wallet
             </AppButton>
           }
-          className="flex items-center gap-3"
+          className="flex items-center gap-1.5 sm:gap-2"
         >
           {isConnected ? (
             <>
-              <AppButton 
-                variant={VARIANT_TYPES.NOT_SELECTED} 
-                className="bg-gray-800/80 border border-gray-700 text-white hover:bg-gray-700/80 px-4 py-2.5 text-xs font-normal rounded transition-all shadow-sm hover:shadow-md cursor-pointer relative overflow-hidden min-w-[200px]"
+              {/* Deposit/Withdraw actions */}
+              <div className="hidden sm:flex items-center bg-gray-900/70 border border-gray-800/40 rounded-lg overflow-hidden">
+                <button
+                  className="px-2.5 py-1.5 text-[11px] font-semibold text-green-400 hover:bg-green-500/10 transition-colors"
+                  onClick={() => setIsDepositModalOpen(true)}
+                >
+                  Deposit
+                </button>
+                <div className="w-px h-4 bg-gray-800/60" />
+                <button
+                  className="px-2.5 py-1.5 text-[11px] font-semibold text-gray-400 hover:text-white hover:bg-gray-800/40 transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
+                  onClick={() => setIsWithdrawModalOpen(true)}
+                  disabled={availableBalance === 0}
+                >
+                  Withdraw
+                </button>
+              </div>
+
+              {/* Balance widget - lg only */}
+              <button 
+                className="hidden lg:flex items-center gap-2.5 bg-gray-900/70 border border-gray-800/40 rounded-lg px-3 py-1.5 text-xs transition-all hover:bg-gray-800/40 cursor-pointer"
                 onClick={fetchBalances}
                 disabled={isBalancesLoading}
               >
                 {isBalancesLoading ? (
-                  <>
-                    <div className="relative z-10 flex items-center gap-2 w-full">
-                      <div className="h-3 w-20 bg-gray-600/50 rounded animate-pulse" />
-                      <div className="h-3 w-16 bg-gray-600/50 rounded animate-pulse" />
-                    </div>
-                    <div className="absolute inset-0 w-full h-full bg-[linear-gradient(90deg,transparent,rgba(255,255,255,0.15),transparent)] animate-shimmer" />
-                  </>
-                ) : (
-                  <div className="flex items-center gap-2 relative z-10">
-                    <div className="flex items-center gap-1.5">
-                      <span className="text-gray-400 text-[10px]">Available:</span>
-                      <span className="text-white font-medium text-xs">{formattedAvailableBalance}</span>
-                    </div>
-                    <div className="w-px h-3 bg-gray-600" />
-                    <div className="flex items-center gap-1.5">
-                      <span className="text-gray-400 text-[10px]">Total:</span>
-                      <span className="text-gray-300 font-medium text-xs">{formattedTotalBalance}</span>
-                    </div>
+                  <div className="flex items-center gap-2">
+                    <div className="h-3 w-14 bg-gray-700/50 rounded animate-pulse" />
+                    <div className="h-3 w-12 bg-gray-700/50 rounded animate-pulse" />
                   </div>
+                ) : (
+                  <>
+                    <div className="flex items-center gap-1">
+                      <div className="w-1.5 h-1.5 rounded-full bg-green-400" />
+                      <span className="text-white font-semibold font-mono">{formattedAvailableBalance}</span>
+                    </div>
+                    <div className="w-px h-3 bg-gray-700/50" />
+                    <span className="text-gray-500 font-mono">{formattedTotalBalance}</span>
+                  </>
                 )}
-              </AppButton>
-              <AppButton 
-                variant={VARIANT_TYPES.NOT_SELECTED} 
-                className="bg-green-500 text-white hover:bg-green-600 px-4 py-2 text-sm font-medium rounded transition-colors shadow-sm hover:shadow-md"
-                onClick={() => {
-                  setIsDepositModalOpen(true);
-                }}
-              >
-                Deposit
-              </AppButton>
-              <AppButton 
-                variant={VARIANT_TYPES.NOT_SELECTED} 
-                className="bg-red-600 text-white hover:bg-red-700 px-4 py-2 text-sm font-medium rounded transition-colors shadow-sm hover:shadow-md disabled:bg-gray-700 disabled:cursor-not-allowed disabled:hover:bg-gray-700"
-                onClick={() => {
-                  setIsWithdrawModalOpen(true);
-                }}
-                disabled={availableBalance === 0}
-              >
-                Withdraw
-              </AppButton>
+              </button>
+
+              {/* Wallet address */}
               <AppDropdown
                 variant={VARIANT_TYPES.PRIMARY}
                 options={walletDropdownOptions}
-                placeholder={address ? `${address.slice(0, 6)}...${address.slice(-4)}` : "Connect Wallet"}
+                placeholder={address ? `${address.slice(0, 6)}...${address.slice(-4)}` : "Wallet"}
                 onChange={handleWalletAction}
                 className="w-auto"
-                dropdownClassName="text-gray-300 hover:text-green-400 bg-gray-900 hover:bg-gray-800 text-sm"
-                optionClassName="bg-gray-900 text-gray-300 hover:bg-gray-800 hover:text-white border-gray-700 hover:text-green-400"
+                dropdownClassName="text-white bg-gray-900/70 hover:bg-gray-800/80 text-xs border border-gray-800/40 rounded-lg font-mono"
+                optionClassName="w-44 bg-gray-900/95 backdrop-blur-xl border border-gray-700/50 text-gray-300 hover:bg-gray-800 hover:text-white rounded-xl shadow-2xl shadow-black/40"
               />
-              {/* <AppButton variant={VARIANT_TYPES.PRIMARY}>
-                <Bell className="h-4 w-4 hover:text-green-400" />
-              </AppButton> */}
             </>
           ) : (
             <AppButton 
               variant={VARIANT_TYPES.NOT_SELECTED} 
-              className="bg-green-600 text-white hover:bg-green-700 px-4 py-2 text-sm font-medium rounded transition-colors"
+              className="bg-green-500 text-white hover:bg-green-400 px-4 py-1.5 text-xs font-semibold rounded-lg transition-all"
               onClick={() => setIsWalletConnectModalOpen(true)}
             >
               Connect Wallet
             </AppButton>
           )}
         </HydrationGuard>
-        <NetworkSwitcher />
-        <ThemePickerButton onClick={() => setIsThemePickerOpen(true)} />
+
+        {/* Theme picker */}
+        <div className="hidden sm:block">
+          <ThemePickerButton onClick={() => setIsThemePickerOpen(true)} />
+        </div>
+
+        {/* Mobile hamburger */}
+        <button
+          className="md:hidden p-2 -mr-1 text-gray-400 hover:text-white hover:bg-gray-800/60 rounded-lg transition-colors"
+          onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+          aria-label="Toggle menu"
+        >
+          {isMobileMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
+        </button>
       </div>
+
+      {/* Mobile menu overlay */}
+      {isMobileMenuOpen && (
+        <div className="absolute top-14 left-0 right-0 bg-gray-950/98 backdrop-blur-xl border-b border-gray-800/60 z-50 md:hidden shadow-2xl shadow-black/40">
+          <nav className="flex flex-col p-3 gap-0.5">
+            {[
+              { label: "Trade", route: ROUTES.TRADE },
+              { label: "Markets", route: ROUTES.MARKETS },
+              { label: "Portfolio", route: ROUTES.PORTFOLIO },
+              ...MORE_MENU_ITEMS,
+            ].map((item) => {
+              const isActive = router.pathname === item.route || 
+                (item.route === ROUTES.TRADE && router.pathname.startsWith('/trade'));
+              return (
+                <Link key={item.label} href={item.route} onClick={() => setIsMobileMenuOpen(false)}>
+                  <div className={`px-4 py-3 rounded-xl text-sm font-medium transition-all ${
+                    isActive
+                      ? "text-green-400 bg-green-500/8"
+                      : "text-gray-400 hover:text-white hover:bg-gray-800/40"
+                  }`}>
+                    {item.label}
+                  </div>
+                </Link>
+              );
+            })}
+            {isConnected && (
+              <>
+                <div className="mx-3 mt-3 mb-2 pt-3 border-t border-gray-800/40">
+                  <div className="bg-gray-900/50 rounded-xl p-3 border border-gray-800/30">
+                    <div className="flex items-center justify-between text-xs mb-2">
+                      <div className="flex items-center gap-1.5">
+                        <div className="w-1.5 h-1.5 rounded-full bg-green-400" />
+                        <span className="text-gray-500 uppercase tracking-wider text-[10px]">Available</span>
+                      </div>
+                      <span className="text-white font-semibold font-mono">{formattedAvailableBalance} USDC</span>
+                    </div>
+                    <div className="flex items-center justify-between text-xs">
+                      <span className="text-gray-500 uppercase tracking-wider text-[10px] ml-3">Total</span>
+                      <span className="text-gray-400 font-mono">{formattedTotalBalance} USDC</span>
+                    </div>
+                  </div>
+                </div>
+                <div className="flex gap-2 px-3 pb-1">
+                  <AppButton
+                    variant={VARIANT_TYPES.NOT_SELECTED}
+                    className="flex-1 bg-linear-to-r from-green-500 to-emerald-600 text-white px-3 py-2.5 text-sm font-semibold rounded-xl transition-all justify-center shadow-sm shadow-green-500/15"
+                    onClick={() => { setIsDepositModalOpen(true); setIsMobileMenuOpen(false); }}
+                  >
+                    Deposit
+                  </AppButton>
+                  <AppButton
+                    variant={VARIANT_TYPES.NOT_SELECTED}
+                    className="flex-1 bg-gray-800/60 text-gray-300 border border-gray-700/50 px-3 py-2.5 text-sm font-semibold rounded-xl transition-all justify-center disabled:opacity-40 disabled:cursor-not-allowed"
+                    onClick={() => { setIsWithdrawModalOpen(true); setIsMobileMenuOpen(false); }}
+                    disabled={availableBalance === 0}
+                  >
+                    Withdraw
+                  </AppButton>
+                </div>
+              </>
+            )}
+            <div className="flex items-center gap-2 mx-3 mt-2 pt-3 border-t border-gray-800/40 sm:hidden">
+              <NetworkSwitcher />
+              <ThemePickerButton onClick={() => { setIsThemePickerOpen(true); setIsMobileMenuOpen(false); }} />
+            </div>
+          </nav>
+        </div>
+      )}
     </header>
 
     <AppModal

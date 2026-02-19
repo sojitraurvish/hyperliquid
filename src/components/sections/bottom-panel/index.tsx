@@ -702,23 +702,23 @@ const LimitCloseModal = ({
       isOpen={isOpen}
       onClose={onClose}
       title="Limit Close"
-      className="max-w-md bg-gray-950 border border-gray-800"
+      className="max-w-md"
       contentClassName="space-y-6"
     >
-      <p className="text-sm text-gray-400">
-        This will send an order to close your position at the limit price.
+      <p className="text-sm text-gray-400 leading-relaxed">
+        Close your position at a limit price.
       </p>
 
       {/* Price Input */}
       <div className="space-y-2">
         <div className="flex items-center justify-between">
-          <Label className="text-xs text-gray-400">Price (USDC)</Label>
+          <span className="text-xs text-gray-500 font-medium">Price (USDC)</span>
           {midPrice > 0 && (
             <button
               onClick={() => setClosePrice(midPrice.toFixed(2))}
-              className="text-xs text-green-400 hover:text-green-300 transition-colors cursor-pointer"
+              className="text-[11px] text-green-400 hover:text-green-300 transition-colors cursor-pointer font-medium"
             >
-              Mid
+              Use Mid: {midPrice.toFixed(2)}
             </button>
           )}
         </div>
@@ -727,27 +727,22 @@ const LimitCloseModal = ({
           value={closePrice}
           onChange={handlePriceChange}
           placeholder="0.00"
-          className="h-9 text-right font-mono bg-gray-900/50 border border-gray-800 text-white"
+          className="h-10 text-right font-mono bg-gray-800/40 border border-gray-700/50 text-white rounded-xl focus:border-green-500/40 transition-colors"
         />
-        {midPrice > 0 && (
-          <p className="text-xs text-gray-500 text-right">
-            {midPrice.toFixed(2)} Mid
-          </p>
-        )}
       </div>
 
       {/* Size Input */}
       <div className="space-y-2">
-        <Label className="text-xs text-gray-400">Size</Label>
+        <span className="text-xs text-gray-500 font-medium">Size</span>
         <div className="relative">
           <Input
             value={displaySize}
             readOnly
-            className="h-9 text-right font-mono pr-20 bg-gray-900/50 border border-gray-800 text-white"
+            className="h-10 text-right font-mono pr-20 bg-gray-800/40 border border-gray-700/50 text-white rounded-xl"
           />
           <button
             onClick={() => setSizeCurrency(sizeCurrency === "USDC" ? "currency" : "USDC")}
-            className="absolute right-1 top-1/2 -translate-y-1/2 h-6 sm:h-7 px-2 text-xs text-gray-400 hover:text-white flex items-center gap-1 transition-colors cursor-pointer"
+            className="absolute right-2 top-1/2 -translate-y-1/2 h-7 px-2.5 text-xs text-gray-400 hover:text-white flex items-center gap-1 transition-colors cursor-pointer bg-gray-700/40 rounded-lg"
           >
             {displayCurrency} <ChevronDown className="h-3 w-3" />
           </button>
@@ -757,19 +752,15 @@ const LimitCloseModal = ({
       {/* Percentage Slider */}
       <div className="space-y-3">
         <div className="flex items-center justify-between">
-          <Label className="text-xs text-gray-400">Position Size</Label>
-          <span className="text-xs text-white font-mono">{closePercentage}%</span>
+          <span className="text-xs text-gray-500 font-medium">Position Size</span>
+          <span className="text-xs text-white font-mono font-medium">{closePercentage}%</span>
         </div>
         <div className="relative flex items-center py-2">
-          {/* Slider track background */}
           <div className="relative w-full h-2 bg-gray-800 rounded-full">
-            {/* Filled portion */}
             <div 
               className="absolute top-0 left-0 h-2 bg-green-400 rounded-full transition-all duration-150 ease-out"
               style={{ width: `${closePercentage}%` }}
             />
-            
-            {/* Slider markers - positioned behind handle */}
             <div className="absolute inset-0 flex items-center justify-between px-0.5 pointer-events-none">
               {[0, 25, 50, 75, 100].map((val) => (
                 <div
@@ -780,14 +771,10 @@ const LimitCloseModal = ({
                 />
               ))}
             </div>
-            
-            {/* Custom slider handle */}
             <div
               className="absolute top-1/2 -translate-y-1/2 w-4 h-4 bg-green-400 rounded-full border-2 border-gray-950 shadow-lg transition-all duration-150 ease-out hover:scale-110 hover:bg-green-300 z-20 pointer-events-none"
               style={{ left: `calc(${closePercentage}% - 8px)` }}
             />
-            
-            {/* Slider input - on top for interaction */}
             <input
               type="range"
               min={0}
@@ -804,16 +791,15 @@ const LimitCloseModal = ({
             />
           </div>
         </div>
-        {/* Quick percentage buttons */}
-        <div className="flex items-center justify-end gap-2">
+        <div className="flex items-center gap-2">
           {[25, 50, 75, 100].map((val) => (
             <button
               key={val}
               onClick={() => setClosePercentage(val)}
-              className={`text-xs px-2.5 py-1 rounded transition-colors cursor-pointer ${
+              className={`flex-1 py-1.5 text-xs font-medium rounded-lg transition-colors cursor-pointer ${
                 closePercentage === val
-                  ? "bg-green-400/20 text-green-400 border border-green-400/30"
-                  : "text-gray-400 hover:text-green-400 hover:bg-gray-800/50 border border-transparent"
+                  ? "bg-green-500/15 text-green-400 border border-green-500/25"
+                  : "bg-gray-800/50 text-gray-400 hover:text-white border border-gray-800/60 hover:border-gray-700"
               }`}
             >
               {val}%
@@ -823,23 +809,24 @@ const LimitCloseModal = ({
       </div>
 
       {/* Estimated PNL */}
-      <div className="space-y-1">
-        <p className="text-xs text-gray-400">
-          Estimated closed PNL (without fees): <span className={estimatedPNL >= 0 ? "text-green-500" : "text-red-500"}>{pnlFormatted}</span>
-        </p>
+      <div className="p-3 rounded-xl bg-gray-800/30 border border-gray-800/50">
+        <div className="flex items-center justify-between">
+          <span className="text-xs text-gray-500">Est. Closed PNL</span>
+          <span className={`text-sm font-semibold font-mono ${estimatedPNL >= 0 ? "text-green-400" : "text-red-400"}`}>{pnlFormatted}</span>
+        </div>
       </div>
 
-      {/* Confirm Button */}
-      <Button
-        variant="primary"
-        size="lg"
-        className="w-full cursor-pointer"
+      <button
         onClick={handleConfirm}
-        isLoading={isSubmitting}
-        isDisabled={isSubmitting || !closePrice || parseFloat(closePrice) <= 0 || closeSize <= 0}
+        disabled={isSubmitting || !closePrice || parseFloat(closePrice) <= 0 || closeSize <= 0}
+        className={`w-full h-11 rounded-xl font-semibold text-sm transition-colors cursor-pointer ${
+          isSubmitting || !closePrice || parseFloat(closePrice) <= 0 || closeSize <= 0
+            ? "bg-gray-800 text-gray-500 cursor-not-allowed"
+            : "bg-green-500 hover:bg-green-400 text-white"
+        }`}
       >
-        Confirm
-      </Button>
+        {isSubmitting ? "Confirming..." : "Confirm"}
+      </button>
     </AppModal>
   );
 };
@@ -1945,52 +1932,61 @@ const TransferModal = ({
       onClose={onClose}
       className="max-w-sm"
     >
-      <div className="flex flex-col items-center gap-5">
-        {/* Title */}
-        <div className="text-center">
-          <h2 className="text-lg font-semibold text-white">Transfer USDC</h2>
-          <p className="text-xs text-gray-400 mt-1">
-            Transfer USDC between your Perps and Spot balances.
-          </p>
+      <div className="flex flex-col gap-5">
+        {/* Direction visual */}
+        <div className="flex items-center justify-center">
+          <div className="flex items-center gap-3 px-5 py-3 rounded-xl bg-gray-800/40 border border-gray-800/60">
+            <div className="text-center">
+              <div className="text-[10px] text-gray-500 uppercase tracking-wider mb-0.5">From</div>
+              <div className="text-sm font-semibold text-white">{fromLabel}</div>
+            </div>
+            <button
+              onClick={handleSwapDirection}
+              className="w-8 h-8 rounded-lg bg-green-500/10 border border-green-500/20 flex items-center justify-center hover:bg-green-500/20 transition-colors cursor-pointer"
+            >
+              <svg className="w-4 h-4 text-green-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4" />
+              </svg>
+            </button>
+            <div className="text-center">
+              <div className="text-[10px] text-gray-500 uppercase tracking-wider mb-0.5">To</div>
+              <div className="text-sm font-semibold text-white">{toLabel}</div>
+            </div>
+          </div>
         </div>
 
-        {/* Direction Toggle */}
-        <button
-          onClick={handleSwapDirection}
-          className="flex items-center gap-2 px-4 py-2 rounded-full bg-gray-800 border border-gray-700 hover:border-gray-600 transition-colors cursor-pointer"
-        >
-          <span className="text-sm font-medium text-white">{fromLabel}</span>
-          <svg className="w-4 h-4 text-green-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-            <path strokeLinecap="round" strokeLinejoin="round" d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4" />
-          </svg>
-          <span className="text-sm font-medium text-white">{toLabel}</span>
-        </button>
-
         {/* Amount Input */}
-        <div className="w-full">
-          <div className="flex items-center bg-gray-800/50 rounded-lg border border-gray-700 focus-within:border-green-500/50 transition-colors">
+        <div className="w-full space-y-2">
+          <div className="flex items-center justify-between">
+            <span className="text-xs text-gray-500 font-medium">Amount (USDC)</span>
+            <button
+              onClick={handleMaxClick}
+              className="text-[11px] font-medium text-green-400 hover:text-green-300 cursor-pointer transition-colors"
+            >
+              Max: {addDecimals(maxAmount)}
+            </button>
+          </div>
+          <div className="flex items-center bg-gray-800/40 rounded-xl border border-gray-700/50 focus-within:border-green-500/40 transition-colors">
             <input
               type="text"
               inputMode="decimal"
               value={amount}
               onChange={handleAmountChange}
               placeholder="0.00"
-              className="flex-1 bg-transparent px-3 py-3 text-sm text-white placeholder:text-gray-500 focus:outline-none font-mono"
+              className="flex-1 bg-transparent px-4 py-3 text-sm text-white placeholder:text-gray-600 focus:outline-none font-mono"
             />
-            <button
-              onClick={handleMaxClick}
-              className="px-3 py-1 mr-2 text-xs font-medium text-green-400 hover:text-green-300 cursor-pointer transition-colors"
-            >
-              MAX: {addDecimals(maxAmount)}
-            </button>
+            <span className="pr-4 text-xs font-medium text-gray-500">USDC</span>
           </div>
         </div>
 
-        {/* Confirm Button */}
         <button
           onClick={handleConfirm}
           disabled={!isValid || isSubmitting}
-          className="w-full h-11 rounded-lg bg-green-500 text-white font-medium text-sm hover:bg-green-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer flex items-center justify-center gap-2"
+          className={`w-full h-11 rounded-xl font-semibold text-sm transition-colors cursor-pointer flex items-center justify-center gap-2 ${
+            !isValid || isSubmitting
+              ? "bg-gray-800 text-gray-500 cursor-not-allowed"
+              : "bg-green-500 hover:bg-green-400 text-white"
+          }`}
         >
           {isSubmitting && (
             <svg className="animate-spin h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
@@ -1998,7 +1994,7 @@ const TransferModal = ({
               <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
             </svg>
           )}
-          {isSubmitting ? "Confirming..." : "Confirm"}
+          {isSubmitting ? "Transferring..." : "Confirm Transfer"}
         </button>
       </div>
     </AppModal>
@@ -2043,7 +2039,8 @@ export const BottomPanel = () => {
     isUserPositionsLoading, 
     getUserPositions,
     getAllData,
-    isLoading
+    isLoading,
+    clearAllData,
   } = useBottomPanelStore();
   const { selectedMarket } = useMarketStore();
 
@@ -2053,6 +2050,13 @@ export const BottomPanel = () => {
   useEffect(() => {
     setIsHydrated(true);
   }, []);
+
+  // Clear all store data when wallet disconnects
+  useEffect(() => {
+    if (!userAddress) {
+      clearAllData();
+    }
+  }, [userAddress, clearAllData]);
 
   const openOrdersCount = userOpenOrders?.length || 0;
 

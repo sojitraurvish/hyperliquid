@@ -115,10 +115,10 @@ export const PortfolioContent = () => {
   // Show loading state during SSR and before hydration
   if (!isMounted) {
     return (
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-12">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 sm:py-14">
         <div className="mb-8">
-          <div className="h-10 bg-gray-800 rounded animate-pulse w-48 mb-2" />
-          <div className="h-5 bg-gray-800 rounded animate-pulse w-64" />
+          <div className="h-10 bg-gray-800/50 rounded-xl animate-pulse w-48 mb-2" />
+          <div className="h-5 bg-gray-800/50 rounded-xl animate-pulse w-64" />
         </div>
       </div>
     );
@@ -128,12 +128,14 @@ export const PortfolioContent = () => {
   if (!isConnected || !address) {
     return (
       <div className="min-h-[calc(100vh-3.5rem)] flex items-center justify-center px-4">
-        <div className="max-w-md w-full text-center">
-          <div className="mb-6">
-            <Wallet className="w-16 h-16 mx-auto text-gray-600 mb-4" />
-            <h2 className="text-2xl font-semibold text-white mb-2">Connect Your Wallet</h2>
-            <p className="text-gray-400">
-              Please connect your wallet to view your portfolio and manage your positions.
+        <div className="max-w-sm sm:max-w-md w-full text-center">
+          <div className="mb-6 p-6 sm:p-10 bg-gray-900/30 backdrop-blur-sm rounded-2xl sm:rounded-3xl border border-gray-800/50">
+            <div className="w-16 h-16 sm:w-20 sm:h-20 mx-auto mb-4 sm:mb-6 bg-gray-800/50 rounded-xl sm:rounded-2xl flex items-center justify-center">
+              <Wallet className="w-8 h-8 sm:w-10 sm:h-10 text-gray-500" />
+            </div>
+            <h2 className="text-xl sm:text-2xl font-bold text-white mb-2 sm:mb-3 tracking-tight">Connect Your Wallet</h2>
+            <p className="text-gray-400 text-sm sm:text-base leading-relaxed">
+              Connect your wallet to view your portfolio and manage your positions.
             </p>
           </div>
         </div>
@@ -142,29 +144,34 @@ export const PortfolioContent = () => {
   }
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-12">
-      {/* Header Section */}
-      <div className="mb-8">
-        <h1 className="text-3xl sm:text-4xl font-bold text-white mb-2">Portfolio</h1>
-        <p className="text-gray-400 text-sm sm:text-base">Manage your positions and track performance.</p>
-      </div>
+    <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 py-6 sm:py-14 relative">
+      <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[600px] h-[300px] bg-green-500/3 rounded-full blur-3xl pointer-events-none" />
 
-      {/* Action Buttons */}
-      <div className="flex gap-3 mb-8">
-        <AppButton
-          variant={VARIANT_TYPES.NOT_SELECTED}
-          className="bg-green-500 text-white hover:bg-green-600 px-4 py-2 text-sm font-medium rounded transition-colors"
-          onClick={() => setIsDepositModalOpen(true)}
-        >
-          + Deposit
-        </AppButton>
-        <AppButton
-          variant={VARIANT_TYPES.NOT_SELECTED}
-          className="bg-gray-800 text-white hover:bg-gray-700 px-4 py-2 text-sm font-medium rounded transition-colors"
-          onClick={() => setIsWithdrawModalOpen(true)}
-        >
-          Withdraw
-        </AppButton>
+      <div className="relative">
+      {/* Header Section */}
+      <div className="mb-5 sm:mb-8 flex items-end justify-between gap-3">
+        <div>
+          <h1 className="text-2xl sm:text-4xl font-bold text-white mb-1 sm:mb-2 tracking-tight">Portfolio</h1>
+          <p className="text-gray-400 text-xs sm:text-base hidden sm:block">Manage your positions and track performance.</p>
+        </div>
+
+        {/* Action Buttons */}
+        <div className="flex gap-2 sm:gap-3">
+          <AppButton
+            variant={VARIANT_TYPES.NOT_SELECTED}
+            className="bg-green-500 hover:bg-green-400 text-white px-3 sm:px-5 py-2 sm:py-2.5 text-xs sm:text-sm font-semibold rounded-lg sm:rounded-xl transition-all shadow-[0_0_20px_rgba(16,185,129,0.2)] hover:shadow-[0_0_30px_rgba(16,185,129,0.3)]"
+            onClick={() => setIsDepositModalOpen(true)}
+          >
+            Deposit
+          </AppButton>
+          <AppButton
+            variant={VARIANT_TYPES.NOT_SELECTED}
+            className="bg-white/5 border border-white/10 text-white hover:bg-white/10 hover:border-white/20 px-3 sm:px-5 py-2 sm:py-2.5 text-xs sm:text-sm font-semibold rounded-lg sm:rounded-xl transition-all backdrop-blur-sm"
+            onClick={() => setIsWithdrawModalOpen(true)}
+          >
+            Withdraw
+          </AppButton>
+        </div>
       </div>
 
       {/* Summary Cards */}
@@ -202,6 +209,7 @@ export const PortfolioContent = () => {
           }
         }}
       />
+      </div>
     </div>
   );
 };

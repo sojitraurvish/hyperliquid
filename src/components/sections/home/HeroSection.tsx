@@ -1,209 +1,167 @@
+"use client";
+
 import Link from 'next/link';
+import { motion } from 'framer-motion';
+import { useState, useEffect } from 'react';
 import AppButton from '@/components/ui/button';
 import { VARIANT_TYPES } from '@/lib/constants';
 import { ROUTES } from '@/lib/config';
 
+const FloatingOrb = ({ className, delay = 0 }: { className: string; delay?: number }) => (
+  <motion.div
+    className={`absolute rounded-full blur-3xl ${className}`}
+    animate={{
+      y: [0, -30, 0],
+      x: [0, 15, 0],
+      scale: [1, 1.1, 1],
+    }}
+    transition={{ duration: 8, repeat: Infinity, delay, ease: "easeInOut" as const }}
+  />
+);
+
 export const HeroSection = () => {
-  // Generate candlestick data for background
-  const generateCandlesticks = () => {
-    const candlesticks = [];
-    const baseHeight = 40;
-    const positions = Array.from({ length: 50 }, (_, i) => ({
-      x: (i * 2) + 10,
-      height: baseHeight + Math.random() * 60,
-      y: 30 + Math.random() * 40,
-      width: 1.5,
-    }));
-    return positions;
-  };
-
-  const candlesticks = generateCandlesticks();
-
-  // Generate line graph points
-  const generateLinePoints = () => {
-    const points = [];
-    let y = 50;
-    for (let i = 0; i < 100; i++) {
-      y += (Math.random() - 0.5) * 3;
-      y = Math.max(20, Math.min(80, y));
-      points.push({ x: i, y });
-    }
-    return points;
-  };
-
-  const linePoints = generateLinePoints();
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => setMounted(true), []);
 
   return (
-    <section className="relative w-full min-h-[600px] sm:min-h-[700px] md:min-h-[800px] flex items-center justify-center overflow-hidden bg-gray-950">
-      {/* Chart Background Pattern */}
-      <div className="absolute inset-0 opacity-30 overflow-hidden">
-        <svg
-          className="w-full h-full"
-          viewBox="0 0 100 100"
-          preserveAspectRatio="none"
-        >
-          {/* Grid lines */}
-          <defs>
-            <linearGradient id="candleGradient" x1="0%" y1="0%" x2="0%" y2="100%">
-              <stop offset="0%" stopColor="transparent" />
-              <stop offset="50%" stopColor="#10b981" stopOpacity="0.8" />
-              <stop offset="100%" stopColor="transparent" />
-            </linearGradient>
-            <linearGradient id="lineGradient" x1="0%" y1="0%" x2="0%" y2="100%">
-              <stop offset="0%" stopColor="#10b981" stopOpacity="0.6" />
-              <stop offset="100%" stopColor="#10b981" stopOpacity="0.2" />
-            </linearGradient>
-            <filter id="glow">
-              <feGaussianBlur stdDeviation="0.5" result="coloredBlur" />
-              <feMerge>
-                <feMergeNode in="coloredBlur" />
-                <feMergeNode in="SourceGraphic" />
-              </feMerge>
-            </filter>
-          </defs>
-
-          {/* Horizontal grid lines */}
-          {[20, 40, 60, 80].map((y) => (
-            <line
-              key={`h-${y}`}
-              x1="0"
-              y1={y}
-              x2="100"
-              y2={y}
-              stroke="#1f2937"
-              strokeWidth="0.1"
-            />
-          ))}
-
-          {/* Vertical grid lines */}
-          {[10, 30, 50, 70, 90].map((x) => (
-            <line
-              key={`v-${x}`}
-              x1={x}
-              y1="0"
-              x2={x}
-              y2="100"
-              stroke="#1f2937"
-              strokeWidth="0.1"
-            />
-          ))}
-
-          {/* Line graph */}
-          <polyline
-            points={linePoints.map((p, i) => `${p.x},${p.y}`).join(' ')}
-            fill="none"
-            stroke="url(#lineGradient)"
-            strokeWidth="0.3"
-            filter="url(#glow)"
-            className="animate-pulse"
-          />
-
-          {/* Line graph markers */}
-          {linePoints.filter((_, i) => i % 10 === 0).map((point, i) => (
-            <circle
-              key={`marker-${i}`}
-              cx={point.x}
-              cy={point.y}
-              r="0.4"
-              fill="#10b981"
-              opacity="0.8"
-              filter="url(#glow)"
-            />
-          ))}
-
-          {/* Candlesticks */}
-          {candlesticks.map((candle, i) => (
-            <g key={`candle-${i}`}>
-              {/* Candle body */}
-              <rect
-                x={candle.x - candle.width / 2}
-                y={candle.y}
-                width={candle.width}
-                height={candle.height}
-                fill="url(#candleGradient)"
-                filter="url(#glow)"
-                opacity="0.7"
-              />
-              {/* Top wick */}
-              <line
-                x1={candle.x}
-                y1={candle.y}
-                x2={candle.x}
-                y2={candle.y - 2}
-                stroke="#10b981"
-                strokeWidth="0.2"
-                opacity="0.6"
-              />
-              {/* Bottom wick */}
-              <line
-                x1={candle.x}
-                y1={candle.y + candle.height}
-                x2={candle.x}
-                y2={candle.y + candle.height + 2}
-                stroke="#10b981"
-                strokeWidth="0.2"
-                opacity="0.6"
-              />
-            </g>
-          ))}
-        </svg>
+    <section className="relative w-full min-h-screen flex items-center justify-center overflow-hidden bg-gray-950">
+      {/* Grid background */}
+      <div className="absolute inset-0 overflow-hidden">
+        <div
+          className="absolute inset-0 opacity-[0.04]"
+          style={{
+            backgroundImage: `linear-gradient(rgba(16, 185, 129, 0.5) 1px, transparent 1px),
+                              linear-gradient(90deg, rgba(16, 185, 129, 0.5) 1px, transparent 1px)`,
+            backgroundSize: '60px 60px',
+          }}
+        />
       </div>
 
-      {/* Additional animated vertical lines for depth */}
-      <div className="absolute inset-0 opacity-10 overflow-hidden">
-        <div className="absolute inset-0">
-          {Array.from({ length: 15 }).map((_, i) => (
-            <div
-              key={i}
-              className="absolute w-px h-full bg-gradient-to-b from-transparent via-green-400 to-transparent"
-              style={{
-                left: `${(i * 6.5) + 5}%`,
-                animation: `chartPulse 4s ease-in-out infinite ${i * 0.15}s`,
-              }}
-            />
-          ))}
-        </div>
+      {/* Floating gradient orbs */}
+      <FloatingOrb className="w-[600px] h-[600px] bg-green-500/[0.07] top-[-15%] left-[-10%]" delay={0} />
+      <FloatingOrb className="w-[500px] h-[500px] bg-emerald-500/6 bottom-[5%] right-[-8%]" delay={2} />
+      <FloatingOrb className="w-[350px] h-[350px] bg-green-400/4 top-[35%] left-[55%]" delay={4} />
+
+      {/* Radial gradient overlay */}
+      <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,transparent_0%,rgba(3,7,18,0.5)_50%,rgba(3,7,18,0.95)_100%)]" />
+
+      {/* Animated vertical line accents */}
+      <div className="absolute inset-0 overflow-hidden opacity-15 pointer-events-none">
+        {[12, 30, 50, 70, 88].map((left, i) => (
+          <motion.div
+            key={i}
+            className="absolute w-px bg-linear-to-b from-transparent via-green-400/60 to-transparent"
+            style={{ left: `${left}%`, height: '120%', top: '-10%' }}
+            animate={{ opacity: [0.1, 0.4, 0.1] }}
+            transition={{ duration: 3 + i, repeat: Infinity, delay: i * 0.6, ease: "easeInOut" as const }}
+          />
+        ))}
       </div>
 
       {/* Content */}
-      <div className="relative z-10 max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+      <div
+        className="relative z-10 max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 text-center transition-all duration-700"
+        style={{ opacity: mounted ? 1 : 0, transform: mounted ? 'translateY(0)' : 'translateY(30px)' }}
+      >
         {/* Badge */}
-        <div className="inline-flex items-center px-4 py-2 mb-6 bg-green-500/10 border border-green-500/20 rounded-full">
-          <span className="text-sm sm:text-base text-green-400 font-medium">
+        <div
+          className="inline-flex items-center px-5 py-2.5 mb-8 bg-green-500/10 border border-green-500/20 rounded-full backdrop-blur-sm transition-all duration-700 delay-100"
+          style={{ opacity: mounted ? 1 : 0, transform: mounted ? 'translateY(0)' : 'translateY(20px)' }}
+        >
+          <motion.span
+            className="w-2 h-2 bg-green-400 rounded-full mr-3"
+            animate={{ scale: [1, 1.5, 1], opacity: [0.6, 1, 0.6] }}
+            transition={{ duration: 2, repeat: Infinity }}
+          />
+          <span className="text-sm sm:text-base text-green-400 font-medium tracking-wide">
             Trade with up to 50x leverage
           </span>
         </div>
 
         {/* Main Heading */}
-        <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-bold text-white mb-6 leading-tight">
-          The Most Advanced{' '}
-          <span className="text-green-400">Decentralized</span> Perpetual Exchange
+        <h1
+          className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl xl:text-8xl font-bold text-white mb-8 leading-[1.05] tracking-tight transition-all duration-700 delay-200"
+          style={{ opacity: mounted ? 1 : 0, transform: mounted ? 'translateY(0)' : 'translateY(30px)' }}
+        >
+          <span className="block">The Most Advanced</span>
+          <span className="block mt-2 bg-linear-to-r from-green-400 via-emerald-300 to-green-500 bg-clip-text text-transparent">
+            Decentralized
+          </span>
+          <span className="block mt-2">Perpetual Exchange</span>
         </h1>
 
         {/* Subtitle */}
-        <p className="text-lg sm:text-xl md:text-2xl text-gray-400 mb-10 max-w-3xl mx-auto leading-relaxed">
-          Trade any asset with deep liquidity, low fees, and lightning-fast execution. Built for professional traders, accessible to everyone.
+        <p
+          className="text-lg sm:text-xl md:text-2xl text-gray-400 mb-12 max-w-3xl mx-auto leading-relaxed transition-all duration-700 delay-300"
+          style={{ opacity: mounted ? 1 : 0, transform: mounted ? 'translateY(0)' : 'translateY(20px)' }}
+        >
+          Trade any asset with deep liquidity, low fees, and lightning-fast execution.
+          Built for professional traders, accessible to everyone.
         </p>
 
         {/* CTA Buttons */}
-        <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
-          <Link href={ROUTES.TRADE}>
+        <div
+          className="flex flex-col sm:flex-row items-center justify-center gap-4 transition-all duration-700 delay-400"
+          style={{ opacity: mounted ? 1 : 0, transform: mounted ? 'translateY(0)' : 'translateY(20px)' }}
+        >
+          <Link href={ROUTES.TRADE} className="w-full sm:w-auto">
+            <motion.div whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.97 }}>
+              <AppButton
+                variant={VARIANT_TYPES.NOT_SELECTED}
+                className="w-full sm:w-auto bg-green-500 hover:bg-green-400 text-white px-10 py-4 text-base sm:text-lg font-semibold rounded-xl transition-all duration-300 shadow-[0_0_30px_rgba(16,185,129,0.3)] hover:shadow-[0_0_50px_rgba(16,185,129,0.5)] flex items-center justify-center gap-2"
+              >
+                Start Trading
+                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M13 7l5 5m0 0l-5 5m5-5H6" />
+                </svg>
+              </AppButton>
+            </motion.div>
+          </Link>
+          <motion.div whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.97 }} className="w-full sm:w-auto">
             <AppButton
               variant={VARIANT_TYPES.NOT_SELECTED}
-              className="bg-green-500 hover:bg-green-600 text-white px-8 py-4 text-base sm:text-lg font-semibold rounded-lg transition-all duration-200 shadow-lg hover:shadow-xl flex items-center gap-2"
+              className="w-full sm:w-auto bg-white/5 border border-white/10 text-white hover:bg-white/10 hover:border-white/20 px-10 py-4 text-base sm:text-lg font-semibold rounded-xl transition-all duration-300 backdrop-blur-sm justify-center"
             >
-              Start Trading →
+              Learn More
             </AppButton>
-          </Link>
-          <AppButton
-            variant={VARIANT_TYPES.NOT_SELECTED}
-            className="bg-transparent border-2 border-white text-white hover:bg-white/10 px-8 py-4 text-base sm:text-lg font-semibold rounded-lg transition-all duration-200"
-          >
-            Learn More
-          </AppButton>
+          </motion.div>
         </div>
+
+        {/* Trust indicators */}
+        <div
+          className="mt-10 sm:mt-14 md:mt-16 flex flex-wrap items-center justify-center gap-4 sm:gap-10 text-gray-500 text-sm transition-all duration-700 delay-500"
+          style={{ opacity: mounted ? 1 : 0 }}
+        >
+          {[
+            { label: "24h Volume", value: "$1.09B+" },
+            { label: "Active Traders", value: "125K+" },
+            { label: "Total Trades", value: "50M+" },
+          ].map((stat) => (
+            <div key={stat.label} className="flex items-center gap-2">
+              <span className="text-white font-semibold font-mono">{stat.value}</span>
+              <span>{stat.label}</span>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Scroll indicator */}
+      <div
+        className="absolute bottom-8 left-1/2 -translate-x-1/2 z-10 transition-opacity duration-700 delay-800"
+        style={{ opacity: mounted ? 1 : 0 }}
+      >
+        <motion.div
+          className="w-6 h-10 border-2 border-white/20 rounded-full flex justify-center"
+          animate={{ opacity: [0.3, 0.6, 0.3] }}
+          transition={{ duration: 2, repeat: Infinity }}
+        >
+          <motion.div
+            className="w-1.5 h-3 bg-white/40 rounded-full mt-2"
+            animate={{ y: [0, 12, 0] }}
+            transition={{ duration: 1.5, repeat: Infinity, ease: "easeInOut" as const }}
+          />
+        </motion.div>
       </div>
     </section>
   );
 };
-

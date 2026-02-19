@@ -88,7 +88,7 @@ export const updateMarginAndLeverage = async ({currentCurrency, agentPrivateKey,
     const assetId = conv.getAssetId(currentCurrency);
     const exchange = await getAgentExchangeClient(agentPrivateKey as `0x${string}`);
     return await exchange.updateLeverage(
-        { asset: assetId as number, isCross: marginMode === "Cross", leverage },
+        { asset: assetId as number, isCross: marginMode === "cross", leverage },
     );
 }
 

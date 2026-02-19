@@ -5,13 +5,11 @@ import { MarketsTable } from '@/components/sections/markets/MarketsTable';
 
 export default function MarketsContainer() {
   return (
-    <div className="min-h-screen flex flex-col bg-gray-950">
-      {/* Fixed Header */}
-      <div className="fixed top-0 left-0 right-0 z-50 bg-gray-950">
+    <div className="min-h-screen flex flex-col bg-gray-950 overflow-x-hidden">
+      <div className="fixed top-0 left-0 right-0 z-50 bg-gray-950/80 backdrop-blur-md border-b border-gray-800/50">
         <Header />
       </div>
 
-      {/* Main Content with padding for fixed header */}
       <div className="flex-1 pt-14">
         <MarketsHeroSection />
         <MarketsTable />
@@ -20,8 +18,3 @@ export default function MarketsContainer() {
     </div>
   );
 }
-
-
-
-
-

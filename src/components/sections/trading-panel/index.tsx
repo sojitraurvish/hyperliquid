@@ -209,13 +209,13 @@ const Slider = ({
 interface MarginModeDialogProps {
   isOpen: boolean;
   onClose: () => void;
-  selectedMode: "Cross" | "Isolated";
-  onConfirm: (mode: "Cross" | "Isolated") => void;
+  selectedMode: "cross" | "isolated";
+  onConfirm: (mode: "cross" | "isolated") => void;
   symbol: string;
 }
 
 const MarginModeDialog = ({ isOpen, onClose, selectedMode, onConfirm, symbol }: MarginModeDialogProps) => {
-  const [tempMode, setTempMode] = useState<"Cross" | "Isolated">(selectedMode);
+  const [tempMode, setTempMode] = useState<"cross" | "isolated">(selectedMode);
 
   useEffect(() => {
     if (isOpen) {
@@ -236,56 +236,74 @@ const MarginModeDialog = ({ isOpen, onClose, selectedMode, onConfirm, symbol }: 
       className="max-w-md"
       contentClassName="space-y-6"
     >
-      <div className="space-y-4">
+      <div className="space-y-3">
         {/* Cross Mode Option */}
-        <div className="space-y-2">
+        <button
+          onClick={() => setTempMode("cross")}
+          className={`w-full text-left p-4 rounded-xl border transition-all cursor-pointer ${
+            tempMode === "cross"
+              ? "bg-green-500/8 border-green-500/30 ring-1 ring-green-500/20"
+              : "bg-gray-800/30 border-gray-800/60 hover:border-gray-700/60 hover:bg-gray-800/50"
+          }`}
+        >
           <div className="flex items-start gap-3">
-            <Checkbox
-              id="cross-mode"
-              checked={tempMode === "Cross"}
-              onChange={() => setTempMode("Cross")}
-              className="mt-0.5"
-            />
+            <div className={`mt-0.5 w-5 h-5 rounded-full border-2 flex items-center justify-center shrink-0 transition-colors ${
+              tempMode === "cross" ? "border-green-400 bg-green-400" : "border-gray-600"
+            }`}>
+              {tempMode === "cross" && (
+                <svg className="w-3 h-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                </svg>
+              )}
+            </div>
             <div className="flex-1">
-              <Label htmlFor="cross-mode" className="text-sm text-white font-medium cursor-pointer">
+              <span className={`text-sm font-semibold ${tempMode === "cross" ? "text-white" : "text-gray-300"}`}>
                 Cross
-              </Label>
-              <p className="text-xs text-gray-400 mt-1">
+              </span>
+              <p className="text-xs text-gray-500 mt-1 leading-relaxed">
                 All cross positions share the same cross margin as collateral. In the event of liquidation, your cross margin balance and any remaining open positions under assets in this mode may be forfeited.
               </p>
             </div>
           </div>
-        </div>
+        </button>
 
         {/* Isolated Mode Option */}
-        <div className="space-y-2">
+        <button
+          onClick={() => setTempMode("isolated")}
+          className={`w-full text-left p-4 rounded-xl border transition-all cursor-pointer ${
+            tempMode === "isolated"
+              ? "bg-green-500/8 border-green-500/30 ring-1 ring-green-500/20"
+              : "bg-gray-800/30 border-gray-800/60 hover:border-gray-700/60 hover:bg-gray-800/50"
+          }`}
+        >
           <div className="flex items-start gap-3">
-            <Checkbox
-              id="isolated-mode"
-              checked={tempMode === "Isolated"}
-              onChange={() => setTempMode("Isolated")}
-              className="mt-0.5"
-            />
+            <div className={`mt-0.5 w-5 h-5 rounded-full border-2 flex items-center justify-center shrink-0 transition-colors ${
+              tempMode === "isolated" ? "border-green-400 bg-green-400" : "border-gray-600"
+            }`}>
+              {tempMode === "isolated" && (
+                <svg className="w-3 h-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                </svg>
+              )}
+            </div>
             <div className="flex-1">
-              <Label htmlFor="isolated-mode" className="text-sm text-white font-medium cursor-pointer">
+              <span className={`text-sm font-semibold ${tempMode === "isolated" ? "text-white" : "text-gray-300"}`}>
                 Isolated
-              </Label>
-              <p className="text-xs text-gray-400 mt-1">
+              </span>
+              <p className="text-xs text-gray-500 mt-1 leading-relaxed">
                 Manage your risk on individual positions by restricting the amount of margin allocated to each. If the margin ratio of an isolated position reaches 100%, the position will be liquidated. Margin can be added or removed to individual positions in this mode.
               </p>
             </div>
           </div>
-        </div>
+        </button>
       </div>
 
-      <Button
-        variant="primary"
-        size="lg"
-        className="w-full"
+      <button
         onClick={handleConfirm}
+        className="w-full h-11 rounded-xl bg-green-500 hover:bg-green-400 text-white font-semibold text-sm transition-colors cursor-pointer"
       >
         Confirm
-      </Button>
+      </button>
     </AppModal>
   );
 };
@@ -338,55 +356,72 @@ const LeverageDialog = ({
       className="max-w-md"
       contentClassName="space-y-6"
     >
-      <div className="space-y-4">
-        <p className="text-sm text-gray-400">
-          Control the leverage used for {symbol} positions. The maximum leverage is {maxLeverage}x.
-        </p>
+      <p className="text-sm text-gray-400 leading-relaxed">
+        Control the leverage used for <span className="text-white font-medium">{symbol}</span> positions. The maximum leverage is <span className="text-white font-medium">{maxLeverage}x</span>.
+      </p>
 
-        {/* {maxPositionSize && (
-          <p className="text-sm text-gray-400">
-            Max position size decreases the higher your leverage. The max position size for {tempLeverage}x leverage on {symbol} is {maxPositionSize}.
-          </p>
-        )} */}
-
-        {/* Leverage Slider */}
-        <div className="space-y-3">
-          <div className="flex items-center gap-3">
-            <Slider
-              value={[tempLeverage]}
-              onChange={(vals) => setTempLeverage(vals[0])}
-              max={maxLeverage}
-              step={1}
-              className="flex-1 py-2"
-            />
-            <div className="flex items-center gap-1">
-              <Input
-                type="number"
-                value={tempLeverage}
-                onChange={handleLeverageInputChange}
-                min={0}
-                max={maxLeverage}
-                step={1}
-                className="w-14 h-9 text-center px-2"
-              />
-              <span className="text-white text-sm">x</span>
-            </div>
-          </div>
+      {/* Leverage display */}
+      <div className="flex items-center justify-center py-4">
+        <div className="text-center">
+          <div className="text-4xl font-bold text-white font-mono">{tempLeverage}<span className="text-green-400 text-2xl ml-0.5">x</span></div>
+          <div className="text-xs text-gray-500 mt-1">Leverage</div>
         </div>
       </div>
 
-      <Button
-        variant="primary"
-        size="lg"
-        className="w-full"
+      {/* Leverage Slider */}
+      <div className="space-y-3">
+        <div className="flex items-center gap-3">
+          <Slider
+            value={[tempLeverage]}
+            onChange={(vals) => setTempLeverage(vals[0])}
+            max={maxLeverage}
+            step={1}
+            className="flex-1 py-2"
+          />
+          <div className="flex items-center gap-1">
+            <Input
+              type="number"
+              value={tempLeverage}
+              onChange={handleLeverageInputChange}
+              min={0}
+              max={maxLeverage}
+              step={1}
+              className="w-16 h-9 text-center px-2 rounded-lg"
+            />
+            <span className="text-gray-400 text-sm">x</span>
+          </div>
+        </div>
+        {/* Quick select buttons */}
+        <div className="flex gap-2">
+          {[1, 5, 10, 25, maxLeverage].filter((v, i, a) => a.indexOf(v) === i).slice(0, 5).map((val) => (
+            <button
+              key={val}
+              onClick={() => setTempLeverage(val)}
+              className={`flex-1 py-1.5 text-xs font-medium rounded-lg transition-colors cursor-pointer ${
+                tempLeverage === val
+                  ? "bg-green-500/15 text-green-400 border border-green-500/25"
+                  : "bg-gray-800/50 text-gray-400 hover:text-white border border-gray-800/60 hover:border-gray-700"
+              }`}
+            >
+              {val}x
+            </button>
+          ))}
+        </div>
+      </div>
+
+      <button
         onClick={handleConfirm}
+        className="w-full h-11 rounded-xl bg-green-500 hover:bg-green-400 text-white font-semibold text-sm transition-colors cursor-pointer"
       >
         Confirm
-      </Button>
+      </button>
 
-      <div className="bg-red-950/50 border border-red-500/50 rounded-lg p-3">
-        <p className="text-xs text-white">
-          Note that setting a higher leverage increases the risk of liquidation.
+      <div className="flex items-start gap-2.5 bg-amber-500/5 border border-amber-500/15 rounded-xl p-3.5">
+        <svg className="w-4 h-4 text-amber-400 shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+          <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z" />
+        </svg>
+        <p className="text-xs text-amber-200/70 leading-relaxed">
+          Higher leverage increases the risk of liquidation.
         </p>
       </div>
     </AppModal>
@@ -420,39 +455,56 @@ const EstablishConnectionDialog = ({
       className="max-w-md"
       contentClassName="space-y-6"
     >
-      <div className="space-y-4">
-        <p className="text-sm text-white">
-          This signature is gas-free to send. It opens a decentralized channel for gas-free and instantaneous trading.
-        </p>
-
-        <div className="flex items-center gap-3">
-          <Checkbox
-            id="stay-connected"
-            checked={stayConnected}
-            onChange={(e) => setStayConnected(e.target.checked)}
-          />
-          <Label htmlFor="stay-connected" className="text-sm text-white cursor-pointer">
-            Stay Connected
-          </Label>
+      <div className="flex items-center justify-center py-2">
+        <div className="w-14 h-14 rounded-2xl bg-green-500/10 border border-green-500/20 flex items-center justify-center">
+          <svg className="w-7 h-7 text-green-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M13.19 8.688a4.5 4.5 0 011.242 7.244l-4.5 4.5a4.5 4.5 0 01-6.364-6.364l1.757-1.757m9.86-2.514a4.5 4.5 0 00-1.242-7.244l-4.5-4.5a4.5 4.5 0 00-6.364 6.364L4.343 8.97" />
+          </svg>
         </div>
       </div>
 
-      <Button
-        variant="primary"
-        size="lg"
-        className="w-full"
+      <p className="text-sm text-gray-400 text-center leading-relaxed">
+        This signature is gas-free to send. It opens a decentralized channel for <span className="text-white">gas-free</span> and <span className="text-white">instantaneous</span> trading.
+      </p>
+
+      <button
+        onClick={() => setStayConnected(!stayConnected)}
+        className={`w-full flex items-center gap-3 p-4 rounded-xl border transition-all cursor-pointer ${
+          stayConnected
+            ? "bg-green-500/8 border-green-500/30"
+            : "bg-gray-800/30 border-gray-800/60 hover:border-gray-700/60"
+        }`}
+      >
+        <div className={`w-5 h-5 rounded-md border-2 flex items-center justify-center shrink-0 transition-colors ${
+          stayConnected ? "border-green-400 bg-green-400" : "border-gray-600"
+        }`}>
+          {stayConnected && (
+            <svg className="w-3 h-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+            </svg>
+          )}
+        </div>
+        <span className={`text-sm font-medium ${stayConnected ? "text-white" : "text-gray-400"}`}>Stay Connected</span>
+      </button>
+
+      <button
         onClick={handleEstablish}
-        isDisabled={!stayConnected}
+        disabled={!stayConnected}
+        className={`w-full h-11 rounded-xl font-semibold text-sm transition-colors cursor-pointer ${
+          stayConnected
+            ? "bg-green-500 hover:bg-green-400 text-white"
+            : "bg-gray-800 text-gray-500 cursor-not-allowed"
+        }`}
       >
         Establish Connection
-      </Button>
+      </button>
     </AppModal>
   );
 };
 
 // Trading Mode Tabs Component
 interface TradingModeTabsProps {
-  marginMode: "Cross" | "Isolated";
+  marginMode: "cross" | "isolated";
   leverage: number;
   onMarginModeClick: () => void;
   onLeverageClick: () => void;
@@ -471,7 +523,7 @@ const TradingModeTabs = ({
           onClick={onMarginModeClick}
           className="h-7 text-xs rounded transition-colors bg-gray-800 text-white hover:bg-gray-700"
         >
-          {marginMode}
+          {marginMode.charAt(0).toUpperCase() + marginMode.slice(1)}
         </button>
         <button
           onClick={onLeverageClick}
@@ -869,51 +921,69 @@ const MaxSlippageDialog = ({
       className="max-w-md"
       contentClassName="space-y-6"
     >
-      <div className="space-y-4">
-        <p className="text-sm text-gray-400">
-          Max slippage only affects market orders placed from the order form. Closing positions will use max slippage of 8% and market TP/SL orders will use max slippage of 10%.
-        </p>
-
-        {/* Max Slippage Slider */}
-        <div className="space-y-3">
-          <div className="flex items-center gap-3">
-            <Slider
-              value={[Math.max(1, Math.min(100, Math.round(tempMaxSlippage)))]}
-              onChange={(vals) => {
-                const val = vals[0];
-                // Ensure value is >= 1 and <= 100, rounded to whole number
-                const clampedVal = Math.max(1, Math.min(100, Math.round(val)));
-                setTempMaxSlippage(clampedVal);
-              }}
-              min={1}
-              max={100}
-              step={1}
-              className="flex-1 py-2"
-            />
-            <div className="flex items-center gap-1">
-              <Input
-                type="number"
-                value={Math.round(tempMaxSlippage)}
-                onChange={handleSlippageInputChange}
-                min={1}
-                max={100}
-                step={1}
-                className="w-20 h-9 text-center px-2"
-              />
-              <span className="text-white text-sm">%</span>
-            </div>
-          </div>
+      {/* Slippage display */}
+      <div className="flex items-center justify-center py-3">
+        <div className="text-center">
+          <div className="text-3xl font-bold text-white font-mono">{Math.round(tempMaxSlippage)}<span className="text-green-400 text-xl ml-0.5">%</span></div>
+          <div className="text-xs text-gray-500 mt-1">Max Slippage</div>
         </div>
       </div>
 
-      <Button
-        variant="primary"
-        size="lg"
-        className="w-full"
+      <p className="text-xs text-gray-500 leading-relaxed">
+        Max slippage only affects market orders. Closing positions uses <span className="text-gray-300">8%</span> and market TP/SL orders use <span className="text-gray-300">10%</span>.
+      </p>
+
+      <div className="space-y-3">
+        <div className="flex items-center gap-3">
+          <Slider
+            value={[Math.max(1, Math.min(100, Math.round(tempMaxSlippage)))]}
+            onChange={(vals) => {
+              const val = vals[0];
+              const clampedVal = Math.max(1, Math.min(100, Math.round(val)));
+              setTempMaxSlippage(clampedVal);
+            }}
+            min={1}
+            max={100}
+            step={1}
+            className="flex-1 py-2"
+          />
+          <div className="flex items-center gap-1">
+            <Input
+              type="number"
+              value={Math.round(tempMaxSlippage)}
+              onChange={handleSlippageInputChange}
+              min={1}
+              max={100}
+              step={1}
+              className="w-16 h-9 text-center px-2 rounded-lg"
+            />
+            <span className="text-gray-400 text-sm">%</span>
+          </div>
+        </div>
+        {/* Quick select buttons */}
+        <div className="flex gap-2">
+          {[1, 3, 5, 10, 25].map((val) => (
+            <button
+              key={val}
+              onClick={() => setTempMaxSlippage(val)}
+              className={`flex-1 py-1.5 text-xs font-medium rounded-lg transition-colors cursor-pointer ${
+                Math.round(tempMaxSlippage) === val
+                  ? "bg-green-500/15 text-green-400 border border-green-500/25"
+                  : "bg-gray-800/50 text-gray-400 hover:text-white border border-gray-800/60 hover:border-gray-700"
+              }`}
+            >
+              {val}%
+            </button>
+          ))}
+        </div>
+      </div>
+
+      <button
         onClick={handleConfirm}
+        className="w-full h-11 rounded-xl bg-green-500 hover:bg-green-400 text-white font-semibold text-sm transition-colors cursor-pointer"
       >
         Confirm
-      </Button>
+      </button>
     </AppModal>
   );
 };
@@ -1176,7 +1246,7 @@ export const TradingPanel = ({currentCurrency, currentLeverage}: {currentCurrenc
   const [isManualSizeInput, setIsManualSizeInput] = useState(false);
   
   // Margin and leverage states
-  const [marginMode, setMarginMode] = useState<"Cross" | "Isolated">("Cross");
+  const [marginMode, setMarginMode] = useState<"cross" | "isolated">("cross");
   const [maxLeverage, setMaxLeverage] = useState<number>(currentLeverage);
   const [userLeverage, setUserLeverage] = useState<number>(currentLeverage);
   
@@ -1305,6 +1375,10 @@ export const TradingPanel = ({currentCurrency, currentLeverage}: {currentCurrenc
     if (!address) {
       // No address means no position data needed
       positionDataReadyRef.current = true;
+      setAvailableToTradeBuy(0);
+      setAvailableToTradeSell(0);
+      setCurrentPosition(0);
+      setIsLiquidationPx(0);
       checkAllDataReady();
       return;
     }
@@ -1312,23 +1386,7 @@ export const TradingPanel = ({currentCurrency, currentLeverage}: {currentCurrenc
     // Reset position data state when address or currency changes
     positionDataReadyRef.current = false;
 
-    subscriptionClient.webData2({user:address as `0x${string}`}, (data) => {
-      console.log("clearinghouseState",data);
-      const assetCtxs = data.assetCtxs || [];
-      const universe = data.meta?.universe || [];
-
-      // Extract mark price for the current currency
-      // Find the index of currentCurrency in the universe array
-      const currencyIndex = universe.findIndex((u: any) => u?.name === currentCurrency);
-      if (currencyIndex !== -1 && assetCtxs[currencyIndex]) {
-        const ctx = assetCtxs[currencyIndex];
-        // Prefer markPx over midPx (same logic as market-header)
-        const mark = ctx.markPx != null ? Number(ctx.markPx) : ctx.midPx != null ? Number(ctx.midPx) : null;
-        setMarkPrice(mark);
-      } else {
-        setMarkPrice(null);
-      }
-      
+    const webData2Sub = subscriptionClient.webData2({user:address as `0x${string}`}, (data) => {
       const clearinghouseState = data.clearinghouseState;
       
       const positionData = clearinghouseState.assetPositions.filter((position) => position.position.coin === currentCurrency)[0];
@@ -1338,21 +1396,26 @@ export const TradingPanel = ({currentCurrency, currentLeverage}: {currentCurrenc
       const liquidationPx = positionData?.position?.liquidationPx;
       setIsLiquidationPx(Number(liquidationPx ?? 0));
 
-      const availableToTradeBuy = positionValue===0 ? Number(clearinghouseState.withdrawable) : positionValue > 0 
-        ? Number(clearinghouseState.marginSummary.accountValue) - Number(clearinghouseState.marginSummary.totalMarginUsed) 
-        : Number(clearinghouseState.marginSummary.accountValue) + Number(clearinghouseState.marginSummary.totalMarginUsed);
-      const availableToTradeSell = positionValue===0 ? Number(clearinghouseState.withdrawable) : positionValue < 0 
-        ? Number(clearinghouseState.marginSummary.accountValue) - Number(clearinghouseState.marginSummary.totalMarginUsed) 
-        : Number(clearinghouseState.marginSummary.accountValue) + Number(clearinghouseState.marginSummary.totalMarginUsed);
-      setAvailableToTradeBuy(Number(availableToTradeBuy > 0 ? availableToTradeBuy : 0));
-      setAvailableToTradeSell(Number(availableToTradeSell > 0 ? availableToTradeSell : 0));
-
-      // Mark that we've received position data
       positionDataReadyRef.current = true;
-      
-      // Check if all data is ready
       checkAllDataReady();
     });
+
+    const activeAssetSub = subscriptionClient.activeAssetData({user:address as `0x${string}`,coin:currentCurrency}, (data) => {
+      console.log("mine bro   ",data);
+      if (data.coin === currentCurrency) {
+        setAvailableToTradeBuy(Number(data?.availableToTrade[0]) > 0 ? Number(data.availableToTrade[0]) : 0);
+        setAvailableToTradeSell(Number(data?.availableToTrade[1]) > 0 ? Number(data.availableToTrade[1]) : 0);
+
+        setMarginMode(data?.leverage.type === "isolated" ? "isolated" : "cross");
+        setUserLeverage(Number(data?.leverage.value));
+        setMarkPrice(Number(data?.markPx));
+      }
+    });
+
+    return () => {
+      webData2Sub.then(sub => sub.unsubscribe()).catch(() => {});
+      activeAssetSub.then(sub => sub.unsubscribe()).catch(() => {});
+    };
   }, [address, currentCurrency, checkAllDataReady, setMarkPrice]);
 
   console.log("markPrice",markPrice);
@@ -1495,53 +1558,8 @@ export const TradingPanel = ({currentCurrency, currentLeverage}: {currentCurrenc
 
   // Sync margin mode and leverage when currency changes or stored values update (client-side only)
   useEffect(() => {
-    if (!mounted) return; // Only sync after client-side mount to avoid hydration issues
-    
-    const storedValues = useTradesStore.getState().getMarginAndLeverage(currentCurrency);
-    
-    // If stored values exist, use them
-    if (storedValues?.marginMode) {
-      setMarginMode(storedValues.marginMode as "Cross" | "Isolated");
-    } else if (getCurrentPosition?.position.leverage) {
-      // Fallback to current position leverage data if stored values are null
-      const leverageData = getCurrentPosition.position.leverage;
-      if (leverageData.type) {
-        // Capitalize first letter: 'isolated' -> 'Isolated', 'cross' -> 'Cross'
-        const marginType = leverageData.type.charAt(0).toUpperCase() + leverageData.type.slice(1) as "Cross" | "Isolated";
-        setMarginMode(marginType);
-      }
-    }
-    
     setMaxLeverage(currentLeverage);
-    
-    // Use stored leverage, or fallback to current position leverage value, or currentLeverage
-    if (storedValues?.leverage) {
-      setUserLeverage(storedValues.leverage);
-    } else if (getCurrentPosition?.position.leverage?.value) {
-      const leverageValue = getCurrentPosition.position.leverage.value;
-      if (leverageValue) {
-        setUserLeverage(leverageValue);
-      }
-    }
-    
-    
-    if ((!storedValues?.marginMode && !storedValues?.leverage) || (!getCurrentPosition?.position.leverage && !getCurrentPosition?.position.leverage.type)) {
-      if (agentPrivateKey && isApproved) {
-        (async () => {
-          const success = await updateMarginAndLeverage({
-            currentCurrency,
-            agentPrivateKey: agentPrivateKey as `0x${string}`,
-            marginMode: "Cross",
-            leverage: currentLeverage,
-          });
-          if (success) {
-            setMarginMode("Cross");
-            setUserLeverage(currentLeverage);
-          }
-        })();
-      }
-    } 
-  }, [currentCurrency, currentLeverage, mounted, getCurrentPosition, isApproved, agentPrivateKey]);
+  }, [currentLeverage]);
 
   return (
     <div className="w-full sm:w-80 lg:w-full bg-gray-950 border-l border-gray-800 flex flex-col text-xs h-full overflow-hidden relative">
@@ -1570,7 +1588,7 @@ export const TradingPanel = ({currentCurrency, currentLeverage}: {currentCurrenc
         isOpen={isMarginModeDialogOpen}
         onClose={() => setIsMarginModeDialogOpen(false)}
         selectedMode={marginMode}
-        onConfirm={async (mode: "Cross" | "Isolated") => {
+        onConfirm={async (mode: "cross" | "isolated") => {
           if (agentPrivateKey) {
             try {
               const success = await updateMarginAndLeverage({

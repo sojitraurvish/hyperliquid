@@ -79,54 +79,78 @@ export const TransactionsTable = ({ trades, isLoading }: TransactionsTableProps)
   };
 
   return (
-    <div className="overflow-x-auto">
-      <table className="w-full">
-        <thead>
-          <tr className="border-b border-gray-800">
-            <th className="text-left py-3 px-4 text-xs font-medium text-gray-400">Type</th>
-            <th className="text-left py-3 px-4 text-xs font-medium text-gray-400">Asset</th>
-            <th className="text-left py-3 px-4 text-xs font-medium text-gray-400">Amount</th>
-            <th className="text-left py-3 px-4 text-xs font-medium text-gray-400">Date</th>
-            <th className="text-left py-3 px-4 text-xs font-medium text-gray-400">Status</th>
-          </tr>
-        </thead>
-        <tbody>
-          {limitedTransactions.map((transaction, index) => {
-            const formattedDate = transaction.date.toLocaleString("en-US", {
-              month: "short",
-              day: "numeric",
-              year: "numeric",
-              hour: "numeric",
-              minute: "2-digit",
-            });
+    <div>
+      {/* Mobile card layout */}
+      <div className="sm:hidden py-1">
+        {limitedTransactions.map((transaction, index) => {
+          const formattedDate = transaction.date.toLocaleString("en-US", { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" });
+          const amountPrefix = transaction.type === "Withdraw" ? "-" : "+";
+          const amountColor = getAmountColor(transaction.type);
 
-            const amountPrefix = transaction.type === "Withdraw" ? "-" : "+";
-            const amountColor = getAmountColor(transaction.type);
-
-            return (
-              <tr key={index} className="border-b border-gray-800 hover:bg-gray-800/50 transition-colors">
-                <td className="py-4 px-4">
-                  <div className="flex items-center gap-2">
+          return (
+            <div key={index} className="mx-3 my-2 rounded-xl bg-gray-800/25 border border-gray-700/25 overflow-hidden">
+              <div className="flex items-center justify-between px-4 py-3">
+                <div className="flex items-center gap-2.5">
+                  <div className="w-8 h-8 rounded-lg bg-gray-700/40 flex items-center justify-center shrink-0">
                     {getTypeIcon(transaction.type)}
-                    <span className="text-gray-300 text-sm">{transaction.type}</span>
                   </div>
-                </td>
-                <td className="py-4 px-4 text-gray-300 text-sm">{transaction.asset}</td>
-                <td className={`py-4 px-4 text-sm font-medium ${amountColor}`}>
-                  {amountPrefix}
-                  {transaction.amount}
-                </td>
-                <td className="py-4 px-4 text-gray-300 text-sm">{formattedDate}</td>
-                <td className="py-4 px-4">
-                  <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-500/20 text-green-400">
+                  <div className="flex flex-col">
+                    <span className="text-white text-[13px] font-semibold leading-tight">{transaction.type}</span>
+                    <span className="text-gray-500 text-[10px]">{transaction.asset} · {formattedDate}</span>
+                  </div>
+                </div>
+                <div className="text-right">
+                  <span className={`font-mono font-bold text-sm block ${amountColor}`}>{amountPrefix}{transaction.amount}</span>
+                  <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[9px] font-medium bg-green-500/15 text-green-400 mt-0.5">
                     {transaction.status}
                   </span>
-                </td>
-              </tr>
-            );
-          })}
-        </tbody>
-      </table>
+                </div>
+              </div>
+            </div>
+          );
+        })}
+      </div>
+
+      {/* Desktop table layout */}
+      <div className="hidden sm:block overflow-x-auto">
+        <table className="w-full">
+          <thead>
+            <tr className="border-b border-gray-800/60">
+              <th className="text-left py-3 px-4 text-xs font-medium text-gray-500 uppercase tracking-wider">Type</th>
+              <th className="text-left py-3 px-4 text-xs font-medium text-gray-500 uppercase tracking-wider">Asset</th>
+              <th className="text-left py-3 px-4 text-xs font-medium text-gray-500 uppercase tracking-wider">Amount</th>
+              <th className="text-left py-3 px-4 text-xs font-medium text-gray-500 uppercase tracking-wider">Date</th>
+              <th className="text-left py-3 px-4 text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+            </tr>
+          </thead>
+          <tbody>
+            {limitedTransactions.map((transaction, index) => {
+              const formattedDate = transaction.date.toLocaleString("en-US", { month: "short", day: "numeric", year: "numeric", hour: "numeric", minute: "2-digit" });
+              const amountPrefix = transaction.type === "Withdraw" ? "-" : "+";
+              const amountColor = getAmountColor(transaction.type);
+
+              return (
+                <tr key={index} className="border-b border-gray-800/40 hover:bg-gray-800/30 transition-colors">
+                  <td className="py-4 px-4">
+                    <div className="flex items-center gap-2">
+                      {getTypeIcon(transaction.type)}
+                      <span className="text-gray-300 text-sm">{transaction.type}</span>
+                    </div>
+                  </td>
+                  <td className="py-4 px-4 text-gray-300 text-sm">{transaction.asset}</td>
+                  <td className={`py-4 px-4 text-sm font-medium font-mono ${amountColor}`}>{amountPrefix}{transaction.amount}</td>
+                  <td className="py-4 px-4 text-gray-400 text-sm">{formattedDate}</td>
+                  <td className="py-4 px-4">
+                    <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-500/15 text-green-400">
+                      {transaction.status}
+                    </span>
+                  </td>
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
+      </div>
     </div>
   );
 };

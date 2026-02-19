@@ -82,7 +82,7 @@ input[type="range"] {
   -webkit-appearance: none;
   appearance: none;
   background: transparent;
-  height: 8px;
+  height: 6px;
   width: 100%;
   cursor: pointer;
   position: relative;
@@ -90,15 +90,15 @@ input[type="range"] {
 }
 
 input[type="range"]::-webkit-slider-runnable-track {
-  height: 8px;
-  border-radius: 4px;
+  height: 6px;
+  border-radius: 999px;
   background: transparent;
   cursor: pointer;
 }
 
 input[type="range"]::-moz-range-track {
-  height: 8px;
-  border-radius: 4px;
+  height: 6px;
+  border-radius: 999px;
   background: transparent;
   cursor: pointer;
 }
@@ -106,30 +106,36 @@ input[type="range"]::-moz-range-track {
 input[type="range"]::-webkit-slider-thumb {
   -webkit-appearance: none;
   appearance: none;
-  width: 20px;
-  height: 20px;
+  width: 16px;
+  height: 16px;
   border-radius: 50%;
   background: var(--color-green-500, #10b981);
   cursor: grab;
   border: 2px solid #ffffff;
-  margin-top: -6px;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+  margin-top: -5px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3), 0 0 0 2px rgba(16, 185, 129, 0.15);
   position: relative;
   z-index: 20;
+  transition: box-shadow 0.15s ease;
+}
+
+input[type="range"]::-webkit-slider-thumb:hover {
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.4), 0 0 0 4px rgba(16, 185, 129, 0.2);
 }
 
 input[type="range"]::-webkit-slider-thumb:active {
   cursor: grabbing;
+  transform: scale(1.1);
 }
 
 input[type="range"]::-moz-range-thumb {
-  width: 20px;
-  height: 20px;
+  width: 16px;
+  height: 16px;
   border-radius: 50%;
   background: var(--color-green-500, #10b981);
   cursor: grab;
   border: 2px solid #ffffff;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3), 0 0 0 2px rgba(16, 185, 129, 0.15);
 }
 
 input[type="range"]::-moz-range-thumb:active {

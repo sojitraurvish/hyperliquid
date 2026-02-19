@@ -1357,30 +1357,28 @@ const positionSize = positionData?.szi || null;
   return (
     <div className={`flex-1 flex flex-col bg-gray-950 w-full ${isFullscreen ? 'fixed inset-0 z-9999' : ''}`}>
       {/* Chart toolbar */}
-      <div className="flex items-center justify-between px-2 sm:px-3 py-1.5 sm:py-2 border-b border-gray-800">
+      <div className="flex items-center justify-between px-2 sm:px-3 py-1.5 sm:py-2 border-b border-gray-800/40 bg-gray-950">
         <div className="flex items-center gap-0.5 sm:gap-1 overflow-x-auto [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
-          {/* Favorite quick access buttons */}
           {favoriteItems.map((fav) => (
             <button
               key={fav.value}
               onClick={() => handleQuickFavoriteClick(fav.value)}
-              className={`text-xs h-6 sm:h-7 px-1.5 sm:px-2 rounded transition-colors whitespace-nowrap ${
+              className={`text-[11px] h-6 sm:h-7 px-1.5 sm:px-2.5 rounded-lg transition-colors whitespace-nowrap font-medium ${
                 fav.isSelected
-                  ? "bg-green-500/20 text-green-400"
-                  : "text-gray-400 hover:text-white hover:bg-gray-900/50"
+                  ? "bg-green-500/15 text-green-400"
+                  : "text-gray-500 hover:text-gray-300 hover:bg-gray-800/50"
               }`}
             >
               {fav.value}
             </button>
           ))}
-          <div className="w-px h-4 bg-gray-800 mx-0.5 sm:mx-1" />
-          <button className="text-xs h-6 sm:h-7 px-1.5 sm:px-2 text-gray-400 hover:text-white hover:bg-gray-900/50 rounded transition-colors flex items-center gap-1 whitespace-nowrap">
+          <div className="w-px h-4 bg-gray-800/50 mx-0.5 sm:mx-1" />
+          <button className="text-[11px] h-6 sm:h-7 px-1.5 sm:px-2.5 text-gray-500 hover:text-gray-300 hover:bg-gray-800/50 rounded-lg transition-colors flex items-center gap-1 whitespace-nowrap font-medium">
             <BarChart3 className="h-3 w-3" />
             <span className="hidden sm:inline">Indicators</span>
           </button>
         </div>
         <div className="flex items-center gap-1 shrink-0">
-          {/* Interval Dropdown */}
           <IntervalDropdown
             sections={interval}
             selectedValue={getSelectedIntervalText()}
@@ -1392,7 +1390,7 @@ const positionSize = positionData?.szi || null;
 
           <button
             onClick={toggleFullscreen}
-            className="h-6 w-6 sm:h-7 sm:w-7 text-gray-400 hover:text-white hover:bg-gray-900/50 rounded transition-colors flex items-center justify-center"
+            className="h-6 w-6 sm:h-7 sm:w-7 text-gray-500 hover:text-gray-300 hover:bg-gray-800/50 rounded-lg transition-colors flex items-center justify-center"
             title={isFullscreen ? "Exit fullscreen" : "Fullscreen"}
           >
             {isFullscreen ? (
@@ -1405,29 +1403,29 @@ const positionSize = positionData?.szi || null;
       </div>
 
       {/* OHLC info */}
-      <div className="px-2 sm:px-3 py-1.5 sm:py-2 text-xs flex items-center gap-1 flex-wrap">
-        <span className="text-gray-400">{currency} · {getSelectedIntervalText()} · Hyperliquid</span>
+      <div className="px-2 sm:px-3 py-1 sm:py-1.5 text-[11px] flex items-center gap-1 flex-wrap border-b border-gray-800/20">
+        <span className="text-gray-500">{currency} · {getSelectedIntervalText()} · Hyperliquid</span>
         <span className="w-2 h-2 rounded-full bg-green-400 ml-1 sm:ml-2" />
         {displayedCandle ? (
           <>
-            <span className="text-gray-400 ml-1 sm:ml-2">O</span>
-            <span className={`tabular-nums ${displayedCandle.close >= displayedCandle.open ? 'text-green-400' : 'text-red-500'}`}>{displayedCandle.open.toFixed(2)}</span>
-            <span className="text-gray-400 ml-1 sm:ml-2">H</span>
-            <span className={`tabular-nums ${displayedCandle.close >= displayedCandle.open ? 'text-green-400' : 'text-red-500'}`}>{displayedCandle.high.toFixed(2)}</span>
-            <span className="text-gray-400 ml-1 sm:ml-2">L</span>
-            <span className={`tabular-nums ${displayedCandle.close >= displayedCandle.open ? 'text-green-400' : 'text-red-500'}`}>{displayedCandle.low.toFixed(2)}</span>
-            <span className="text-gray-400 ml-1 sm:ml-2">C</span>
-            <span className={`tabular-nums ${displayedCandle.close >= displayedCandle.open ? 'text-green-400' : 'text-red-500'}`}>
+            <span className="text-gray-500 ml-1 sm:ml-2">O</span>
+            <span className={`tabular-nums font-medium ${displayedCandle.close >= displayedCandle.open ? 'text-green-400' : 'text-red-400'}`}>{displayedCandle.open.toFixed(2)}</span>
+            <span className="text-gray-500 ml-1 sm:ml-2">H</span>
+            <span className={`tabular-nums font-medium ${displayedCandle.close >= displayedCandle.open ? 'text-green-400' : 'text-red-400'}`}>{displayedCandle.high.toFixed(2)}</span>
+            <span className="text-gray-500 ml-1 sm:ml-2">L</span>
+            <span className={`tabular-nums font-medium ${displayedCandle.close >= displayedCandle.open ? 'text-green-400' : 'text-red-400'}`}>{displayedCandle.low.toFixed(2)}</span>
+            <span className="text-gray-500 ml-1 sm:ml-2">C</span>
+            <span className={`tabular-nums font-medium ${displayedCandle.close >= displayedCandle.open ? 'text-green-400' : 'text-red-400'}`}>
               {displayedCandle.close.toFixed(2)}
             </span>
             {priceChange && (
-              <span className={`ml-1 sm:ml-2 tabular-nums ${priceChange.change >= 0 ? 'text-green-400' : 'text-red-500'}`}>
+              <span className={`ml-1 sm:ml-2 tabular-nums font-medium ${priceChange.change >= 0 ? 'text-green-400' : 'text-red-400'}`}>
                 {priceChange.change >= 0 ? '+' : ''}{priceChange.change.toFixed(6)} ({priceChange.changePercent >= 0 ? '+' : ''}{priceChange.changePercent.toFixed(2)}%)
               </span>
             )}
           </>
         ) : (
-          <span className="text-gray-400 ml-1 sm:ml-2">Loading...</span>
+          <span className="text-gray-500 ml-1 sm:ml-2">Loading...</span>
         )}
       </div>
 
@@ -1487,8 +1485,8 @@ const positionSize = positionData?.szi || null;
       </div> */}
 
       {/* Bottom time controls */}
-      <div className="flex items-center justify-between px-2 sm:px-3 py-1.5 sm:py-2 border-t border-gray-800 text-xs">
-        <div className="flex items-center gap-1 sm:gap-2 overflow-x-auto [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
+      <div className="flex items-center justify-between px-2 sm:px-3 py-1 sm:py-1.5 border-t border-gray-800/40 text-[11px]">
+        <div className="flex items-center gap-0.5 sm:gap-1 overflow-x-auto [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
           {timePeriods.filter((period) => period.value !== "5y").map((period) => (
             <AppButton
               key={period.value}
@@ -1496,8 +1494,8 @@ const positionSize = positionData?.szi || null;
               onClick={() => handleTimePeriodSelect(period.value)}
               className={
                 period.isSelected
-                  ? "bg-green-500/20 text-green-400"
-                  : ""
+                  ? "bg-green-500/15 text-green-400 rounded-lg"
+                  : "rounded-lg"
               }
             >
               {period.title}

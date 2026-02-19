@@ -122,7 +122,7 @@ interface InputProps extends React.InputHTMLAttributes<HTMLInputElement> {}
 const Input = ({ className = "", ...props }: InputProps) => {
   return (
     <input
-      className={`flex h-8 w-full rounded-md bg-gray-900/50 border border-gray-800 px-3 py-1 text-sm text-white placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-green-400 focus:ring-offset-2 focus:ring-offset-gray-950 focus:border-green-400 disabled:cursor-not-allowed disabled:opacity-50 transition-colors ${className}`}
+      className={`flex h-8 w-full rounded-lg bg-gray-800/30 border border-gray-700/40 px-3 py-1 text-sm text-white placeholder:text-gray-500 focus:outline-none focus:ring-1 focus:ring-green-500/30 focus:border-green-500/40 disabled:cursor-not-allowed disabled:opacity-50 transition-all ${className}`}
       {...props}
     />
   );
@@ -162,12 +162,12 @@ const Button = ({
   isDisabled = false,
   ...props 
 }: ButtonProps) => {
-  const baseStyles = "inline-flex items-center justify-center rounded-md font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-green-400 focus:ring-offset-2 focus:ring-offset-gray-950 disabled:opacity-50 disabled:pointer-events-none disabled:cursor-not-allowed";
+  const baseStyles = "inline-flex items-center justify-center rounded-lg font-semibold transition-all focus:outline-none disabled:opacity-40 disabled:pointer-events-none disabled:cursor-not-allowed";
   
   const variants = {
-    ghost: "bg-transparent text-gray-400 hover:bg-gray-800/50 hover:text-gray-300 cursor-pointer",
-    outline: "border border-gray-700 bg-transparent text-gray-400 hover:bg-gray-800/50 hover:text-gray-300 hover:border-gray-600 cursor-pointer",
-    primary: "bg-green-400 text-white hover:bg-green-500 cursor-pointer",
+    ghost: "bg-transparent text-gray-400 hover:bg-gray-800/40 hover:text-gray-300 cursor-pointer",
+    outline: "border border-gray-700/40 bg-transparent text-gray-400 hover:bg-gray-800/40 hover:text-gray-300 hover:border-gray-600/50 cursor-pointer",
+    primary: "bg-green-500 text-white hover:bg-green-400 shadow-sm shadow-green-500/20 cursor-pointer",
   };
   
   const sizes = {
@@ -206,17 +206,17 @@ const TabButton = ({ isActive, onClick, children, count }: TabButtonProps) => {
     <button
       onClick={onClick}
       className={`
-        relative px-2 sm:px-3 h-8 sm:h-10 text-xs font-medium transition-all duration-200
-        whitespace-nowrap cursor-pointer
+        relative px-2 sm:px-3 h-8 sm:h-9 text-[10px] font-semibold transition-all duration-200
+        whitespace-nowrap cursor-pointer uppercase tracking-wide
         ${isActive 
           ? "text-white border-b-2 border-green-400" 
-          : "text-gray-400 hover:text-gray-300 border-b-2 border-transparent"
+          : "text-gray-500 hover:text-gray-300 border-b-2 border-transparent"
         }
       `}
     >
       {children}
       {count !== undefined && count > 0 && (
-        <span className="ml-1 text-gray-500">({count})</span>
+        <span className={`ml-1 text-[9px] px-1.5 py-0.5 rounded-full inline-flex items-center justify-center font-bold ${isActive ? 'bg-green-500/15 text-green-400' : 'bg-gray-800/40 text-gray-500'}`}>{count}</span>
       )}
     </button>
   );
@@ -259,15 +259,13 @@ const PositionsTableHeader = () => {
 
   return (
     <div 
-      className="grid gap-2 sm:gap-3 md:gap-4 px-2 sm:px-3 py-2 text-xs text-gray-400 border-b border-gray-800"
+      className="grid gap-2 sm:gap-3 md:gap-4 px-2 sm:px-3 py-1.5 text-[10px] text-gray-500 border-b border-gray-800/20 font-medium uppercase tracking-wider"
       style={{ gridTemplateColumns: gridColumns }}
     >
       {headers.map((header, index) => (
         <div
           key={index}
-          className={`flex items-center gap-1 ${header.className} ${
-            header.underline ? "underline decoration-dotted" : ""
-          }`}
+          className={`flex items-center gap-1 ${header.className}`}
         >
           <span>{header.label}</span>
           {header.icon && <ChevronDown className="h-3 w-3 shrink-0" />}
@@ -283,7 +281,7 @@ const BalancesTableHeader = () => {
 
   return (
     <div
-      className="grid gap-2 sm:gap-4 px-2 sm:px-3 py-2 text-xs text-gray-400 border-b border-gray-800"
+      className="grid gap-2 sm:gap-4 px-2 sm:px-3 py-1.5 text-[10px] text-gray-500 border-b border-gray-800/20 font-medium uppercase tracking-wider"
       style={{ gridTemplateColumns: BALANCES_GRID }}
     >
       {headers.map((label, index) => (
@@ -301,7 +299,7 @@ const OrdersTableHeader = () => {
 
   return (
     <div
-      className="grid gap-2 sm:gap-4 px-2 sm:px-3 py-2 text-xs text-gray-400 border-b border-gray-800"
+      className="grid gap-2 sm:gap-4 px-2 sm:px-3 py-1.5 text-[10px] text-gray-500 border-b border-gray-800/20 font-medium uppercase tracking-wider"
       style={{ gridTemplateColumns: '2fr 1fr 1fr 1fr 1fr 1fr 1fr 1fr 1fr' }}
     >
       {headers.map((label, index) => (
@@ -319,7 +317,7 @@ const OpenOrdersTableHeader = () => {
 
   return (
     <div
-      className="sticky top-0 z-50 bg-gray-950 backdrop-blur-sm grid gap-2 sm:gap-3 px-2 sm:px-3 py-2 text-xs text-gray-400 border-b border-gray-800"
+      className="sticky top-0 z-50 bg-gray-950/95 backdrop-blur-sm grid gap-2 sm:gap-3 px-2 sm:px-3 py-1.5 text-[10px] text-gray-500 border-b border-gray-800/20 font-medium uppercase tracking-wider"
       style={{ gridTemplateColumns: OPEN_ORDERS_GRID }}
     >
       {headers.map((label, index) => (
@@ -337,7 +335,7 @@ const OrderHistoryTableHeader = () => {
 
   return (
     <div
-      className="sticky top-0 z-50 bg-gray-950 grid gap-2 sm:gap-3 px-2 sm:px-3 py-2 text-xs text-gray-400 border-b border-gray-800 backdrop-blur-sm"
+      className="sticky top-0 z-50 bg-gray-950/95 backdrop-blur-sm grid gap-2 sm:gap-3 px-2 sm:px-3 py-1.5 text-[10px] text-gray-500 border-b border-gray-800/20 font-medium uppercase tracking-wider"
       style={{ gridTemplateColumns: ORDER_HISTORY_GRID }}
     >
       {headers.map((label, index) => (
@@ -355,7 +353,7 @@ const FundingHistoryTableHeader = () => {
 
   return (
     <div
-      className="sticky top-0 z-50 bg-gray-950 backdrop-blur-sm grid gap-2 sm:gap-4 px-2 sm:px-3 py-2 text-xs text-gray-400 border-b border-gray-800"
+      className="sticky top-0 z-50 bg-gray-950/95 backdrop-blur-sm grid gap-2 sm:gap-4 px-2 sm:px-3 py-1.5 text-[10px] text-gray-500 border-b border-gray-800/20 font-medium uppercase tracking-wider"
       style={{ gridTemplateColumns: FUNDING_HISTORY_GRID }}
     >
       {headers.map((label, index) => (
@@ -373,7 +371,7 @@ const TradeHistoryTableHeader = () => {
 
   return (
     <div
-      className="sticky top-0 z-50 bg-gray-950 backdrop-blur-sm grid gap-2 sm:gap-4 px-2 sm:px-3 py-2 text-xs text-gray-400 border-b border-gray-800"
+      className="sticky top-0 z-50 bg-gray-950/95 backdrop-blur-sm grid gap-2 sm:gap-4 px-2 sm:px-3 py-1.5 text-[10px] text-gray-500 border-b border-gray-800/20 font-medium uppercase tracking-wider"
       style={{ gridTemplateColumns: TRADE_HISTORY_GRID }}
     >
       {headers.map((label, index) => (
@@ -411,7 +409,7 @@ const FundingHistoryRow = ({ funding }: FundingHistoryRowProps) => {
 
   return (
     <div
-      className="grid gap-2 sm:gap-4 px-2 sm:px-3 py-2 text-xs sm:text-sm border-b border-gray-800 hover:bg-gray-900/50 transition-colors"
+      className="grid gap-2 sm:gap-4 px-2 sm:px-3 py-2 text-xs sm:text-sm border-b border-gray-800/15 hover:bg-gray-800/15 transition-colors"
       style={{ gridTemplateColumns: FUNDING_HISTORY_GRID }}
     >
       <div className="text-gray-300 truncate" title={formattedDateTime}>
@@ -426,7 +424,7 @@ const FundingHistoryRow = ({ funding }: FundingHistoryRowProps) => {
       <div className="text-green-400 font-medium truncate" title={positionSide}>
         {positionSide}
       </div>
-      <div className="text-red-500 truncate" title={payment}>
+      <div className="text-red-400 truncate" title={payment}>
         {payment}
       </div>
       <div className="text-gray-300 truncate" title={rate}>
@@ -469,26 +467,26 @@ const TradeHistoryRow = ({ trade }: TradeHistoryRowProps) => {
     // Perpetual trades - show position actions
     if (isOpening && isBuy) {
       direction = "Open Long";
-      directionColor = "text-green-500";
+      directionColor = "text-green-400";
     } else if (isClosing && isBuy) {
       // Closing a long position (had position before)
       direction = "Close Long";
-      directionColor = "text-red-500";
+      directionColor = "text-red-400";
     } else if (isOpening && !isBuy) {
       direction = "Open Short";
-      directionColor = "text-red-500";
+      directionColor = "text-red-400";
     } else if (isClosing && !isBuy) {
       direction = "Close Short";
-      directionColor = "text-green-500";
+      directionColor = "text-green-400";
     } else {
       // Fallback for perpetual trades
       direction = isBuy ? "Buy" : "Sell";
-      directionColor = isBuy ? "text-green-500" : "text-red-500";
+      directionColor = isBuy ? "text-green-400" : "text-red-400";
     }
   } else {
     // Spot trades - just show Buy or Sell
     direction = isBuy ? "Buy" : "Sell";
-    directionColor = isBuy ? "text-green-500" : "text-red-500";
+    directionColor = isBuy ? "text-green-400" : "text-red-400";
   }
 
   // Format coin - display as-is from data
@@ -521,11 +519,11 @@ const TradeHistoryRow = ({ trade }: TradeHistoryRowProps) => {
   const formattedClosedPnl = closedPnl >= 0 
     ? `${closedPnl.toFixed(2)} USDC`
     : `${closedPnl.toFixed(2)} USDC`;
-  const closedPnlColor = closedPnl >= 0 ? "text-green-500" : "text-red-500";
+  const closedPnlColor = closedPnl >= 0 ? "text-green-400" : "text-red-400";
 
   return (
     <div
-      className="grid gap-2 sm:gap-4 px-2 sm:px-3 py-2 text-xs sm:text-sm border-b border-gray-800 hover:bg-gray-900/50 transition-colors"
+      className="grid gap-2 sm:gap-4 px-2 sm:px-3 py-2 text-xs sm:text-sm border-b border-gray-800/15 hover:bg-gray-800/15 transition-colors"
       style={{ gridTemplateColumns: TRADE_HISTORY_GRID }}
     >
       <div className="flex items-center gap-1">
@@ -921,12 +919,12 @@ const PositionsRow = ({ position, markPrice, agentPrivateKey, openOrders = [] }:
   const pnlFormatted = pnl >= 0 
     ? `$${pnl.toFixed(2)}`
     : `-$${Math.abs(pnl).toFixed(2)}`;
-  const pnlColor = pnl >= 0 ? "text-green-500" : "text-red-500";
+  const pnlColor = pnl >= 0 ? "text-green-400" : "text-red-400";
   
   // Format ROE as percentage
   const roe = parseFloat(pos.returnOnEquity) * 100;
   const roeFormatted = `${roe >= 0 ? "+" : ""}${roe.toFixed(1)}%`;
-  const roeColor = roe >= 0 ? "text-green-500" : "text-red-500";
+  const roeColor = roe >= 0 ? "text-green-400" : "text-red-400";
   
   // Format liquidation price
   const liqPrice = pos.liquidationPx 
@@ -942,7 +940,7 @@ const PositionsRow = ({ position, markPrice, agentPrivateKey, openOrders = [] }:
   const fundingFormatted = funding >= 0 
     ? `-$${funding.toFixed(2)}`
     : `$${Math.abs(funding).toFixed(2)}`;
-  const fundingColor = funding <= 0 ? "text-green-500" : "text-red-500";
+  const fundingColor = funding <= 0 ? "text-green-400" : "text-red-400";
   
   // Handle close position with market order
   const handleClosePositionMarket = async () => {
@@ -1161,18 +1159,17 @@ const PositionsRow = ({ position, markPrice, agentPrivateKey, openOrders = [] }:
 
   return (
     <div 
-      className="grid gap-2 sm:gap-3 md:gap-4 px-2 sm:px-3 py-2 text-xs sm:text-sm border-b border-gray-800 hover:bg-gray-900/50 transition-colors"
+      className="grid gap-2 sm:gap-3 md:gap-4 px-2 sm:px-3 py-2 text-[11px] border-b border-gray-800/15 hover:bg-gray-800/15 transition-colors"
       style={{ gridTemplateColumns: gridColumns }}
     >
-      {/* Coin */}
       <div>
-        <span className={`inline-block px-2 py-0.5 rounded text-xs font-medium ${posSize > 0 ? "text-green-500 bg-green-500/20" :"text-red-500 bg-red-500/20"}`}>
+        <span className={`inline-block px-1.5 py-0.5 rounded-md text-[10px] font-semibold ${posSize > 0 ? "text-green-400 bg-green-500/12" :"text-red-400 bg-red-500/12"}`}>
           {coin}
         </span>
       </div>
       
       {/* Size */}
-      <div className={`text-gray-300 truncate ${posSize > 0 ? "text-green-500" :"text-red-500"}`} title={size}>
+      <div className={`text-gray-300 truncate ${posSize > 0 ? "text-green-400" :"text-red-400"}`} title={size}>
         {size.replace("-","")}
       </div>
       
@@ -1241,25 +1238,24 @@ const PositionsRow = ({ position, markPrice, agentPrivateKey, openOrders = [] }:
         {fundingFormatted}
       </div>
       
-      {/* Close All */}
-      <div className="flex items-center gap-1 text-xs">
+      <div className="flex items-center gap-1 text-[10px]">
         <button
           onClick={() => setIsLimitCloseModalOpen(true)}
-          className="text-green-400 hover:text-green-300 cursor-pointer transition-colors"
+          className="text-green-400 hover:text-green-300 cursor-pointer transition-colors font-medium"
         >
           Limit
         </button>
-        <span className="text-gray-600">|</span>
+        <span className="text-gray-700">|</span>
         <button
           onClick={handleClosePositionMarket}
-          className="text-green-400 hover:text-green-300 cursor-pointer transition-colors"
+          className="text-green-400 hover:text-green-300 cursor-pointer transition-colors font-medium"
         >
           Market
         </button>
-        <span className="text-gray-600">|</span>
+        <span className="text-gray-700">|</span>
         <button
           onClick={handleReversePosition}
-          className="text-green-400 hover:text-green-300 cursor-pointer transition-colors"
+          className="text-green-400 hover:text-green-300 cursor-pointer transition-colors font-medium"
         >
           Reverse
         </button>
@@ -1375,8 +1371,13 @@ interface EmptyStateProps {
 
 const EmptyState = ({ message }: EmptyStateProps) => {
   return (
-    <div className="flex items-center justify-center px-2 sm:px-3 py-6 sm:py-8 min-h-[100px]">
-      <p className="text-xs sm:text-sm text-gray-400 text-center">{message}</p>
+    <div className="flex flex-col items-center justify-center px-2 sm:px-3 py-10 sm:py-14 min-h-[120px] gap-3">
+      <div className="w-10 h-10 rounded-xl bg-gray-800/30 border border-gray-700/20 flex items-center justify-center">
+        <svg className="w-4 h-4 text-gray-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4" />
+        </svg>
+      </div>
+      <p className="text-[11px] text-gray-500 text-center font-medium">{message}</p>
     </div>
   );
 };
@@ -1398,7 +1399,7 @@ const PositionsTableShimmer = () => {
       {[1, 2, 3].map((index) => (
         <div
           key={index}
-          className="grid gap-2 sm:gap-3 md:gap-4 px-2 sm:px-3 py-2 text-xs sm:text-sm border-b border-gray-800"
+          className="grid gap-2 sm:gap-3 md:gap-4 px-2 sm:px-3 py-2 text-xs border-b border-gray-800/20"
           style={{ gridTemplateColumns: gridColumns }}
         >
           {Array.from({ length: gridColumns.split(' ').length }).map((_, colIndex) => (
@@ -1417,7 +1418,7 @@ const BalancesTableShimmer = () => {
       {[1, 2, 3].map((index) => (
         <div
           key={index}
-          className="grid gap-2 sm:gap-4 px-2 sm:px-3 py-2 sm:py-3 text-xs sm:text-sm border-b border-gray-800"
+          className="grid gap-2 sm:gap-4 px-2 sm:px-3 py-2 text-xs border-b border-gray-800/20"
           style={{ gridTemplateColumns: BALANCES_GRID }}
         >
           {[1, 2, 3, 4, 5].map((colIndex) => (
@@ -1436,7 +1437,7 @@ const OpenOrdersTableShimmer = () => {
       {[1, 2, 3].map((index) => (
         <div
           key={index}
-          className="grid gap-2 sm:gap-3 px-2 sm:px-3 py-2 text-xs border-b border-gray-800"
+          className="grid gap-2 sm:gap-3 px-2 sm:px-3 py-2 text-xs border-b border-gray-800/20"
           style={{ gridTemplateColumns: OPEN_ORDERS_GRID }}
         >
           {Array.from({ length: 12 }).map((_, colIndex) => (
@@ -1455,7 +1456,7 @@ const TradeHistoryTableShimmer = () => {
       {[1, 2, 3].map((index) => (
         <div
           key={index}
-          className="grid gap-2 sm:gap-4 px-2 sm:px-3 py-2 text-xs sm:text-sm border-b border-gray-800"
+          className="grid gap-2 sm:gap-4 px-2 sm:px-3 py-2 text-xs border-b border-gray-800/20"
           style={{ gridTemplateColumns: TRADE_HISTORY_GRID }}
         >
           {Array.from({ length: 8 }).map((_, colIndex) => (
@@ -1474,7 +1475,7 @@ const FundingHistoryTableShimmer = () => {
       {[1, 2, 3].map((index) => (
         <div
           key={index}
-          className="grid gap-2 sm:gap-4 px-2 sm:px-3 py-2 text-xs sm:text-sm border-b border-gray-800"
+          className="grid gap-2 sm:gap-4 px-2 sm:px-3 py-2 text-xs border-b border-gray-800/20"
           style={{ gridTemplateColumns: FUNDING_HISTORY_GRID }}
         >
           {Array.from({ length: 6 }).map((_, colIndex) => (
@@ -1493,7 +1494,7 @@ const OrderHistoryTableShimmer = () => {
       {[1, 2, 3].map((index) => (
         <div
           key={index}
-          className="grid gap-2 sm:gap-3 px-2 sm:px-3 py-2 text-xs border-b border-gray-800"
+          className="grid gap-2 sm:gap-3 px-2 sm:px-3 py-2 text-xs border-b border-gray-800/20"
           style={{ gridTemplateColumns: ORDER_HISTORY_GRID }}
         >
           {Array.from({ length: 12 }).map((_, colIndex) => (
@@ -1527,26 +1528,26 @@ const BalanceRow = ({
 
   return (
     <div
-      className="grid gap-2 sm:gap-4 px-2 sm:px-3 py-2 sm:py-3 text-xs sm:text-sm border-b border-gray-800 hover:bg-gray-900/50 transition-colors items-center"
+      className="grid gap-2 sm:gap-4 px-2 sm:px-3 py-2 text-[11px] border-b border-gray-800/15 hover:bg-gray-800/15 transition-colors items-center"
       style={{ gridTemplateColumns: BALANCES_GRID }}
     >
-      <div className="text-gray-300 font-medium truncate">
+      <div className="text-gray-200 font-semibold truncate">
         {coin}
       </div>
-      <div className="text-gray-300 truncate">
+      <div className="text-gray-300 truncate font-mono tabular-nums">
         {total_balance}
       </div>
-      <div className={`text-gray-300 truncate ${isAvailableEqualTotal ? "decoration-dotted underline" : ""}`}>
+      <div className={`text-gray-300 truncate font-mono tabular-nums ${isAvailableEqualTotal ? "decoration-dotted underline" : ""}`}>
         {available_balance}
       </div>
-      <div className="text-gray-300 truncate">
+      <div className="text-gray-300 truncate font-mono tabular-nums">
         ${usdc_value}
       </div>
       <div className="truncate">
         {isPerps && onTransfer && (
           <button
             onClick={() => onTransfer("toSpot")}
-            className="text-green-400 hover:text-green-300 text-xs font-medium cursor-pointer transition-colors"
+            className="text-green-400 hover:text-green-300 text-[10px] font-semibold cursor-pointer transition-colors"
           >
             Transfer to Spot
           </button>
@@ -1554,7 +1555,7 @@ const BalanceRow = ({
         {isSpot && onTransfer && (
           <button
             onClick={() => onTransfer("toPerp")}
-            className="text-green-400 hover:text-green-300 text-xs font-medium cursor-pointer transition-colors"
+            className="text-green-400 hover:text-green-300 text-[10px] font-semibold cursor-pointer transition-colors"
           >
             Transfer to Perps
           </button>
@@ -1608,7 +1609,7 @@ const OrderHistoryRow = ({
   // reduceOnly = closing a position
   const isCloseLong = reduceOnly || (side === "A" && !isPositionTpsl);
   const positionAction = isCloseLong ? "Close Long" : "Long";
-  const positionColor = isCloseLong ? "text-pink-500" : "text-green-500";
+  const positionColor = isCloseLong ? "text-pink-500" : "text-green-400";
   
   // Format values
   const value1 = limitPx && parseFloat(limitPx) > 0 
@@ -1703,7 +1704,7 @@ const OrderHistoryRow = ({
   
   return (
     <div
-      className="grid gap-2 sm:gap-3 px-2 sm:px-3 py-2 text-xs border-b border-gray-800 hover:bg-gray-900/50 transition-colors"
+      className="grid gap-2 sm:gap-3 px-2 sm:px-3 py-2 text-xs border-b border-gray-800/15 hover:bg-gray-800/15 transition-colors"
       style={{ gridTemplateColumns: ORDER_HISTORY_GRID }}
     >
       <div className="text-gray-300 truncate" title={formattedDateTime}>
@@ -1762,7 +1763,7 @@ const OpenOrdersRow = ({ order, onCancel }: OpenOrdersRowProps) => {
   // Determine direction based on side
   // side: "B" = Buy = Long, side: "A" = Sell = Short
   const direction = order.side === "B" ? "Long" : "Short";
-  const directionColor = direction === "Long" ? "text-green-400" : "text-red-500";
+  const directionColor = direction === "Long" ? "text-green-400" : "text-red-400";
 
   // Format coin - display as-is
   const coin = order.coin;
@@ -1800,7 +1801,7 @@ const OpenOrdersRow = ({ order, onCancel }: OpenOrdersRowProps) => {
 
   return (
     <div
-      className="grid gap-2 sm:gap-3 px-2 sm:px-3 py-2 text-xs border-b border-gray-800 hover:bg-gray-900/50 transition-colors"
+      className="grid gap-2 sm:gap-3 px-2 sm:px-3 py-2 text-xs border-b border-gray-800/15 hover:bg-gray-800/15 transition-colors"
       style={{ gridTemplateColumns: OPEN_ORDERS_GRID }}
     >
       <div className="text-gray-300 truncate" title={formattedDateTime}>
@@ -1843,13 +1844,12 @@ const OpenOrdersRow = ({ order, onCancel }: OpenOrdersRowProps) => {
   );
 };
 
-// Online Indicator Component
 const OnlineIndicator = () => {
   return (
     <div className="absolute bottom-2 left-2 sm:left-3 z-10">
-      <div className="flex items-center gap-1.5 text-xs">
-        <div className="w-2 h-2 rounded-full bg-green-400 animate-pulse" />
-        <span className="text-gray-400 hidden sm:inline">Online</span>
+      <div className="flex items-center gap-1.5">
+        <div className="w-1.5 h-1.5 rounded-full bg-green-400 animate-pulse" />
+        <span className="text-[10px] text-gray-500 hidden sm:inline font-medium">Online</span>
       </div>
     </div>
   );
@@ -2281,10 +2281,9 @@ export const BottomPanel = () => {
   };
 
   return (
-    <div className="relative h-full bg-gray-950 border-t border-gray-800 flex flex-col min-h-0 max-h-full overflow-hidden">
+    <div className="relative h-full bg-gray-950 flex flex-col min-h-0 max-h-full overflow-hidden">
       {/* Tabs Navigation */}
-      <div className="flex items-center justify-between border-b border-gray-800 px-2 sm:px-3 shrink-0">
-        {/* Tabs List - Scrollable on mobile */}
+      <div className="flex items-center justify-between border-b border-gray-800/20 px-2 sm:px-3 shrink-0">
         <div className="flex-1 overflow-x-auto [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
           <div className="flex items-center gap-0 min-w-max">
             {tabs.map((tab) => (
@@ -2300,12 +2299,11 @@ export const BottomPanel = () => {
           </div>
         </div>
 
-        {/* Filter Button */}
         <div className="shrink-0 ml-2">
           <Button 
             variant="ghost" 
             size="sm" 
-            className="text-xs h-7 text-gray-400 hover:text-gray-300 gap-1"
+            className="text-[10px] h-7 text-gray-400 hover:text-gray-300 gap-1"
           >
             <span className="hidden sm:inline">Filter</span>
             <ChevronDown className="h-3 w-3" />
@@ -2436,12 +2434,12 @@ export const BottomPanel = () => {
             </div>
             {/* View All Link - Sticky at bottom */}
             {userAddress && (
-              <div className="absolute bottom-0 left-0 right-0 bg-gray-950 border-t border-gray-800 z-20 shrink-0">
+              <div className="absolute bottom-0 left-0 right-0 bg-gray-950/95 backdrop-blur-sm border-t border-gray-800/20 z-20 shrink-0">
                 <a
                   href={`${TRADE_HISTORY_URL}/${userAddress}`}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="block px-2 sm:px-3 py-2 text-xs text-green-400 hover:text-green-300 cursor-pointer transition-colors"
+                  className="block px-2 sm:px-3 py-2 text-[11px] text-green-400 hover:text-green-300 cursor-pointer transition-colors font-medium"
                 >
                   View All
                 </a>
@@ -2474,12 +2472,12 @@ export const BottomPanel = () => {
             </div>
             {/* View All Link - Sticky at bottom */}
             {userAddress && (
-              <div className="absolute bottom-0 left-0 right-0 bg-gray-950 border-t border-gray-800 z-20 shrink-0">
+              <div className="absolute bottom-0 left-0 right-0 bg-gray-950/95 backdrop-blur-sm border-t border-gray-800/20 z-20 shrink-0">
                 <a
                   href={`${FUNDING_HISTORY_URL}/${userAddress}`}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="block px-2 sm:px-3 py-2 text-xs text-green-400 hover:text-green-300 cursor-pointer transition-colors"
+                  className="block px-2 sm:px-3 py-2 text-[11px] text-green-400 hover:text-green-300 cursor-pointer transition-colors font-medium"
                 >
                   View All
                 </a>
@@ -2523,12 +2521,12 @@ export const BottomPanel = () => {
             </div>
             {/* View All Link - Sticky at bottom */}
             {userAddress && (
-              <div className="absolute bottom-0 left-0 right-0 bg-gray-950 border-t border-gray-800 z-20 shrink-0">
+              <div className="absolute bottom-0 left-0 right-0 bg-gray-950/95 backdrop-blur-sm border-t border-gray-800/20 z-20 shrink-0">
                 <a
                   href={`${HISTORICAL_ORDERS_URL}/${userAddress}`}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="block px-2 sm:px-3 py-2 text-xs text-green-400 hover:text-green-300 cursor-pointer transition-colors"
+                  className="block px-2 sm:px-3 py-2 text-[11px] text-green-400 hover:text-green-300 cursor-pointer transition-colors font-medium"
                 >
                   View All
                 </a>

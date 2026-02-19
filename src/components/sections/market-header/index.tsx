@@ -661,33 +661,30 @@ export const MarketHeader = ({ currency }: { currency: string }) => {
   }, []); // Empty dependency array - subscription runs once on mount
   
   return (
-    <div className="border-b border-gray-800 bg-gray-950">
-      {/* Favorite Markets Bar */}
-      <div className="border-b border-gray-800 bg-gray-950">
-        <div className="px-4 py-2.5 flex items-center gap-3">
-          {/* Star Icon */}
-          <button className="text-gray-400 hover:text-yellow-400 transition-colors shrink-0 cursor-pointer">
-            <Star fill={favoriteMarkets.length > 0 ? "yellow" : "none"} className="h-4 w-4" />
+    <div className="border-b border-gray-800/20 bg-gray-950">
+      <div className="border-b border-gray-800/15 bg-gray-950/80">
+        <div className="px-4 py-2 flex items-center gap-3">
+          <button className="text-gray-500 hover:text-yellow-400 transition-colors shrink-0 cursor-pointer">
+            <Star fill={favoriteMarkets.length > 0 ? "yellow" : "none"} className="h-3.5 w-3.5" />
           </button>
 
-          {/* Toggle Switch */}
-          <div className="flex items-center bg-gray-900 rounded-md p-0.5 shrink-0">
+          <div className="flex items-center bg-gray-900/40 rounded-lg p-0.5 shrink-0 border border-gray-800/15">
             <button
               onClick={() => setViewMode("$")}
-              className={`px-2 py-1 text-xs font-medium rounded transition-colors cursor-pointer ${
+              className={`px-2 py-1 text-[10px] font-semibold rounded-md transition-all cursor-pointer ${
                 viewMode === "$"
-                  ? "bg-green-500/20 text-green-400"
-                  : "text-gray-400 hover:text-gray-300"
+                  ? "bg-green-500/12 text-green-400"
+                  : "text-gray-500 hover:text-gray-300"
               }`}
             >
               $
             </button>
             <button
               onClick={() => setViewMode("%")}
-              className={`px-2 py-1 text-xs font-medium rounded transition-colors cursor-pointer ${
+              className={`px-2 py-1 text-[10px] font-semibold rounded-md transition-all cursor-pointer ${
                 viewMode === "%"
-                  ? "bg-green-500/20 text-green-400"
-                  : "text-gray-400 hover:text-gray-300"
+                  ? "bg-green-500/12 text-green-400"
+                  : "text-gray-500 hover:text-gray-300"
               }`}
             >
               %
@@ -724,10 +721,10 @@ export const MarketHeader = ({ currency }: { currency: string }) => {
                   <button
                     key={market.symbol}
                     onClick={() => handleMarketSelect(market.symbol)}
-                    className="text-sm font-medium hover:bg-gray-800 px-2 py-1 rounded transition-colors shrink-0 whitespace-nowrap cursor-pointer"
+                    className="text-[11px] font-semibold hover:bg-gray-800/40 px-2 py-1 rounded-lg transition-all shrink-0 whitespace-nowrap cursor-pointer"
                   >
-                    <span className="text-white">{market.symbol}</span>
-                    <span className={`ml-2 ${isPositive ? "text-green-500" : "text-red-500"}`}>
+                    <span className="text-gray-300">{market.symbol}</span>
+                    <span className={`ml-1.5 text-[10px] font-mono tabular-nums ${isPositive ? "text-green-400" : "text-red-400"}`}>
                       {displayValue}
                     </span>
                   </button>
@@ -749,14 +746,14 @@ export const MarketHeader = ({ currency }: { currency: string }) => {
       </div>
       {/* Desktop & Tablet View */}
       <div className="hidden md:flex">
-        <div className="w-full px-4 py-3.5 flex items-center justify-between relative min-h-[56px]">
-          <div className="flex items-center gap-4 lg:gap-8 flex-1 min-w-0">
+        <div className="w-full px-4 py-3 flex items-center justify-between relative min-h-[52px]">
+          <div className="flex items-center gap-4 lg:gap-6 flex-1 min-w-0">
             <div className="relative shrink-0">
               {selectedMarketData && (
                 <button 
                   ref={marketButtonRefDesktop}
                   onClick={handleDropdownToggle}
-                  className="text-white hover:bg-gray-900/50 p-2 h-auto rounded transition-colors shrink-0 cursor-pointer"
+                  className="text-white hover:bg-gray-800/50 px-3 py-1.5 h-auto rounded-lg transition-colors shrink-0 cursor-pointer border border-transparent hover:border-gray-700/40"
                 >
                   <div className="flex items-center gap-2">
                     <img 
@@ -777,18 +774,17 @@ export const MarketHeader = ({ currency }: { currency: string }) => {
               {isDropdownOpen && (
                 <div 
                   ref={dropdownRef}
-                  className="absolute top-full left-0 mt-2 bg-gray-900 border border-gray-800 rounded-lg shadow-xl z-[100] w-[800px] max-h-[600px] flex flex-col"
+                  className="absolute top-full left-0 mt-2 bg-gray-900/95 backdrop-blur-xl border border-gray-700/50 rounded-xl shadow-2xl shadow-black/40 z-100 w-[800px] max-h-[600px] flex flex-col"
                 >
-                  {/* Search Bar */}
-                  <div className="p-3 border-b border-gray-800">
+                  <div className="p-3 border-b border-gray-800/40">
                     <div className="relative mb-2">
-                      <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+                      <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-500" />
                       <input
                         type="text"
                         placeholder="Search markets..."
                         value={searchQuery}
                         onChange={(e) => setSearchQuery(e.target.value)}
-                        className="w-full pl-9 pr-9 py-2 bg-gray-950 border border-gray-800 rounded text-sm text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-green-500"
+                        className="w-full pl-9 pr-9 py-2 bg-gray-800/40 border border-gray-700/40 rounded-xl text-sm text-white placeholder-gray-500 focus:outline-none focus:ring-1 focus:ring-green-500/40 focus:border-green-500/30 transition-colors"
                         autoFocus
                       />
                       {searchQuery && (
@@ -802,16 +798,14 @@ export const MarketHeader = ({ currency }: { currency: string }) => {
                     </div>
                   </div>
 
-                  {/* Markets Table */}
-                  <div className="overflow-y-auto flex-1 max-h-[400px] [scrollbar-width:thin] [scrollbar-color:gray-700_transparent] [&::-webkit-scrollbar]:w-2 [&::-webkit-scrollbar-track]:bg-gray-900 [&::-webkit-scrollbar-thumb]:bg-gray-700 [&::-webkit-scrollbar-thumb]:rounded">
+                  <div className="overflow-y-auto flex-1 max-h-[400px] [scrollbar-width:thin] [scrollbar-color:gray-700_transparent] [&::-webkit-scrollbar]:w-2 [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:bg-gray-700/60 [&::-webkit-scrollbar-thumb]:rounded">
                     {filteredMarkets.length === 0 ? (
-                      <div className="p-4 text-center text-gray-400 text-sm">
+                      <div className="p-4 text-center text-gray-500 text-sm">
                         No markets found
                       </div>
                     ) : (
                       <div className="min-w-full">
-                        {/* Table Header */}
-                        <div className="sticky top-0 bg-gray-900 border-b border-gray-800 px-4 py-2 grid grid-cols-[minmax(0,2fr)_minmax(0,1fr)_minmax(0,1.5fr)_minmax(0,0.8fr)_minmax(0,1.2fr)_minmax(0,1.5fr)] gap-4 text-xs font-medium text-gray-400">
+                        <div className="sticky top-0 bg-gray-900/95 backdrop-blur-sm border-b border-gray-800/30 px-4 py-2 grid grid-cols-[minmax(0,2fr)_minmax(0,1fr)_minmax(0,1.5fr)_minmax(0,0.8fr)_minmax(0,1.2fr)_minmax(0,1.5fr)] gap-4 text-[11px] font-medium text-gray-500 uppercase tracking-wider">
                           <div>Symbol</div>
                           <div className="text-right">Last Price</div>
                           <div className="text-right">24H Change</div>
@@ -820,7 +814,6 @@ export const MarketHeader = ({ currency }: { currency: string }) => {
                           <div className="text-right">Open Interest</div>
                         </div>
                         
-                        {/* Table Rows */}
                         {filteredMarkets.map((market) => {
                           const isPositive = (market.change24hPer ?? 0) >= 0;
                           const isFavorite = market.isFavorite;
@@ -833,8 +826,8 @@ export const MarketHeader = ({ currency }: { currency: string }) => {
                               key={market.symbol}
                               type="button"
                               onClick={(e) => handleMarketSelect(market.symbol, e)}
-                              className={`w-full cursor-pointer px-4 py-2.5 grid grid-cols-[minmax(0,2fr)_minmax(0,1fr)_minmax(0,1.5fr)_minmax(0,0.8fr)_minmax(0,1.2fr)_minmax(0,1.5fr)] gap-4 items-center hover:bg-gray-800 transition-colors border-b border-gray-800/50 last:border-b-0 text-xs ${
-                                isSelected ? 'bg-gray-800/30' : ''
+                              className={`w-full cursor-pointer px-4 py-2.5 grid grid-cols-[minmax(0,2fr)_minmax(0,1fr)_minmax(0,1.5fr)_minmax(0,0.8fr)_minmax(0,1.2fr)_minmax(0,1.5fr)] gap-4 items-center hover:bg-gray-800/40 transition-colors border-b border-gray-800/20 last:border-b-0 text-xs ${
+                                isSelected ? 'bg-green-500/5' : ''
                               }`}
                             >
                               <div className="flex items-center gap-2 min-w-0">
@@ -845,7 +838,7 @@ export const MarketHeader = ({ currency }: { currency: string }) => {
                                 >
                                   <Star
                                     fill={isFavorite ? "yellow" : "none"}
-                                    className={`h-3 w-3 ${isFavorite ? "text-yellow-400" : "text-gray-500"}`}
+                                    className={`h-3 w-3 ${isFavorite ? "text-yellow-400" : "text-gray-600"}`}
                                   />
                                 </button>
                                 <img 
@@ -860,7 +853,7 @@ export const MarketHeader = ({ currency }: { currency: string }) => {
                                   {market.symbol}
                                 </span>
                                 {market.leverage && (
-                                  <span className="text-xs font-medium bg-green-500/20 text-green-400 px-1 py-0.5 rounded shrink-0">
+                                  <span className="text-[10px] font-medium bg-green-500/15 text-green-400 px-1.5 py-0.5 rounded-md shrink-0">
                                     {market.leverage}
                                   </span>
                                 )}
@@ -868,19 +861,19 @@ export const MarketHeader = ({ currency }: { currency: string }) => {
                                   <div className="w-1.5 h-1.5 rounded-full bg-green-400 shrink-0"></div>
                                 )}
                               </div>
-                              <div className="text-right font-medium tabular-nums text-white whitespace-nowrap overflow-hidden text-ellipsis">
+                              <div className="text-right font-medium tabular-nums text-gray-200 whitespace-nowrap overflow-hidden text-ellipsis">
                                 {market.lastPrice != null ? market.lastPrice.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : "—"}
                               </div>
-                              <div className={`text-right font-medium tabular-nums whitespace-nowrap overflow-hidden text-ellipsis ${isPositive ? "text-green-500" : "text-red-500"}`}>
+                              <div className={`text-right font-medium tabular-nums whitespace-nowrap overflow-hidden text-ellipsis ${isPositive ? "text-green-400" : "text-red-400"}`}>
                                 {market.change24h != null ? `${isPositive ? "+" : ""}${market.change24h.toFixed(2)}` : "—"} / {market.change24hPer != null ? `${isPositive ? "+" : ""}${market.change24hPer.toFixed(2)}%` : "—"}
                               </div>
-                              <div className={`text-right font-medium tabular-nums whitespace-nowrap overflow-hidden text-ellipsis ${(funding8hValue ?? 0) >= 0 ? "text-white" : "text-red-500"}`}>
+                              <div className={`text-right font-medium tabular-nums whitespace-nowrap overflow-hidden text-ellipsis ${(funding8hValue ?? 0) >= 0 ? "text-gray-200" : "text-red-400"}`}>
                                 {funding8hDisplay}
                               </div>
-                              <div className="text-right font-medium tabular-nums text-white whitespace-nowrap overflow-hidden text-ellipsis">
+                              <div className="text-right font-medium tabular-nums text-gray-200 whitespace-nowrap overflow-hidden text-ellipsis">
                                 {market.volume24h != null ? `$${market.volume24h.toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 0 })}` : "—"}
                               </div>
-                              <div className="text-right font-medium tabular-nums text-white whitespace-nowrap overflow-hidden text-ellipsis">
+                              <div className="text-right font-medium tabular-nums text-gray-200 whitespace-nowrap overflow-hidden text-ellipsis">
                                 {market.openInterest != null ? `$${market.openInterest.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` : "—"}
                               </div>
                             </button>
@@ -894,48 +887,61 @@ export const MarketHeader = ({ currency }: { currency: string }) => {
             </div>
 
             {selectedMarketData?.leverage && (
-              <span className="text-xs font-medium bg-green-500/20 text-green-400 px-2 py-0.5 rounded shrink-0">{selectedMarketData.leverage}</span>
+              <span className="text-[11px] font-medium bg-green-500/15 text-green-400 px-2 py-0.5 rounded-md shrink-0">{selectedMarketData.leverage}</span>
             )}
 
             {selectedMarketData && (
-              <div className="flex gap-4 lg:gap-8 text-xs flex-1 min-w-0">
+              <div className="flex gap-4 lg:gap-5 text-xs flex-1 min-w-0 items-center">
                 {selectedMarketData.mark != null && (
                   <div className="shrink-0">
-                    <div className="text-gray-400 mb-0.5 border-b border-dashed border-gray-600 pb-0.5 block w-fit">Mark</div>
-                    <div className="font-medium tabular-nums text-white">{selectedMarketData.mark.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</div>
+                    <div className="text-[10px] text-gray-500 mb-0.5 font-medium">Mark</div>
+                    <div className="text-[11px] font-semibold tabular-nums text-gray-200 font-mono">{selectedMarketData.mark.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</div>
                   </div>
                 )}
                 {selectedMarketData.oracle != null && (
-                  <div className="shrink-0">
-                    <div className="text-gray-400 mb-0.5 border-b border-dashed border-gray-600 pb-0.5 block w-fit">Oracle</div>
-                    <div className="font-medium tabular-nums text-white">{selectedMarketData.oracle.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</div>
-                  </div>
+                  <>
+                    <div className="w-px h-7 bg-gray-800/30 shrink-0 hidden lg:block" />
+                    <div className="shrink-0">
+                      <div className="text-[10px] text-gray-500 mb-0.5 font-medium">Oracle</div>
+                      <div className="text-[11px] font-semibold tabular-nums text-gray-200 font-mono">{selectedMarketData.oracle.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</div>
+                    </div>
+                  </>
                 )}
+                <div className="w-px h-7 bg-gray-800/30 shrink-0 hidden lg:block" />
                 <div className="shrink-0">
-                  <div className="text-gray-400 mb-0.5">24H Change</div>
-                  <div className={`font-medium tabular-nums ${(selectedMarketData.change24hPer ?? 0) >= 0 ? 'text-green-500' : 'text-red-500'}`}>
+                  <div className="text-[10px] text-gray-500 mb-0.5 font-medium">24H Change</div>
+                  <div className={`text-[11px] font-semibold tabular-nums font-mono ${(selectedMarketData.change24hPer ?? 0) >= 0 ? 'text-green-400' : 'text-red-400'}`}>
                     {selectedMarketData.change24h != null ? `${(selectedMarketData.change24hPer ?? 0) >= 0 ? '+' : ''}${selectedMarketData.change24h.toFixed(2)}` : '—'} / {selectedMarketData.change24hPer != null ? `${(selectedMarketData.change24hPer ?? 0) >= 0 ? '+' : ''}${selectedMarketData.change24hPer.toFixed(2)}%` : '—'}
                   </div>
                 </div>
                 {selectedMarketData.volume24h != null && (
-                  <div className="shrink-0 hidden lg:block">
-                    <div className="text-gray-400 mb-0.5">24H Volume</div>
-                    <div className="font-medium tabular-nums text-white">${selectedMarketData.volume24h.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</div>
-                  </div>
+                  <>
+                    <div className="w-px h-7 bg-gray-800/30 shrink-0 hidden lg:block" />
+                    <div className="shrink-0 hidden lg:block">
+                      <div className="text-[10px] text-gray-500 mb-0.5 font-medium">24H Volume</div>
+                      <div className="text-[11px] font-semibold tabular-nums text-gray-200 font-mono">${selectedMarketData.volume24h.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</div>
+                    </div>
+                  </>
                 )}
                 {selectedMarketData.openInterest != null && (
-                  <div className="shrink-0 hidden lg:block">
-                    <div className="text-gray-400 mb-0.5 border-b border-dashed border-gray-600 pb-0.5 block w-fit">Open Interest</div>
-                    <div className="font-medium tabular-nums text-white">${selectedMarketData.openInterest.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</div>
-                  </div>
+                  <>
+                    <div className="w-px h-7 bg-gray-800/30 shrink-0 hidden lg:block" />
+                    <div className="shrink-0 hidden lg:block">
+                      <div className="text-[10px] text-gray-500 mb-0.5 font-medium">Open Interest</div>
+                      <div className="text-[11px] font-semibold tabular-nums text-gray-200 font-mono">${selectedMarketData.openInterest.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</div>
+                    </div>
+                  </>
                 )}
                 {selectedMarketData.fundingDisplay != null && (
-                  <div className="shrink-0 hidden xl:block">
-                    <div className="text-gray-400 mb-0.5 border-b border-dashed border-gray-600 pb-0.5 block w-fit">Funding / Countdown</div>
-                    <div className="font-medium tabular-nums text-green-400">
-                      {selectedMarketData.fundingDisplay} <span className="text-white">{selectedMarketData.countdown || '—'}</span>
+                  <>
+                    <div className="w-px h-7 bg-gray-800/30 shrink-0 hidden xl:block" />
+                    <div className="shrink-0 hidden xl:block">
+                      <div className="text-[10px] text-gray-500 mb-0.5 font-medium">Funding / Countdown</div>
+                      <div className="text-[11px] font-semibold tabular-nums text-green-400 font-mono">
+                        {selectedMarketData.fundingDisplay} <span className="text-gray-300">{selectedMarketData.countdown || '—'}</span>
+                      </div>
                     </div>
-                  </div>
+                  </>
                 )}
               </div>
             )}
@@ -945,14 +951,14 @@ export const MarketHeader = ({ currency }: { currency: string }) => {
 
       {/* Mobile View */}
       <div className="md:hidden">
-        <div className="px-4 py-3 flex items-center justify-between relative">
+        <div className="px-3 py-2.5 flex items-center justify-between relative">
           <div className="flex items-center gap-2 flex-1 min-w-0">
             <div className="relative">
               {selectedMarketData && (
                 <button 
                   ref={marketButtonRefMobile}
                   onClick={handleDropdownToggle}
-                  className="text-white hover:bg-gray-900/50 p-2 h-auto rounded transition-colors cursor-pointer"
+                  className="text-white hover:bg-gray-800/40 px-2 py-1.5 h-auto rounded-lg transition-colors cursor-pointer"
                 >
                   <div className="flex items-center gap-2">
                     <img 
@@ -964,27 +970,25 @@ export const MarketHeader = ({ currency }: { currency: string }) => {
                       }}
                     />
                     <span className="font-semibold text-sm text-white">{selectedMarketData.symbol}</span>
-                    <ChevronDown className={`h-3 w-3 text-gray-400 transition-transform ${isDropdownOpen ? 'rotate-180' : ''}`} />
+                    <ChevronDown className={`h-3 w-3 text-gray-500 transition-transform ${isDropdownOpen ? 'rotate-180' : ''}`} />
                   </div>
                 </button>
               )}
 
-              {/* Dropdown Menu - Mobile */}
               {isDropdownOpen && (
                 <div 
                   ref={dropdownRef}
-                  className="absolute top-full left-0 mt-2 bg-gray-900 border border-gray-800 rounded-lg shadow-xl z-[100] w-[calc(100vw-2rem)] max-h-[600px] flex flex-col"
+                  className="absolute top-full left-0 mt-2 bg-gray-900/95 backdrop-blur-xl border border-gray-700/50 rounded-xl shadow-2xl shadow-black/40 z-100 w-[calc(100vw-2rem)] max-h-[600px] flex flex-col"
                 >
-                  {/* Search Bar */}
-                  <div className="p-3 border-b border-gray-800">
+                  <div className="p-3 border-b border-gray-800/30">
                     <div className="relative mb-2">
-                      <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+                      <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-500" />
                       <input
                         type="text"
                         placeholder="Search markets..."
                         value={searchQuery}
                         onChange={(e) => setSearchQuery(e.target.value)}
-                        className="w-full pl-9 pr-9 py-2 bg-gray-950 border border-gray-800 rounded text-sm text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-green-500"
+                        className="w-full pl-9 pr-9 py-2 bg-gray-800/40 border border-gray-700/40 rounded-xl text-sm text-white placeholder-gray-500 focus:outline-none focus:ring-1 focus:ring-green-500/40 focus:border-green-500/30 transition-colors"
                         autoFocus
                       />
                       {searchQuery && (
@@ -998,10 +1002,9 @@ export const MarketHeader = ({ currency }: { currency: string }) => {
                     </div>
                   </div>
 
-                  {/* Markets List */}
-                  <div className="overflow-y-auto flex-1 max-h-[400px] [scrollbar-width:thin] [scrollbar-color:gray-700_transparent] [&::-webkit-scrollbar]:w-2 [&::-webkit-scrollbar-track]:bg-gray-900 [&::-webkit-scrollbar-thumb]:bg-gray-700 [&::-webkit-scrollbar-thumb]:rounded">
+                  <div className="overflow-y-auto flex-1 max-h-[400px] [scrollbar-width:thin] [scrollbar-color:gray-700_transparent] [&::-webkit-scrollbar]:w-2 [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:bg-gray-700/60 [&::-webkit-scrollbar-thumb]:rounded">
                     {filteredMarkets.length === 0 ? (
-                      <div className="p-4 text-center text-gray-400 text-sm">
+                      <div className="p-4 text-center text-gray-500 text-sm">
                         No markets found
                       </div>
                     ) : (
@@ -1015,8 +1018,8 @@ export const MarketHeader = ({ currency }: { currency: string }) => {
                             key={market.symbol}
                             type="button"
                             onClick={(e) => handleMarketSelect(market.symbol, e)}
-                            className={`w-full  px-4 py-3 flex items-center justify-between hover:bg-gray-800/50 transition-colors border-b border-gray-800/50 last:border-b-0 cursor-pointer ${
-                              isSelected ? 'bg-gray-800/30' : ''
+                            className={`w-full px-4 py-3 flex items-center justify-between hover:bg-gray-800/40 transition-colors border-b border-gray-800/20 last:border-b-0 cursor-pointer ${
+                              isSelected ? 'bg-green-500/5' : ''
                             }`}
                           >
                             <div className="flex items-center gap-3 flex-1 min-w-0">
@@ -1036,21 +1039,21 @@ export const MarketHeader = ({ currency }: { currency: string }) => {
                                 >
                                   <Star
                                     fill={isFavorite ? "yellow" : "none"}
-                                    className={`h-3 w-3 ${isFavorite ? "text-yellow-400" : "text-gray-500"}`}
+                                    className={`h-3 w-3 ${isFavorite ? "text-yellow-400" : "text-gray-600"}`}
                                   />
                                 </button>
                                 <span className={`text-sm font-medium truncate ${isSelected ? 'text-green-400' : 'text-white'}`}>
                                   {market.symbol}
                                 </span>
                                 {market.leverage && (
-                                  <span className="text-xs font-medium bg-green-500/20 text-green-400 px-1.5 py-0.5 rounded shrink-0">
+                                  <span className="text-[10px] font-medium bg-green-500/15 text-green-400 px-1.5 py-0.5 rounded-md shrink-0">
                                     {market.leverage}
                                   </span>
                                 )}
                               </div>
                             </div>
                             <div className="flex items-center gap-2 shrink-0">
-                              <span className={`text-xs font-medium ${isPositive ? "text-green-500" : "text-red-500"}`}>
+                              <span className={`text-xs font-medium ${isPositive ? "text-green-400" : "text-red-400"}`}>
                                 {market.change24hPer != null ? `${isPositive ? "+" : ""}${market.change24hPer.toFixed(2)}%` : "—"}
                               </span>
                               {isSelected && (
@@ -1066,14 +1069,14 @@ export const MarketHeader = ({ currency }: { currency: string }) => {
               )}
             </div>
             {selectedMarketData?.leverage && (
-              <span className="text-xs font-medium bg-green-500/20 text-green-400 px-2 py-0.5 rounded">{selectedMarketData.leverage}</span>
+              <span className="text-[11px] font-medium bg-green-500/15 text-green-400 px-2 py-0.5 rounded-md">{selectedMarketData.leverage}</span>
             )}
             {selectedMarketData && (
               <div className="ml-auto text-right">
                 {selectedMarketData.mark != null && (
-                  <div className="text-xs font-medium tabular-nums text-white">{selectedMarketData.mark.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</div>
+                  <div className="text-xs font-medium tabular-nums text-gray-200">{selectedMarketData.mark.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</div>
                 )}
-                <div className={`text-xs font-medium tabular-nums ${(selectedMarketData.change24hPer ?? 0) >= 0 ? 'text-green-500' : 'text-red-500'}`}>
+                <div className={`text-xs font-medium tabular-nums ${(selectedMarketData.change24hPer ?? 0) >= 0 ? 'text-green-400' : 'text-red-400'}`}>
                   {selectedMarketData.change24h != null ? `${(selectedMarketData.change24hPer ?? 0) >= 0 ? '+' : ''}${selectedMarketData.change24h.toFixed(2)}` : '—'} / {selectedMarketData.change24hPer != null ? `${(selectedMarketData.change24hPer ?? 0) >= 0 ? '+' : ''}${selectedMarketData.change24hPer.toFixed(2)}%` : '—'}
                 </div>
               </div>
@@ -1081,49 +1084,49 @@ export const MarketHeader = ({ currency }: { currency: string }) => {
           </div>
           <button
             onClick={() => setIsExpanded(!isExpanded)}
-            className="ml-2 p-2 hover:bg-gray-900/50 rounded transition-colors cursor-pointer"
+            className="ml-2 p-2 hover:bg-gray-800/40 rounded-lg transition-colors cursor-pointer"
           >
             {isExpanded ? (
-              <ChevronUp className="h-4 w-4 text-gray-400" />
+              <ChevronUp className="h-4 w-4 text-gray-500" />
             ) : (
-              <ChevronDown className="h-4 w-4 text-gray-400" />
+              <ChevronDown className="h-4 w-4 text-gray-500" />
             )}
           </button>
         </div>
 
         {/* Expanded Mobile Details */}
         {isExpanded && selectedMarketData && (
-          <div className="px-4 pb-3 space-y-3 border-t border-gray-800 pt-3">
-            <div className="grid grid-cols-2 gap-4 text-xs">
+          <div className="px-3 pb-3 space-y-3 border-t border-gray-800/15 pt-3">
+            <div className="grid grid-cols-2 gap-3 text-xs bg-gray-900/20 rounded-xl p-3 border border-gray-800/10">
               {selectedMarketData.mark != null && (
                 <div>
-                  <div className="text-gray-400 mb-0.5 border-b border-dashed border-gray-600 pb-0.5 block w-fit">Mark</div>
-                  <div className="font-medium tabular-nums text-white">{selectedMarketData.mark.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</div>
+                  <div className="text-[10px] text-gray-500 mb-0.5 font-medium">Mark</div>
+                  <div className="text-[11px] font-semibold tabular-nums text-gray-200 font-mono">{selectedMarketData.mark.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</div>
                 </div>
               )}
               {selectedMarketData.oracle != null && (
                 <div>
-                  <div className="text-gray-400 mb-0.5 border-b border-dashed border-gray-600 pb-0.5 block w-fit">Oracle</div>
-                  <div className="font-medium tabular-nums text-white">{selectedMarketData.oracle.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</div>
+                  <div className="text-[10px] text-gray-500 mb-0.5 font-medium">Oracle</div>
+                  <div className="text-[11px] font-semibold tabular-nums text-gray-200 font-mono">{selectedMarketData.oracle.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</div>
                 </div>
               )}
               {selectedMarketData.volume24h != null && (
                 <div>
-                  <div className="text-gray-400 mb-0.5">24H Volume</div>
-                  <div className="font-medium tabular-nums text-white">${selectedMarketData.volume24h.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</div>
+                  <div className="text-[10px] text-gray-500 mb-0.5 font-medium">24H Volume</div>
+                  <div className="text-[11px] font-semibold tabular-nums text-gray-200 font-mono">${selectedMarketData.volume24h.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</div>
                 </div>
               )}
               {selectedMarketData.openInterest != null && (
                 <div>
-                  <div className="text-gray-400 mb-0.5 border-b border-dashed border-gray-600 pb-0.5 block w-fit">Open Interest</div>
-                  <div className="font-medium tabular-nums text-white">${selectedMarketData.openInterest.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</div>
+                  <div className="text-[10px] text-gray-500 mb-0.5 font-medium">Open Interest</div>
+                  <div className="text-[11px] font-semibold tabular-nums text-gray-200 font-mono">${selectedMarketData.openInterest.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</div>
                 </div>
               )}
               {selectedMarketData.fundingDisplay != null && (
                 <div className="col-span-2">
-                  <div className="text-gray-400 mb-0.5 border-b border-dashed border-gray-600 pb-0.5 block w-fit">Funding / Countdown</div>
-                  <div className="font-medium tabular-nums text-green-400">
-                    {selectedMarketData.fundingDisplay} <span className="text-white">{selectedMarketData.countdown || '—'}</span>
+                  <div className="text-[10px] text-gray-500 mb-0.5 font-medium">Funding / Countdown</div>
+                  <div className="text-[11px] font-semibold tabular-nums text-green-400 font-mono">
+                    {selectedMarketData.fundingDisplay} <span className="text-gray-300">{selectedMarketData.countdown || '—'}</span>
                   </div>
                 </div>
               )}

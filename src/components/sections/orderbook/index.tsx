@@ -360,25 +360,21 @@ export const OrderBook = ({ currency }: { currency: string }) => {
   // Show loading state during SSR or initial mount
 
   return (
-    <div className="w-full bg-gray-950 border-l border-gray-800 flex flex-col h-full">
+    <div className="w-full bg-gray-950 flex flex-col h-full">
       <div className="flex-1 flex flex-col min-h-0">
         {/* Header with Tabs */}
-        <div className="flex items-center justify-between px-2 sm:px-3 py-2 border-b border-gray-800 shrink-0">
-          <div className="flex items-center bg-transparent p-0 h-auto w-full">
+        <div className="flex items-center justify-between px-2 sm:px-3 py-1.5 border-b border-gray-800/20 shrink-0">
+          <div className="flex items-center bg-gray-900/40 rounded-lg p-0.5 h-auto w-full border border-gray-800/15">
             {tabs.map((tab) => (
               <button
                 key={tab.value}
                 onClick={tab.onClick}
-                className={` hover:cursor-pointer
-                  flex-1 text-xs sm:text-sm px-0 py-1 transition-colors duration-200
-                  relative focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-gray-950 focus:ring-green-400
-                  ${tab.isActive ? "text-white" : "text-gray-400 hover:text-gray-300"}
+                className={`hover:cursor-pointer
+                  flex-1 text-[10px] sm:text-[11px] px-0 py-1.5 transition-all duration-200 rounded-md font-semibold
+                  ${tab.isActive ? "bg-gray-800/60 text-white shadow-sm" : "text-gray-500 hover:text-gray-300"}
                 `}
               >
                 {tab.label}
-                {tab.isActive && (
-                  <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-green-400" />
-                )}
               </button>
             ))}
           </div>
@@ -462,7 +458,7 @@ export const OrderBook = ({ currency }: { currency: string }) => {
               </div>
 
               {/* Column Headers */}
-              <div className="px-2 sm:px-3 py-1.5 flex justify-between text-xs text-gray-500 border-b border-gray-800 shrink-0 bg-gray-900/50">
+              <div className="px-2 sm:px-3 py-1 flex justify-between text-[10px] text-gray-500 border-b border-gray-800/20 shrink-0 font-medium uppercase tracking-wider">
                 <span className="flex-1 text-left">Price</span>
                 <span className="flex-1 text-center">Size ({currencyName})</span>
                 <span className="flex-1 text-right">Total ({currencyName})</span>

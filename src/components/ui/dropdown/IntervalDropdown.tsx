@@ -101,29 +101,26 @@ export const IntervalDropdown = ({
 
   return (
     <div className="relative" ref={dropdownRef}>
-      {/* Dropdown Button */}
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className={`h-6 sm:h-7 px-2 sm:px-3 text-xs text-gray-300 hover:text-white hover:bg-gray-900/50 rounded transition-colors flex items-center gap-1.5 border border-gray-700 hover:border-gray-600 ${buttonClassName}`}
+        className={`h-6 sm:h-7 px-2 sm:px-3 text-[11px] text-gray-400 hover:text-gray-200 hover:bg-gray-800/50 rounded-lg transition-colors flex items-center gap-1.5 border border-gray-700/40 hover:border-gray-600/50 font-medium ${buttonClassName}`}
       >
         <span className="hidden sm:inline">{getSelectedText()}</span>
         <ChevronDown className={`h-3 w-3 transition-transform ${isOpen ? 'rotate-180' : ''}`} />
       </button>
 
-      {/* Dropdown Menu */}
       {isOpen && (
-        <div className={`absolute right-0 top-full mt-1 w-52 bg-gray-900 border border-gray-700 rounded-lg shadow-xl z-50 overflow-hidden ${dropdownClassName}`}>
-          <div className={`overflow-y-auto ${maxHeight} [scrollbar-width:thin] [scrollbar-color:#374151_#1f2937] [&::-webkit-scrollbar]:w-2 [&::-webkit-scrollbar-track]:bg-gray-800 [&::-webkit-scrollbar-thumb]:bg-gray-600 [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:hover:bg-gray-500`}>
+        <div className={`absolute right-0 top-full mt-1.5 w-52 bg-gray-900/95 backdrop-blur-xl border border-gray-700/50 rounded-xl shadow-2xl shadow-black/40 z-50 overflow-hidden ${dropdownClassName}`}>
+          <div className={`overflow-y-auto ${maxHeight} [scrollbar-width:thin] [scrollbar-color:#374151_transparent] [&::-webkit-scrollbar]:w-1.5 [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:bg-gray-700/60 [&::-webkit-scrollbar-thumb]:rounded-full`}>
             {sections.map((section, sectionIndex) => {
               const sectionKey = section.title.toLowerCase();
               const isCollapsed = collapsedSections[sectionKey] ?? false;
               
               return (
-                <div key={section.title} className="border-b border-gray-800 last:border-b-0">
-                  {/* Section Header with Chevron */}
+                <div key={section.title} className="border-b border-gray-800/30 last:border-b-0">
                   <button
                     onClick={() => toggleSection(section.title)}
-                    className="w-full px-4 py-2.5 text-[10px] font-semibold text-gray-500 uppercase tracking-wider flex items-center justify-between hover:bg-gray-800/50 transition-colors"
+                    className="w-full px-4 py-2 text-[10px] font-semibold text-gray-500 uppercase tracking-wider flex items-center justify-between hover:bg-gray-800/30 transition-colors"
                   >
                     <span>{section.title}</span>
                     {isCollapsed ? (
@@ -133,7 +130,6 @@ export const IntervalDropdown = ({
                     )}
                   </button>
                   
-                  {/* Section Items */}
                   {!isCollapsed && (
                     <div className="py-0.5">
                       {section.value.map((item, itemIndex) => {
@@ -145,10 +141,10 @@ export const IntervalDropdown = ({
                             onClick={(e) => {
                               handleSelect(sectionIndex, itemIndex, item.value);
                             }}
-                            className={`w-full px-4 py-2 text-xs text-left flex items-center justify-between transition-colors group ${
+                            className={`w-full px-4 py-1.5 text-xs text-left flex items-center justify-between transition-colors group ${
                               isSelected
-                                ? "bg-green-500/20 text-green-400"
-                                : "text-gray-300 hover:bg-gray-800 hover:text-white"
+                                ? "bg-green-500/15 text-green-400"
+                                : "text-gray-400 hover:bg-gray-800/40 hover:text-gray-200"
                             }`}
                           >
                             <span className="flex-1">{item.title}</span>
@@ -162,7 +158,7 @@ export const IntervalDropdown = ({
                                 ) : (
                                   <Star
                                     onClick={(e) => handleToggleFavorite(e, sectionIndex, itemIndex)}
-                                    className="h-3.5 w-3.5 text-gray-500 ml-2 shrink-0 cursor-pointer hover:text-yellow-400 hover:fill-yellow-400 transition-colors opacity-0 group-hover:opacity-100"
+                                    className="h-3.5 w-3.5 text-gray-600 ml-2 shrink-0 cursor-pointer hover:text-yellow-400 hover:fill-yellow-400 transition-colors opacity-0 group-hover:opacity-100"
                                   />
                                 )}
                               </div>

@@ -82,42 +82,33 @@ export default function TradeContainer() {
 console.log("selectedMarket", selectedMarket)
 
   return (
-    <div className="min-h-screen flex flex-col overflow-auto">
-      {/* Fixed Header - Always stays at top while scrolling */}
-      <div className="fixed top-0 left-0 right-0 z-50 bg-gray-950">
+    <div className="min-h-screen flex flex-col overflow-auto bg-gray-950">
+      <div className="fixed top-0 left-0 right-0 z-50 bg-gray-950/95 backdrop-blur-md border-b border-gray-800/15">
         <Header />
       </div>
       
-      {/* Main Content Area - Allows page-level scrolling with padding for fixed header */}
       <div className="flex flex-col pt-14">
         <div className="shrink-0">
           <MarketHeader currency={selectedCoin} />
         </div>
         
-        {/* Main Layout: Responsive - Desktop: side by side, Mobile: stacked */}
         <div className="flex flex-col lg:flex-row overflow-hidden min-h-0">
-          {/* Left Side: Chart, OrderBook, and BottomPanel */}
           <div className="flex-1 flex flex-col overflow-hidden min-h-0 order-1 lg:order-1">
-            {/* Chart and OrderBook - Desktop: side by side, Mobile: stacked */}
             <div className="flex flex-col lg:flex-row h-[400px] sm:h-[500px] lg:h-[600px] w-full shrink-0 overflow-hidden">
-              {/* Chart takes remaining space */}
               <div className="flex-1 flex flex-col h-full w-full min-w-0 overflow-hidden">
                 <TradingChart currency={selectedCoin} />
               </div>
-              {/* OrderBook - Hidden on mobile, visible on tablet and up */}
-              <div className="hidden md:flex shrink-0 flex-col h-full overflow-hidden border-t lg:border-t-0 lg:border-l border-gray-800 w-full md:w-80 lg:w-96">
+              <div className="hidden md:flex shrink-0 flex-col h-full overflow-hidden border-t lg:border-t-0 lg:border-l border-gray-800/20 w-full md:w-80 lg:w-96">
                 <OrderBook currency={selectedCoin} />
               </div>
             </div>
             
-            {/* BottomPanel below both Chart and OrderBook - Responsive height */}
-            <div className="shrink-0 border-t border-gray-800 h-[300px] sm:h-[400px] lg:h-[500px] flex flex-col overflow-hidden">
+            <div className="shrink-0 border-t border-gray-800/20 h-[300px] sm:h-[400px] lg:h-[500px] flex flex-col overflow-hidden">
               <BottomPanel />
             </div>
           </div>
           
-          {/* Right Side: TradingPanel - Stacks below on mobile, side by side on desktop */}
-          <div className="shrink-0 border-t lg:border-t-0 lg:border-l border-gray-800 flex flex-col h-auto lg:h-[1100px] overflow-hidden order-2 lg:order-2 w-full lg:w-96 xl:w-[420px]">
+          <div className="shrink-0 border-t lg:border-t-0 lg:border-l border-gray-800/20 flex flex-col h-auto lg:h-[1100px] overflow-hidden order-2 lg:order-2 w-full lg:w-96 xl:w-[420px]">
             <TradingPanel currentCurrency={selectedCoin} currentLeverage={selectedLeverage} />
           </div>
         </div>

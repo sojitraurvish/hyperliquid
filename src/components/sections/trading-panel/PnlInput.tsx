@@ -101,7 +101,7 @@ export function PnlInput({
 
   return (
     <div className="space-y-1.5">
-      <div className="grid grid-cols-2 gap-2">
+      <div className="grid grid-cols-2 gap-1.5 sm:gap-2">
         <div className="space-y-1">
           <Label className="text-[10px] text-gray-500 uppercase tracking-wider font-medium">{label}</Label>
           <div className="relative">
@@ -113,7 +113,7 @@ export function PnlInput({
               placeholder="0.00"
               ref={inputRef}
               value={draftPrice}
-              className={`h-9 text-right font-mono text-sm pr-8 rounded-lg bg-gray-800/30 border-gray-700/40 focus:border-green-500/40 focus:ring-1 focus:ring-green-500/20 transition-all ${error ? 'border-red-500/50 focus:ring-red-500/30' : ''}`}
+              className={`h-8 sm:h-9 text-right font-mono text-xs sm:text-sm pr-7 sm:pr-8 rounded-lg bg-gray-800/30 border-gray-700/40 focus:border-green-500/40 focus:ring-1 focus:ring-green-500/20 transition-all ${error ? 'border-red-500/50 focus:ring-red-500/30' : ''}`}
             />
             <span className="absolute right-2 top-1/2 -translate-y-1/2 text-[10px] text-gray-500 font-medium">$</span>
           </div>
@@ -128,13 +128,13 @@ export function PnlInput({
               onChange={(e: React.ChangeEvent<HTMLInputElement>) => handlePnLChange(e.target.value)}
               placeholder="0.00"
               value={pnlValue}
-              className={`h-9 text-right font-mono text-sm pr-8 rounded-lg bg-gray-800/30 border-gray-700/40 focus:border-green-500/40 focus:ring-1 focus:ring-green-500/20 transition-all ${error ? 'border-red-500/50 focus:ring-red-500/30' : ''}`}
+              className={`h-8 sm:h-9 text-right font-mono text-xs sm:text-sm pr-7 sm:pr-8 rounded-lg bg-gray-800/30 border-gray-700/40 focus:border-green-500/40 focus:ring-1 focus:ring-green-500/20 transition-all ${error ? 'border-red-500/50 focus:ring-red-500/30' : ''}`}
             />
             <button
               type="button"
               onClick={toggleVariant}
               disabled={disabled}
-              className="absolute right-1.5 top-1/2 -translate-y-1/2 h-6 px-2 text-[10px] font-medium text-gray-400 hover:text-white flex items-center gap-1 transition-all rounded-md hover:bg-gray-700/30 disabled:opacity-40 disabled:cursor-not-allowed"
+              className="absolute right-1 sm:right-1.5 top-1/2 -translate-y-1/2 h-5 sm:h-6 px-1.5 sm:px-2 text-[10px] font-medium text-gray-400 hover:text-white flex items-center gap-1 transition-all rounded-md hover:bg-gray-700/30 disabled:opacity-40 disabled:cursor-not-allowed"
             >
               {tpslVariant === "percent" ? "%" : "$"}
             </button>

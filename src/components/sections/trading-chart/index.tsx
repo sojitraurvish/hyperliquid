@@ -1403,8 +1403,8 @@ const positionSize = positionData?.szi || null;
       </div>
 
       {/* OHLC info */}
-      <div className="px-2 sm:px-3 py-1 sm:py-1.5 text-[11px] flex items-center gap-1 flex-wrap border-b border-gray-800/20">
-        <span className="text-gray-500">{currency} · {getSelectedIntervalText()} · Hyperliquid</span>
+      <div className="px-2 sm:px-3 py-1 sm:py-1.5 text-[10px] sm:text-[11px] flex items-center gap-1 flex-wrap border-b border-gray-800/20 overflow-x-auto [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
+        <span className="text-gray-500 whitespace-nowrap">{currency} · {getSelectedIntervalText()} · <span className="hidden sm:inline">Hyperliquid</span><span className="sm:hidden">HL</span></span>
         <span className="w-2 h-2 rounded-full bg-green-400 ml-1 sm:ml-2" />
         {displayedCandle ? (
           <>
@@ -1461,7 +1461,7 @@ const positionSize = positionData?.szi || null;
               </div>
               
               {/* Modern progress bar */}
-              <div className="w-72 h-1.5 bg-gray-800/50 rounded-full overflow-hidden relative">
+              <div className="w-48 sm:w-72 h-1.5 bg-gray-800/50 rounded-full overflow-hidden relative">
                 <div 
                   className="absolute inset-0 h-full rounded-full animate-shimmer"
                   style={{

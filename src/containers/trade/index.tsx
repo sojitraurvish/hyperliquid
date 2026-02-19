@@ -82,34 +82,38 @@ export default function TradeContainer() {
 console.log("selectedMarket", selectedMarket)
 
   return (
-    <div className="min-h-screen flex flex-col overflow-auto bg-gray-950">
+    <div className="min-h-screen lg:h-screen lg:overflow-hidden flex flex-col bg-gray-950">
       <div className="fixed top-0 left-0 right-0 z-50 bg-gray-950/95 backdrop-blur-md border-b border-gray-800/15">
         <Header />
       </div>
       
-      <div className="flex flex-col pt-14">
+      <div className="flex flex-col flex-1 min-h-0 pt-14">
         <div className="shrink-0">
           <MarketHeader currency={selectedCoin} />
         </div>
         
-        <div className="flex flex-col lg:flex-row overflow-hidden min-h-0">
-          <div className="flex-1 flex flex-col overflow-hidden min-h-0 order-1 lg:order-1">
-            <div className="flex flex-col lg:flex-row h-[400px] sm:h-[500px] lg:h-[600px] w-full shrink-0 overflow-hidden">
-              <div className="flex-1 flex flex-col h-full w-full min-w-0 overflow-hidden">
+        {/* Mobile: scrollable page with stacked sections. Desktop: fixed 2-column grid. */}
+        <div className="flex-1 min-h-0 flex flex-col lg:grid lg:grid-cols-[1fr_320px] xl:grid-cols-[1fr_384px] lg:grid-rows-[minmax(0,2fr)_minmax(0,1fr)]">
+          {/* Chart + Desktop OrderBook */}
+          <div className="order-1 lg:col-start-1 lg:row-start-1 lg:min-h-0 overflow-hidden">
+            <div className="flex h-[300px] sm:h-[380px] md:h-[480px] lg:h-full">
+              <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
                 <TradingChart currency={selectedCoin} />
               </div>
-              <div className="hidden md:flex shrink-0 flex-col h-full overflow-hidden border-t lg:border-t-0 lg:border-l border-gray-800/20 w-full md:w-80 lg:w-96">
+              <div className="hidden md:flex shrink-0 flex-col overflow-hidden border-l border-gray-800/20 w-60 lg:w-64 xl:w-80">
                 <OrderBook currency={selectedCoin} />
               </div>
             </div>
-            
-            <div className="shrink-0 border-t border-gray-800/20 h-[300px] sm:h-[400px] lg:h-[500px] flex flex-col overflow-hidden">
-              <BottomPanel />
-            </div>
           </div>
           
-          <div className="shrink-0 border-t lg:border-t-0 lg:border-l border-gray-800/20 flex flex-col h-auto lg:h-[1100px] overflow-hidden order-2 lg:order-2 w-full lg:w-96 xl:w-[420px]">
+          {/* Trading Panel - right after chart on mobile, sidebar on desktop */}
+          <div className="order-2 lg:col-start-2 lg:row-start-1 lg:row-span-2 border-t lg:border-t-0 lg:border-l border-gray-800/20 lg:overflow-y-auto lg:min-h-0">
             <TradingPanel currentCurrency={selectedCoin} currentLeverage={selectedLeverage} />
+          </div>
+          
+          {/* Bottom Panel (Positions/Orders) - last on mobile, below chart on desktop */}
+          <div className="order-3 lg:col-start-1 lg:row-start-2 border-t border-gray-800/20 h-[280px] sm:h-[320px] md:h-[350px] lg:h-auto lg:min-h-0 flex flex-col overflow-hidden">
+            <BottomPanel />
           </div>
         </div>
       </div>

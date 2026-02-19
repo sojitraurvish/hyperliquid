@@ -233,7 +233,7 @@ const TabContent = ({ value, activeTab, children }: TabContentProps) => {
   if (value !== activeTab) return null;
   
   return (
-    <div className="flex-1 overflow-auto">
+    <div className="flex-1 min-h-0 overflow-auto">
       {children}
     </div>
   );
@@ -259,7 +259,7 @@ const PositionsTableHeader = () => {
 
   return (
     <div 
-      className="grid gap-2 sm:gap-3 md:gap-4 px-2 sm:px-3 py-1.5 text-[10px] text-gray-500 border-b border-gray-800/20 font-medium uppercase tracking-wider"
+      className="hidden md:grid gap-2 sm:gap-3 md:gap-4 px-2 sm:px-3 py-1.5 text-[10px] text-gray-500 border-b border-gray-800/20 font-medium uppercase tracking-wider"
       style={{ gridTemplateColumns: gridColumns }}
     >
       {headers.map((header, index) => (
@@ -281,7 +281,7 @@ const BalancesTableHeader = () => {
 
   return (
     <div
-      className="grid gap-2 sm:gap-4 px-2 sm:px-3 py-1.5 text-[10px] text-gray-500 border-b border-gray-800/20 font-medium uppercase tracking-wider"
+      className="hidden md:grid gap-2 sm:gap-4 px-2 sm:px-3 py-1.5 text-[10px] text-gray-500 border-b border-gray-800/20 font-medium uppercase tracking-wider"
       style={{ gridTemplateColumns: BALANCES_GRID }}
     >
       {headers.map((label, index) => (
@@ -317,7 +317,7 @@ const OpenOrdersTableHeader = () => {
 
   return (
     <div
-      className="sticky top-0 z-50 bg-gray-950/95 backdrop-blur-sm grid gap-2 sm:gap-3 px-2 sm:px-3 py-1.5 text-[10px] text-gray-500 border-b border-gray-800/20 font-medium uppercase tracking-wider"
+      className="hidden md:grid sticky top-0 z-50 bg-gray-950/95 backdrop-blur-sm gap-2 sm:gap-3 px-2 sm:px-3 py-1.5 text-[10px] text-gray-500 border-b border-gray-800/20 font-medium uppercase tracking-wider"
       style={{ gridTemplateColumns: OPEN_ORDERS_GRID }}
     >
       {headers.map((label, index) => (
@@ -335,7 +335,7 @@ const OrderHistoryTableHeader = () => {
 
   return (
     <div
-      className="sticky top-0 z-50 bg-gray-950/95 backdrop-blur-sm grid gap-2 sm:gap-3 px-2 sm:px-3 py-1.5 text-[10px] text-gray-500 border-b border-gray-800/20 font-medium uppercase tracking-wider"
+      className="hidden md:grid sticky top-0 z-50 bg-gray-950/95 backdrop-blur-sm gap-2 sm:gap-3 px-2 sm:px-3 py-1.5 text-[10px] text-gray-500 border-b border-gray-800/20 font-medium uppercase tracking-wider"
       style={{ gridTemplateColumns: ORDER_HISTORY_GRID }}
     >
       {headers.map((label, index) => (
@@ -353,7 +353,7 @@ const FundingHistoryTableHeader = () => {
 
   return (
     <div
-      className="sticky top-0 z-50 bg-gray-950/95 backdrop-blur-sm grid gap-2 sm:gap-4 px-2 sm:px-3 py-1.5 text-[10px] text-gray-500 border-b border-gray-800/20 font-medium uppercase tracking-wider"
+      className="hidden md:grid sticky top-0 z-50 bg-gray-950/95 backdrop-blur-sm gap-2 sm:gap-4 px-2 sm:px-3 py-1.5 text-[10px] text-gray-500 border-b border-gray-800/20 font-medium uppercase tracking-wider"
       style={{ gridTemplateColumns: FUNDING_HISTORY_GRID }}
     >
       {headers.map((label, index) => (
@@ -371,7 +371,7 @@ const TradeHistoryTableHeader = () => {
 
   return (
     <div
-      className="sticky top-0 z-50 bg-gray-950/95 backdrop-blur-sm grid gap-2 sm:gap-4 px-2 sm:px-3 py-1.5 text-[10px] text-gray-500 border-b border-gray-800/20 font-medium uppercase tracking-wider"
+      className="hidden md:grid sticky top-0 z-50 bg-gray-950/95 backdrop-blur-sm gap-2 sm:gap-4 px-2 sm:px-3 py-1.5 text-[10px] text-gray-500 border-b border-gray-800/20 font-medium uppercase tracking-wider"
       style={{ gridTemplateColumns: TRADE_HISTORY_GRID }}
     >
       {headers.map((label, index) => (
@@ -408,29 +408,44 @@ const FundingHistoryRow = ({ funding }: FundingHistoryRowProps) => {
   const positionSide = "Long";
 
   return (
-    <div
-      className="grid gap-2 sm:gap-4 px-2 sm:px-3 py-2 text-xs sm:text-sm border-b border-gray-800/15 hover:bg-gray-800/15 transition-colors"
-      style={{ gridTemplateColumns: FUNDING_HISTORY_GRID }}
-    >
-      <div className="text-gray-300 truncate" title={formattedDateTime}>
-        {formattedDateTime}
-      </div>
-      <div className="text-green-400 font-medium truncate" title={funding.delta.coin}>
-        {funding.delta.coin}
-      </div>
-      <div className="text-gray-300 truncate" title={size}>
-        {size}
-      </div>
-      <div className="text-green-400 font-medium truncate" title={positionSide}>
-        {positionSide}
-      </div>
-      <div className="text-red-400 truncate" title={payment}>
-        {payment}
-      </div>
-      <div className="text-gray-300 truncate" title={rate}>
-        {rate}
+    <>
+    {/* Mobile Card */}
+    <div className="md:hidden px-2 py-1.5">
+      <div className="rounded-xl border border-gray-800/40 bg-gray-900/40 p-3">
+        <div className="flex items-center justify-between mb-2">
+          <div className="flex items-center gap-2">
+            <span className="text-[11px] text-gray-200 font-bold">{funding.delta.coin}</span>
+            <span className="text-[10px] text-green-400 font-medium px-1.5 py-0.5 rounded-md bg-green-500/10">{positionSide}</span>
+          </div>
+          <span className="text-[11px] text-red-400 font-mono font-bold">{payment}</span>
+        </div>
+        <div className="grid grid-cols-2 gap-2 mb-1.5">
+          <div>
+            <div className="text-[9px] text-gray-500 uppercase tracking-wider">Size</div>
+            <div className="text-[10px] text-gray-300 font-mono">{size}</div>
+          </div>
+          <div className="text-right">
+            <div className="text-[9px] text-gray-500 uppercase tracking-wider">Rate</div>
+            <div className="text-[10px] text-gray-300 font-mono">{rate}</div>
+          </div>
+        </div>
+        <div className="text-[9px] text-gray-600">{formattedDateTime}</div>
       </div>
     </div>
+
+    {/* Desktop Grid Row */}
+    <div
+      className="hidden md:grid gap-2 sm:gap-4 px-2 sm:px-3 py-2 text-xs sm:text-sm border-b border-gray-800/15 hover:bg-gray-800/15 transition-colors"
+      style={{ gridTemplateColumns: FUNDING_HISTORY_GRID }}
+    >
+      <div className="text-gray-300 truncate" title={formattedDateTime}>{formattedDateTime}</div>
+      <div className="text-green-400 font-medium truncate" title={funding.delta.coin}>{funding.delta.coin}</div>
+      <div className="text-gray-300 truncate" title={size}>{size}</div>
+      <div className="text-green-400 font-medium truncate" title={positionSide}>{positionSide}</div>
+      <div className="text-red-400 truncate" title={payment}>{payment}</div>
+      <div className="text-gray-300 truncate" title={rate}>{rate}</div>
+    </div>
+    </>
   );
 };
 
@@ -522,47 +537,56 @@ const TradeHistoryRow = ({ trade }: TradeHistoryRowProps) => {
   const closedPnlColor = closedPnl >= 0 ? "text-green-400" : "text-red-400";
 
   return (
+    <>
+    {/* Mobile Card */}
+    <div className="md:hidden px-2 py-1.5">
+      <div className="rounded-xl border border-gray-800/40 bg-gray-900/40 p-3">
+        <div className="flex items-center justify-between mb-2">
+          <div className="flex items-center gap-2">
+            <span className="text-[11px] text-gray-200 font-bold">{coin}</span>
+            <span className={`text-[10px] font-medium px-1.5 py-0.5 rounded-md ${directionColor} ${isBuy ? "bg-green-500/10" : "bg-red-500/10"}`}>{direction}</span>
+          </div>
+          <span className={`text-[12px] font-mono font-bold ${closedPnlColor}`}>{formattedClosedPnl}</span>
+        </div>
+        <div className="grid grid-cols-2 gap-2 mb-1.5">
+          <div>
+            <div className="text-[9px] text-gray-500 uppercase tracking-wider">Price</div>
+            <div className="text-[10px] text-gray-300 font-mono">{price}</div>
+          </div>
+          <div className="text-right">
+            <div className="text-[9px] text-gray-500 uppercase tracking-wider">Value</div>
+            <div className="text-[10px] text-gray-300 font-mono">{formattedTradeValue}</div>
+          </div>
+        </div>
+        <div className="flex items-center gap-1">
+          <span className="text-[9px] text-gray-600">{formattedDateTime}</span>
+          <a href={`${EXPLORER_TX_URL}/${trade.hash}`} target="_blank" rel="noopener noreferrer" className="inline-flex"><ExternalLink className="h-2.5 w-2.5 text-gray-600 hover:text-green-400" /></a>
+        </div>
+      </div>
+    </div>
+
+    {/* Desktop Grid Row */}
     <div
-      className="grid gap-2 sm:gap-4 px-2 sm:px-3 py-2 text-xs sm:text-sm border-b border-gray-800/15 hover:bg-gray-800/15 transition-colors"
+      className="hidden md:grid gap-2 sm:gap-4 px-2 sm:px-3 py-2 text-xs sm:text-sm border-b border-gray-800/15 hover:bg-gray-800/15 transition-colors"
       style={{ gridTemplateColumns: TRADE_HISTORY_GRID }}
     >
       <div className="flex items-center gap-1">
-        <span className="text-gray-300 truncate" title={formattedDateTime}>
-          {formattedDateTime}
-        </span>
-        <a
-          href={`${EXPLORER_TX_URL}/${trade.hash}`}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="inline-flex items-center shrink-0 cursor-pointer"
-        >
+        <span className="text-gray-300 truncate" title={formattedDateTime}>{formattedDateTime}</span>
+        <a href={`${EXPLORER_TX_URL}/${trade.hash}`} target="_blank" rel="noopener noreferrer" className="inline-flex items-center shrink-0 cursor-pointer">
           <ExternalLink className="h-3 w-3 text-gray-500 hover:text-green-400 transition-colors" />
         </a>
       </div>
-      <div className="text-green-400 font-medium truncate" title={coin}>
-        {coin}
-      </div>
-      <div className={`${directionColor} font-medium truncate`} title={direction}>
-        {direction}
-      </div>
-      <div className="text-gray-300 truncate" title={price}>
-        {price}
-      </div>
-      <div className="text-gray-300 truncate" title={size}>
-        {size}
-      </div>
-      <div className="text-gray-300 truncate" title={formattedTradeValue}>
-        {formattedTradeValue}
-      </div>
-      <div className="text-gray-300 truncate" title={formattedFee}>
-        {formattedFee}
-      </div>
+      <div className="text-green-400 font-medium truncate" title={coin}>{coin}</div>
+      <div className={`${directionColor} font-medium truncate`} title={direction}>{direction}</div>
+      <div className="text-gray-300 truncate" title={price}>{price}</div>
+      <div className="text-gray-300 truncate" title={size}>{size}</div>
+      <div className="text-gray-300 truncate" title={formattedTradeValue}>{formattedTradeValue}</div>
+      <div className="text-gray-300 truncate" title={formattedFee}>{formattedFee}</div>
       <div className="flex items-center gap-1">
-        <span className={`${closedPnlColor} truncate`} title={formattedClosedPnl}>
-          {formattedClosedPnl}
-        </span>
+        <span className={`${closedPnlColor} truncate`} title={formattedClosedPnl}>{formattedClosedPnl}</span>
       </div>
     </div>
+    </>
   );
 };
 
@@ -1157,9 +1181,68 @@ const PositionsRow = ({ position, markPrice, agentPrivateKey, openOrders = [] }:
 
   const gridColumns = usePositionsGridColumns();
 
+  const tpPrice = positionTpsl.takeProfit?.triggerPx;
+  const slPrice = positionTpsl.stopLoss?.triggerPx;
+  const displayTp = tpPrice ? formatPrice(tpPrice, 2) : "--";
+  const displaySl = slPrice ? formatPrice(slPrice, 2) : "--";
+
   return (
+    <>
+    {/* Mobile Card */}
+    <div className="md:hidden px-2 py-2">
+      <div className={`rounded-xl border ${posSize > 0 ? "border-green-500/15 bg-green-500/4" : "border-red-500/15 bg-red-500/4"} p-3`}>
+        {/* Header row: coin + leverage badge, PnL */}
+        <div className="flex items-center justify-between mb-2">
+          <div className="flex items-center gap-2">
+            <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[11px] font-bold ${posSize > 0 ? "text-green-400 bg-green-500/15" : "text-red-400 bg-red-500/15"}`}>
+              {coin}
+            </span>
+            <span className={`text-[10px] font-mono font-medium ${posSize > 0 ? "text-green-400/80" : "text-red-400/80"}`}>
+              {size.replace("-", "")}
+            </span>
+          </div>
+          <div className="text-right">
+            <div className={`text-[12px] font-bold font-mono ${pnlColor}`}>{pnlFormatted}</div>
+            <div className={`text-[10px] font-mono ${roeColor}`}>{roeFormatted}</div>
+          </div>
+        </div>
+
+        {/* Info grid */}
+        <div className="grid grid-cols-3 gap-x-2 gap-y-1 mb-2.5">
+          <div>
+            <div className="text-[9px] text-gray-500 uppercase tracking-wider">Value</div>
+            <div className="text-[10px] text-gray-300 font-mono">{positionValue}</div>
+          </div>
+          <div>
+            <div className="text-[9px] text-gray-500 uppercase tracking-wider">Entry</div>
+            <div className="text-[10px] text-gray-300 font-mono">{entryPrice}</div>
+          </div>
+          <div>
+            <div className="text-[9px] text-gray-500 uppercase tracking-wider">Mark</div>
+            <div className="text-[10px] text-gray-300 font-mono">{formattedMarkPrice.replace("-", "")}</div>
+          </div>
+        </div>
+
+        {/* Divider */}
+        <div className="h-px bg-gray-700/30 mb-2" />
+
+        {/* Actions row */}
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2 text-[10px]">
+            <button onClick={() => setIsLimitCloseModalOpen(true)} className="px-2 py-1 rounded-md bg-gray-800/60 text-green-400 hover:bg-gray-700/60 cursor-pointer font-medium transition-colors">Limit</button>
+            <button onClick={handleClosePositionMarket} className="px-2 py-1 rounded-md bg-gray-800/60 text-green-400 hover:bg-gray-700/60 cursor-pointer font-medium transition-colors">Market</button>
+            <button onClick={handleReversePosition} className="px-2 py-1 rounded-md bg-gray-800/60 text-green-400 hover:bg-gray-700/60 cursor-pointer font-medium transition-colors">Reverse</button>
+          </div>
+          <button onClick={() => setIsTpslModalOpen(true)} className="flex items-center gap-1 px-2 py-1 rounded-md bg-gray-800/60 text-[10px] text-gray-400 hover:text-green-400 hover:bg-gray-700/60 cursor-pointer font-medium transition-colors">
+            TP/SL <Pencil className="w-3 h-3" />
+          </button>
+        </div>
+      </div>
+    </div>
+
+    {/* Desktop Grid Row */}
     <div 
-      className="grid gap-2 sm:gap-3 md:gap-4 px-2 sm:px-3 py-2 text-[11px] border-b border-gray-800/15 hover:bg-gray-800/15 transition-colors"
+      className="hidden md:grid gap-2 sm:gap-3 md:gap-4 px-2 sm:px-3 py-2 text-[11px] border-b border-gray-800/15 hover:bg-gray-800/15 transition-colors"
       style={{ gridTemplateColumns: gridColumns }}
     >
       <div>
@@ -1167,122 +1250,48 @@ const PositionsRow = ({ position, markPrice, agentPrivateKey, openOrders = [] }:
           {coin}
         </span>
       </div>
-      
-      {/* Size */}
       <div className={`text-gray-300 truncate ${posSize > 0 ? "text-green-400" :"text-red-400"}`} title={size}>
         {size.replace("-","")}
       </div>
-      
-      {/* Position Value */}
       <div className="text-gray-300 truncate" title={positionValue}>
         {positionValue}
       </div>
-      
-      {/* Entry Price */}
       <div className="hidden sm:block text-gray-300 truncate" title={entryPrice}>
         {entryPrice}
       </div>
-      
-      {/* Mark Price */}
       <div className="hidden md:block text-gray-300 truncate" title={formattedMarkPrice}>
         {formattedMarkPrice.replace("-","")}
       </div>
-      
-      {/* PNL (ROE %) */}
       <div className="flex items-center gap-1">
-        <span className={`${pnlColor} truncate`} title={pnlFormatted}>
-          {pnlFormatted}
-        </span>
-        <span className={`${roeColor} truncate`} title={roeFormatted}>
-          ({roeFormatted})
-        </span>
-        <a
-          href="#"
-          onClick={(e) => {
-            e.preventDefault();
-            // TODO: Open PNL details
-          }}
-          className="inline-flex items-center shrink-0 cursor-pointer"
-        >
-          {/* <ExternalLink className="h-3 w-3 text-gray-500 hover:text-green-400 transition-colors" /> */}
-        </a>
+        <span className={`${pnlColor} truncate`} title={pnlFormatted}>{pnlFormatted}</span>
+        <span className={`${roeColor} truncate`} title={roeFormatted}>({roeFormatted})</span>
       </div>
-      
-      {/* Liq. Price */}
       <div className="hidden lg:block text-gray-300 truncate" title={liqPrice}>
         {liqPrice}
       </div>
-      
-      {/* Margin */}
       <div className="hidden xl:block">
         <div className="flex items-center gap-1">
-          <span className="text-gray-300 truncate" title={marginFormatted}>
-            {marginFormatted}
-          </span>
-          <span className="text-gray-500 truncate" title={marginType}>
-            ({marginType})
-          </span>
-          <button
-            onClick={() => {
-              // TODO: Edit margin
-            }}
-            className="inline-flex items-center shrink-0 cursor-pointer"
-          >
-            {/* <Pencil className="h-3 w-3 text-gray-500 hover:text-green-400 transition-colors" /> */}
-          </button>
+          <span className="text-gray-300 truncate" title={marginFormatted}>{marginFormatted}</span>
+          <span className="text-gray-500 truncate" title={marginType}>({marginType})</span>
         </div>
       </div>
-      
-      {/* Funding */}
       <div className={`hidden xl:block ${fundingColor} truncate`} title={fundingFormatted}>
         {fundingFormatted}
       </div>
-      
       <div className="flex items-center gap-1 text-[10px]">
-        <button
-          onClick={() => setIsLimitCloseModalOpen(true)}
-          className="text-green-400 hover:text-green-300 cursor-pointer transition-colors font-medium"
-        >
-          Limit
-        </button>
+        <button onClick={() => setIsLimitCloseModalOpen(true)} className="text-green-400 hover:text-green-300 cursor-pointer transition-colors font-medium">Limit</button>
         <span className="text-gray-700">|</span>
-        <button
-          onClick={handleClosePositionMarket}
-          className="text-green-400 hover:text-green-300 cursor-pointer transition-colors font-medium"
-        >
-          Market
-        </button>
+        <button onClick={handleClosePositionMarket} className="text-green-400 hover:text-green-300 cursor-pointer transition-colors font-medium">Market</button>
         <span className="text-gray-700">|</span>
-        <button
-          onClick={handleReversePosition}
-          className="text-green-400 hover:text-green-300 cursor-pointer transition-colors font-medium"
-        >
-          Reverse
-        </button>
+        <button onClick={handleReversePosition} className="text-green-400 hover:text-green-300 cursor-pointer transition-colors font-medium">Reverse</button>
       </div>
-
-      {/* TP/SL */}
       <div className="flex items-center gap-2">
-        {(() => {
-          const tpPrice = positionTpsl.takeProfit?.triggerPx;
-          const slPrice = positionTpsl.stopLoss?.triggerPx;
-          const displayTp = tpPrice ? formatPrice(tpPrice, 2) : "--";
-          const displaySl = slPrice ? formatPrice(slPrice, 2) : "--";
-          return (
-            <>
-              <span className="text-sm text-gray-300">
-                {displayTp} / {displaySl}
-              </span>
-              <button
-                onClick={() => setIsTpslModalOpen(true)}
-                className="text-green-400 hover:text-green-300 transition-colors shrink-0"
-              >
-                <Pencil className="w-4 h-4" />
-              </button>
-            </>
-          );
-        })()}
+        <span className="text-sm text-gray-300">{displayTp} / {displaySl}</span>
+        <button onClick={() => setIsTpslModalOpen(true)} className="text-green-400 hover:text-green-300 transition-colors shrink-0">
+          <Pencil className="w-4 h-4" />
+        </button>
       </div>
+    </div>
 
       {/* Limit Close Modal */}
       <LimitCloseModal
@@ -1360,7 +1369,7 @@ const PositionsRow = ({ position, markPrice, agentPrivateKey, openOrders = [] }:
           }}
         />
       )}
-    </div>
+    </>
   );
 };
 
@@ -1397,114 +1406,99 @@ const PositionsTableShimmer = () => {
   return (
     <>
       {[1, 2, 3].map((index) => (
-        <div
-          key={index}
-          className="grid gap-2 sm:gap-3 md:gap-4 px-2 sm:px-3 py-2 text-xs border-b border-gray-800/20"
-          style={{ gridTemplateColumns: gridColumns }}
-        >
-          {Array.from({ length: gridColumns.split(' ').length }).map((_, colIndex) => (
-            <ShimmerSkeleton key={colIndex} className="h-4 sm:h-5" />
-          ))}
+        <div key={index}>
+          <div className="md:hidden px-2 py-2 border-b border-gray-800/20 space-y-1.5">
+            <div className="flex justify-between"><ShimmerSkeleton className="h-4 w-20" /><ShimmerSkeleton className="h-4 w-24" /></div>
+            <div className="flex justify-between"><ShimmerSkeleton className="h-3 w-28" /><ShimmerSkeleton className="h-3 w-28" /></div>
+          </div>
+          <div className="hidden md:grid gap-2 sm:gap-3 md:gap-4 px-2 sm:px-3 py-2 text-xs border-b border-gray-800/20" style={{ gridTemplateColumns: gridColumns }}>
+            {Array.from({ length: gridColumns.split(' ').length }).map((_, colIndex) => (
+              <ShimmerSkeleton key={colIndex} className="h-4 sm:h-5" />
+            ))}
+          </div>
         </div>
       ))}
     </>
   );
 };
+
+// Mobile Shimmer Card
+const MobileShimmerCard = () => (
+  <div className="md:hidden px-2 py-2 border-b border-gray-800/20 space-y-1.5">
+    <div className="flex justify-between"><ShimmerSkeleton className="h-4 w-24" /><ShimmerSkeleton className="h-4 w-20" /></div>
+    <div className="flex justify-between"><ShimmerSkeleton className="h-3 w-32" /><ShimmerSkeleton className="h-3 w-28" /></div>
+  </div>
+);
 
 // Balances Table Shimmer
-const BalancesTableShimmer = () => {
-  return (
-    <>
-      {[1, 2, 3].map((index) => (
-        <div
-          key={index}
-          className="grid gap-2 sm:gap-4 px-2 sm:px-3 py-2 text-xs border-b border-gray-800/20"
-          style={{ gridTemplateColumns: BALANCES_GRID }}
-        >
-          {[1, 2, 3, 4, 5].map((colIndex) => (
-            <ShimmerSkeleton key={colIndex} className="h-4 sm:h-5" />
-          ))}
+const BalancesTableShimmer = () => (
+  <>
+    {[1, 2, 3].map((i) => (
+      <div key={i}>
+        <MobileShimmerCard />
+        <div className="hidden md:grid gap-2 sm:gap-4 px-2 sm:px-3 py-2 text-xs border-b border-gray-800/20" style={{ gridTemplateColumns: BALANCES_GRID }}>
+          {[1, 2, 3, 4, 5].map((c) => <ShimmerSkeleton key={c} className="h-4 sm:h-5" />)}
         </div>
-      ))}
-    </>
-  );
-};
+      </div>
+    ))}
+  </>
+);
 
 // Open Orders Table Shimmer
-const OpenOrdersTableShimmer = () => {
-  return (
-    <>
-      {[1, 2, 3].map((index) => (
-        <div
-          key={index}
-          className="grid gap-2 sm:gap-3 px-2 sm:px-3 py-2 text-xs border-b border-gray-800/20"
-          style={{ gridTemplateColumns: OPEN_ORDERS_GRID }}
-        >
-          {Array.from({ length: 12 }).map((_, colIndex) => (
-            <ShimmerSkeleton key={colIndex} className="h-4" />
-          ))}
+const OpenOrdersTableShimmer = () => (
+  <>
+    {[1, 2, 3].map((i) => (
+      <div key={i}>
+        <MobileShimmerCard />
+        <div className="hidden md:grid gap-2 sm:gap-3 px-2 sm:px-3 py-2 text-xs border-b border-gray-800/20" style={{ gridTemplateColumns: OPEN_ORDERS_GRID }}>
+          {Array.from({ length: 12 }).map((_, c) => <ShimmerSkeleton key={c} className="h-4" />)}
         </div>
-      ))}
-    </>
-  );
-};
+      </div>
+    ))}
+  </>
+);
 
 // Trade History Table Shimmer
-const TradeHistoryTableShimmer = () => {
-  return (
-    <>
-      {[1, 2, 3].map((index) => (
-        <div
-          key={index}
-          className="grid gap-2 sm:gap-4 px-2 sm:px-3 py-2 text-xs border-b border-gray-800/20"
-          style={{ gridTemplateColumns: TRADE_HISTORY_GRID }}
-        >
-          {Array.from({ length: 8 }).map((_, colIndex) => (
-            <ShimmerSkeleton key={colIndex} className="h-4 sm:h-5" />
-          ))}
+const TradeHistoryTableShimmer = () => (
+  <>
+    {[1, 2, 3].map((i) => (
+      <div key={i}>
+        <MobileShimmerCard />
+        <div className="hidden md:grid gap-2 sm:gap-4 px-2 sm:px-3 py-2 text-xs border-b border-gray-800/20" style={{ gridTemplateColumns: TRADE_HISTORY_GRID }}>
+          {Array.from({ length: 8 }).map((_, c) => <ShimmerSkeleton key={c} className="h-4 sm:h-5" />)}
         </div>
-      ))}
-    </>
-  );
-};
+      </div>
+    ))}
+  </>
+);
 
 // Funding History Table Shimmer
-const FundingHistoryTableShimmer = () => {
-  return (
-    <>
-      {[1, 2, 3].map((index) => (
-        <div
-          key={index}
-          className="grid gap-2 sm:gap-4 px-2 sm:px-3 py-2 text-xs border-b border-gray-800/20"
-          style={{ gridTemplateColumns: FUNDING_HISTORY_GRID }}
-        >
-          {Array.from({ length: 6 }).map((_, colIndex) => (
-            <ShimmerSkeleton key={colIndex} className="h-4 sm:h-5" />
-          ))}
+const FundingHistoryTableShimmer = () => (
+  <>
+    {[1, 2, 3].map((i) => (
+      <div key={i}>
+        <MobileShimmerCard />
+        <div className="hidden md:grid gap-2 sm:gap-4 px-2 sm:px-3 py-2 text-xs border-b border-gray-800/20" style={{ gridTemplateColumns: FUNDING_HISTORY_GRID }}>
+          {Array.from({ length: 6 }).map((_, c) => <ShimmerSkeleton key={c} className="h-4 sm:h-5" />)}
         </div>
-      ))}
-    </>
-  );
-};
+      </div>
+    ))}
+  </>
+);
 
 // Order History Table Shimmer
-const OrderHistoryTableShimmer = () => {
-  return (
-    <>
-      {[1, 2, 3].map((index) => (
-        <div
-          key={index}
-          className="grid gap-2 sm:gap-3 px-2 sm:px-3 py-2 text-xs border-b border-gray-800/20"
-          style={{ gridTemplateColumns: ORDER_HISTORY_GRID }}
-        >
-          {Array.from({ length: 12 }).map((_, colIndex) => (
-            <ShimmerSkeleton key={colIndex} className="h-4" />
-          ))}
+const OrderHistoryTableShimmer = () => (
+  <>
+    {[1, 2, 3].map((i) => (
+      <div key={i}>
+        <MobileShimmerCard />
+        <div className="hidden md:grid gap-2 sm:gap-3 px-2 sm:px-3 py-2 text-xs border-b border-gray-800/20" style={{ gridTemplateColumns: ORDER_HISTORY_GRID }}>
+          {Array.from({ length: 12 }).map((_, c) => <ShimmerSkeleton key={c} className="h-4" />)}
         </div>
-      ))}
-    </>
-  );
-};
+      </div>
+    ))}
+  </>
+);
 
 
 
@@ -1527,41 +1521,48 @@ const BalanceRow = ({
   const isSpot = coin.toLowerCase().includes("spot");
 
   return (
-    <div
-      className="grid gap-2 sm:gap-4 px-2 sm:px-3 py-2 text-[11px] border-b border-gray-800/15 hover:bg-gray-800/15 transition-colors items-center"
-      style={{ gridTemplateColumns: BALANCES_GRID }}
-    >
-      <div className="text-gray-200 font-semibold truncate">
-        {coin}
-      </div>
-      <div className="text-gray-300 truncate font-mono tabular-nums">
-        {total_balance}
-      </div>
-      <div className={`text-gray-300 truncate font-mono tabular-nums ${isAvailableEqualTotal ? "decoration-dotted underline" : ""}`}>
-        {available_balance}
-      </div>
-      <div className="text-gray-300 truncate font-mono tabular-nums">
-        ${usdc_value}
-      </div>
-      <div className="truncate">
-        {isPerps && onTransfer && (
-          <button
-            onClick={() => onTransfer("toSpot")}
-            className="text-green-400 hover:text-green-300 text-[10px] font-semibold cursor-pointer transition-colors"
-          >
-            Transfer to Spot
-          </button>
-        )}
-        {isSpot && onTransfer && (
-          <button
-            onClick={() => onTransfer("toPerp")}
-            className="text-green-400 hover:text-green-300 text-[10px] font-semibold cursor-pointer transition-colors"
-          >
-            Transfer to Perps
-          </button>
+    <>
+    {/* Mobile Card */}
+    <div className="md:hidden px-2 py-1.5">
+      <div className="rounded-xl border border-gray-800/40 bg-gray-900/40 p-3">
+        <div className="flex items-center justify-between mb-2">
+          <span className="text-[11px] text-gray-200 font-bold">{coin}</span>
+          <span className="text-[12px] text-gray-200 font-mono font-bold tabular-nums">${usdc_value}</span>
+        </div>
+        <div className="grid grid-cols-2 gap-2">
+          <div>
+            <div className="text-[9px] text-gray-500 uppercase tracking-wider">Total</div>
+            <div className="text-[10px] text-gray-300 font-mono">{total_balance}</div>
+          </div>
+          <div className="text-right">
+            <div className="text-[9px] text-gray-500 uppercase tracking-wider">Available</div>
+            <div className="text-[10px] text-gray-300 font-mono">{available_balance}</div>
+          </div>
+        </div>
+        {(isPerps || isSpot) && onTransfer && (
+          <div className="mt-2 pt-2 border-t border-gray-700/30">
+            {isPerps && <button onClick={() => onTransfer("toSpot")} className="text-green-400 hover:text-green-300 text-[10px] font-semibold cursor-pointer px-2.5 py-1 rounded-md bg-green-500/8 hover:bg-green-500/15 transition-colors">Transfer to Spot</button>}
+            {isSpot && <button onClick={() => onTransfer("toPerp")} className="text-green-400 hover:text-green-300 text-[10px] font-semibold cursor-pointer px-2.5 py-1 rounded-md bg-green-500/8 hover:bg-green-500/15 transition-colors">Transfer to Perps</button>}
+          </div>
         )}
       </div>
     </div>
+
+    {/* Desktop Grid Row */}
+    <div
+      className="hidden md:grid gap-2 sm:gap-4 px-2 sm:px-3 py-2 text-[11px] border-b border-gray-800/15 hover:bg-gray-800/15 transition-colors items-center"
+      style={{ gridTemplateColumns: BALANCES_GRID }}
+    >
+      <div className="text-gray-200 font-semibold truncate">{coin}</div>
+      <div className="text-gray-300 truncate font-mono tabular-nums">{total_balance}</div>
+      <div className={`text-gray-300 truncate font-mono tabular-nums ${isAvailableEqualTotal ? "decoration-dotted underline" : ""}`}>{available_balance}</div>
+      <div className="text-gray-300 truncate font-mono tabular-nums">${usdc_value}</div>
+      <div className="truncate">
+        {isPerps && onTransfer && (<button onClick={() => onTransfer("toSpot")} className="text-green-400 hover:text-green-300 text-[10px] font-semibold cursor-pointer transition-colors">Transfer to Spot</button>)}
+        {isSpot && onTransfer && (<button onClick={() => onTransfer("toPerp")} className="text-green-400 hover:text-green-300 text-[10px] font-semibold cursor-pointer transition-colors">Transfer to Perps</button>)}
+      </div>
+    </div>
+    </>
   );
 };
 
@@ -1703,47 +1704,54 @@ const OrderHistoryRow = ({
   const reduceOnlyText = reduceOnly ? "Yes" : "No" ;
   
   return (
-    <div
-      className="grid gap-2 sm:gap-3 px-2 sm:px-3 py-2 text-xs border-b border-gray-800/15 hover:bg-gray-800/15 transition-colors"
-      style={{ gridTemplateColumns: ORDER_HISTORY_GRID }}
-    >
-      <div className="text-gray-300 truncate" title={formattedDateTime}>
-        {formattedDateTime}
-      </div>
-      <div className="text-gray-300 truncate" title={orderType || "Limit"}>
-        {orderType}
-      </div>
-      <div className={`${positionColor} font-medium truncate`} title={currency}>
-        {coin}
-      </div>
-      <div className={`${positionColor} font-medium truncate`} title={positionAction}>
-        {positionAction}
-      </div>
-      <div className="text-gray-300 truncate" title={formattedSize}>
-        {addDecimals(sz, 5) === "0.00000" ? "--" : addDecimals(sz, 5)}
-      </div>
-      <div className="text-gray-300 truncate" title={filledSize}>
-        {addDecimals(filledSize, 5) === "0.00000" ? "--" : addDecimals(filledSize, 5)}
-      </div>
-      <div className="text-gray-300 truncate" title={orderValue}>
-        {orderValue}
-      </div>
-      <div className="text-gray-300 truncate" title={formattedPrice}>
-        {formattedPrice}
-      </div>
-      <div className="text-gray-300 truncate" title={reduceOnlyText}>
-        {reduceOnlyText}
-      </div>
-      <div className="text-gray-300 truncate" title="N/A">
-        N/A
-      </div>
-      <div className={`${statusColor} truncate`} title={formattedStatus}>
-        {formattedStatus}
-      </div>
-      <div className="text-gray-300 truncate" title={oid.toString()}>
-        {oid}
+    <>
+    {/* Mobile Card */}
+    <div className="md:hidden px-2 py-1.5">
+      <div className="rounded-xl border border-gray-800/40 bg-gray-900/40 p-3">
+        <div className="flex items-center justify-between mb-2">
+          <div className="flex items-center gap-2">
+            <span className={`text-[11px] font-bold ${positionColor}`}>{coin}</span>
+            <span className={`text-[10px] font-medium px-1.5 py-0.5 rounded-md ${positionColor} ${isCloseLong ? "bg-pink-500/10" : "bg-green-500/10"}`}>{positionAction}</span>
+          </div>
+          <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded-md ${statusColor} ${status.toLowerCase() === "filled" ? "bg-green-500/10" : status.toLowerCase().includes("cancel") || status.toLowerCase().includes("reject") ? "bg-red-500/10" : "bg-yellow-500/10"}`}>{formattedStatus}</span>
+        </div>
+        <div className="grid grid-cols-3 gap-2 mb-1.5">
+          <div>
+            <div className="text-[9px] text-gray-500 uppercase tracking-wider">Type</div>
+            <div className="text-[10px] text-gray-300">{orderType}</div>
+          </div>
+          <div>
+            <div className="text-[9px] text-gray-500 uppercase tracking-wider">Price</div>
+            <div className="text-[10px] text-gray-300 font-mono">{formattedPrice}</div>
+          </div>
+          <div className="text-right">
+            <div className="text-[9px] text-gray-500 uppercase tracking-wider">Size</div>
+            <div className="text-[10px] text-gray-300 font-mono">{addDecimals(sz, 5) === "0.00000" ? "--" : addDecimals(sz, 5)}</div>
+          </div>
+        </div>
+        <div className="text-[9px] text-gray-600">{formattedDateTime}</div>
       </div>
     </div>
+
+    {/* Desktop Grid Row */}
+    <div
+      className="hidden md:grid gap-2 sm:gap-3 px-2 sm:px-3 py-2 text-xs border-b border-gray-800/15 hover:bg-gray-800/15 transition-colors"
+      style={{ gridTemplateColumns: ORDER_HISTORY_GRID }}
+    >
+      <div className="text-gray-300 truncate" title={formattedDateTime}>{formattedDateTime}</div>
+      <div className="text-gray-300 truncate" title={orderType || "Limit"}>{orderType}</div>
+      <div className={`${positionColor} font-medium truncate`} title={currency}>{coin}</div>
+      <div className={`${positionColor} font-medium truncate`} title={positionAction}>{positionAction}</div>
+      <div className="text-gray-300 truncate" title={formattedSize}>{addDecimals(sz, 5) === "0.00000" ? "--" : addDecimals(sz, 5)}</div>
+      <div className="text-gray-300 truncate" title={filledSize}>{addDecimals(filledSize, 5) === "0.00000" ? "--" : addDecimals(filledSize, 5)}</div>
+      <div className="text-gray-300 truncate" title={orderValue}>{orderValue}</div>
+      <div className="text-gray-300 truncate" title={formattedPrice}>{formattedPrice}</div>
+      <div className="text-gray-300 truncate" title={reduceOnlyText}>{reduceOnlyText}</div>
+      <div className="text-gray-300 truncate" title="N/A">N/A</div>
+      <div className={`${statusColor} truncate`} title={formattedStatus}>{formattedStatus}</div>
+      <div className="text-gray-300 truncate" title={oid.toString()}>{oid}</div>
+    </div>
+    </>
   );
 };
 
@@ -1800,47 +1808,53 @@ const OpenOrdersRow = ({ order, onCancel }: OpenOrdersRowProps) => {
   const orderType = order.orderType || "Limit";
 
   return (
+    <>
+    {/* Mobile Card */}
+    <div className="md:hidden px-2 py-1.5">
+      <div className={`rounded-xl border p-3 ${direction === "Long" ? "border-green-500/15 bg-green-500/4" : "border-red-500/15 bg-red-500/4"}`}>
+        <div className="flex items-center justify-between mb-2">
+          <div className="flex items-center gap-2">
+            <span className={`${directionColor} text-[11px] font-bold`}>{coin}</span>
+            <span className={`text-[10px] font-medium px-1.5 py-0.5 rounded-md ${directionColor} ${direction === "Long" ? "bg-green-500/15" : "bg-red-500/15"}`}>{direction}</span>
+            <span className="text-[10px] text-gray-500">{orderType}</span>
+          </div>
+          <button onClick={() => onCancel?.(order.oid, order.coin)} className="text-red-400 hover:text-red-300 text-[10px] font-bold cursor-pointer px-2 py-1 rounded-md bg-red-500/10 hover:bg-red-500/20 transition-colors">Cancel</button>
+        </div>
+        <div className="grid grid-cols-2 gap-2 mb-1.5">
+          <div>
+            <div className="text-[9px] text-gray-500 uppercase tracking-wider">Size</div>
+            <div className="text-[10px] text-gray-300 font-mono">{size}</div>
+          </div>
+          <div className="text-right">
+            <div className="text-[9px] text-gray-500 uppercase tracking-wider">Price</div>
+            <div className="text-[10px] text-gray-300 font-mono">{price}</div>
+          </div>
+        </div>
+        <div className="text-[9px] text-gray-600">{formattedDateTime}</div>
+      </div>
+    </div>
+
+    {/* Desktop Grid Row */}
     <div
-      className="grid gap-2 sm:gap-3 px-2 sm:px-3 py-2 text-xs border-b border-gray-800/15 hover:bg-gray-800/15 transition-colors"
+      className="hidden md:grid gap-2 sm:gap-3 px-2 sm:px-3 py-2 text-xs border-b border-gray-800/15 hover:bg-gray-800/15 transition-colors"
       style={{ gridTemplateColumns: OPEN_ORDERS_GRID }}
     >
-      <div className="text-gray-300 truncate" title={formattedDateTime}>
-        {formattedDateTime}
-      </div>
-      <div className="text-gray-300 truncate" title={orderType}>
-        {orderType}
-      </div>
-      <div className={`${directionColor} font-medium truncate`} title={coin}>
-        {coin}
-      </div>
-      <div className={`${directionColor} font-medium truncate`} title={direction}>
-        {direction}
-      </div>
-      <div className="text-gray-300 truncate" title={size}>
-        {size}
-      </div>
-      <div className="text-gray-300 truncate" title={originalSize}>
-        {originalSize}
-      </div>
-      <div className="text-gray-300 truncate" title={orderValue}>
-        {orderValue}
-      </div>
-      <div className="text-gray-300 truncate" title={price}>
-        {price}
-      </div>
-      <div className="text-gray-300 truncate" title={reduceOnlyText}>
-        {reduceOnlyText}
-      </div>
-      <div className="text-gray-300 truncate" title={triggerConditions}>
-        {triggerConditions}
-      </div>
-      <div className="text-gray-300 truncate" title={tpSl}>
-        {tpSl}
-      </div>
+      <div className="text-gray-300 truncate" title={formattedDateTime}>{formattedDateTime}</div>
+      <div className="text-gray-300 truncate" title={orderType}>{orderType}</div>
+      <div className={`${directionColor} font-medium truncate`} title={coin}>{coin}</div>
+      <div className={`${directionColor} font-medium truncate`} title={direction}>{direction}</div>
+      <div className="text-gray-300 truncate" title={size}>{size}</div>
+      <div className="text-gray-300 truncate" title={originalSize}>{originalSize}</div>
+      <div className="text-gray-300 truncate" title={orderValue}>{orderValue}</div>
+      <div className="text-gray-300 truncate" title={price}>{price}</div>
+      <div className="text-gray-300 truncate" title={reduceOnlyText}>{reduceOnlyText}</div>
+      <div className="text-gray-300 truncate" title={triggerConditions}>{triggerConditions}</div>
+      <div className="text-gray-300 truncate" title={tpSl}>{tpSl}</div>
       <div className="text-green-400 hover:text-green-300 cursor-pointer truncate" title="Cancel" onClick={() => onCancel?.(order.oid, order.coin)}>
         Cancel
       </div>
     </div>
+    </>
   );
 };
 
@@ -2312,10 +2326,10 @@ export const BottomPanel = () => {
       </div>
 
       {/* Tab Content */}
-      <div className="flex-1 overflow-hidden flex flex-col">
+      <div className="flex-1 min-h-0 overflow-hidden flex flex-col">
         {/* Positions Tab */}
         <TabContent value="positions" activeTab={activeTab}>
-          <div className="flex-1 overflow-auto relative">
+          <div className="flex-1 min-h-0 overflow-auto relative">
             <PositionsTableHeader />
             {!isHydrated ? (
               <PositionsTableShimmer />
@@ -2368,7 +2382,7 @@ export const BottomPanel = () => {
 
         {/* Open Orders Tab */}
         <TabContent value="openorders" activeTab={activeTab}>
-          <div className="flex-1 overflow-hidden flex flex-col">
+          <div className="flex-1 min-h-0 overflow-hidden flex flex-col">
             {/* Cancel All Button */}
             {/* {userOpenOrders && userOpenOrders.length > 0 && (
               <div className="flex justify-end px-2 sm:px-3 py-2 border-b border-gray-800">
@@ -2383,54 +2397,54 @@ export const BottomPanel = () => {
                 </button>
               </div>
             )} */}
-            <div className="flex-1 overflow-auto relative">
-              <OpenOrdersTableHeader />
-              {isUserOpenOrdersLoading ? (
-                <OpenOrdersTableShimmer />
-              ) : !userAddress ? (
-                <EmptyState message="Connect wallet to view open orders" />
-              ) : userOpenOrders && userOpenOrders.length > 0 ? (
-                <div className="pb-10">
-                  {userOpenOrders.map((order, index) => (
-                    <OpenOrdersRow
-                      key={order.oid || index}
-                      order={order}
-                      onCancel={(oid, coin) => {
-                        if (agentPrivateKey) {
-                          handleCancelOrder({agentPrivateKey: agentPrivateKey as `0x${string}`, oid, coin});
-                        }
-                      }}
-                    />
-                  ))}
-                </div>
-              ) : (
-                <EmptyState message="No open orders" />
-              )}
+            <div className="flex-1 min-h-0 overflow-auto relative">
+                <OpenOrdersTableHeader />
+                {isUserOpenOrdersLoading ? (
+                  <OpenOrdersTableShimmer />
+                ) : !userAddress ? (
+                  <EmptyState message="Connect wallet to view open orders" />
+                ) : userOpenOrders && userOpenOrders.length > 0 ? (
+                  <div className="pb-10">
+                    {userOpenOrders.map((order, index) => (
+                      <OpenOrdersRow
+                        key={order.oid || index}
+                        order={order}
+                        onCancel={(oid, coin) => {
+                          if (agentPrivateKey) {
+                            handleCancelOrder({agentPrivateKey: agentPrivateKey as `0x${string}`, oid, coin});
+                          }
+                        }}
+                      />
+                    ))}
+                  </div>
+                ) : (
+                  <EmptyState message="No open orders" />
+                )}
             </div>
           </div>
         </TabContent>
 
         {/* Trade History Tab */}
         {activeTab === "tradehistory" && (
-          <div className="flex-1 overflow-hidden flex flex-col">
-            <div className="flex-1 overflow-auto relative">
-              <TradeHistoryTableHeader />
-              {isTradeHistoryLoading ? (
-                <TradeHistoryTableShimmer />
-              ) : !userAddress ? (
-                <EmptyState message="Connect wallet to view trade history" />
-              ) : tradeHistory && tradeHistory.length > 0 ? (
-                <div className="pb-10">
-                  {tradeHistory.slice().reverse().map((trade, index) => (
-                    <TradeHistoryRow 
-                      key={`${trade.time}-${trade.hash}-${trade.tid}-${index}`} 
-                      trade={trade}
-                    />
-                  ))}
-                </div>
-              ) : (
-                <EmptyState message="No trade history" />
-              )}
+          <div className="flex-1 min-h-0 overflow-hidden flex flex-col">
+            <div className="flex-1 min-h-0 overflow-auto relative">
+                <TradeHistoryTableHeader />
+                {isTradeHistoryLoading ? (
+                  <TradeHistoryTableShimmer />
+                ) : !userAddress ? (
+                  <EmptyState message="Connect wallet to view trade history" />
+                ) : tradeHistory && tradeHistory.length > 0 ? (
+                  <div className="pb-10">
+                    {tradeHistory.slice().reverse().map((trade, index) => (
+                      <TradeHistoryRow 
+                        key={`${trade.time}-${trade.hash}-${trade.tid}-${index}`} 
+                        trade={trade}
+                      />
+                    ))}
+                  </div>
+                ) : (
+                  <EmptyState message="No trade history" />
+                )}
             </div>
             {/* View All Link - Sticky at bottom */}
             {userAddress && (
@@ -2450,25 +2464,25 @@ export const BottomPanel = () => {
 
         {/* Funding History Tab */}
         {activeTab === "fundinghistory" && (
-          <div className="flex-1 overflow-hidden flex flex-col">
-            <div className="flex-1 overflow-auto relative">
-              <FundingHistoryTableHeader />
-              {isUserFundingsLoading ? (
-                <FundingHistoryTableShimmer />
-              ) : !userAddress ? (
-                <EmptyState message="Connect wallet to view funding history" />
-              ) : userFundings && userFundings.length > 0 ? (
-                <div className="pb-10">
-                  {userFundings.slice().reverse().map((funding, index) => (
-                    <FundingHistoryRow 
-                      key={`${funding.time}-${funding.hash}-${index}`} 
-                      funding={funding}
-                    />
-                  ))}
-                </div>
-              ) : (
-                <EmptyState message="No funding history" />
-              )}
+          <div className="flex-1 min-h-0 overflow-hidden flex flex-col">
+            <div className="flex-1 min-h-0 overflow-auto relative">
+                <FundingHistoryTableHeader />
+                {isUserFundingsLoading ? (
+                  <FundingHistoryTableShimmer />
+                ) : !userAddress ? (
+                  <EmptyState message="Connect wallet to view funding history" />
+                ) : userFundings && userFundings.length > 0 ? (
+                  <div className="pb-10">
+                    {userFundings.slice().reverse().map((funding, index) => (
+                      <FundingHistoryRow 
+                        key={`${funding.time}-${funding.hash}-${index}`} 
+                        funding={funding}
+                      />
+                    ))}
+                  </div>
+                ) : (
+                  <EmptyState message="No funding history" />
+                )}
             </div>
             {/* View All Link - Sticky at bottom */}
             {userAddress && (
@@ -2488,36 +2502,36 @@ export const BottomPanel = () => {
 
         {/* Order History Tab */}
         {activeTab === "orderhistory" && (
-          <div className="flex-1 overflow-hidden flex flex-col">
-            <div className="flex-1 overflow-auto relative">
-              <OrderHistoryTableHeader />
-              {isHistoricalOrdersLoading ? (
-                <OrderHistoryTableShimmer />
-              ) : !userAddress ? (
-                <EmptyState message="Connect wallet to view order history" />
-              ) : historicalOrders && historicalOrders.length > 0 ? (
-                <div className="pb-10">
-                  {historicalOrders.map((order, index) => (
-                    <OrderHistoryRow 
-                      key={order.order.oid || index} 
-                      timestamp={order.order.timestamp}
-                      coin={order.order.coin}
-                      reduceOnly={order.order.reduceOnly}
-                      side={order.order.side}
-                      isPositionTpsl={order.order.isPositionTpsl}
-                      limitPx={order.order.limitPx}
-                      triggerPx={order.order.triggerPx}
-                      orderType={order.order.orderType}
-                      sz={order.order.sz}
-                      origSz={order.order.origSz || order.order.sz}
-                      oid={order.order.oid}
-                      status={order.status}
-                    />
-                  ))}
-                </div>
-              ) : (
-                <EmptyState message="No order history" />
-              )}
+          <div className="flex-1 min-h-0 overflow-hidden flex flex-col">
+            <div className="flex-1 min-h-0 overflow-auto relative">
+                <OrderHistoryTableHeader />
+                {isHistoricalOrdersLoading ? (
+                  <OrderHistoryTableShimmer />
+                ) : !userAddress ? (
+                  <EmptyState message="Connect wallet to view order history" />
+                ) : historicalOrders && historicalOrders.length > 0 ? (
+                  <div className="pb-10">
+                    {historicalOrders.map((order, index) => (
+                      <OrderHistoryRow 
+                        key={order.order.oid || index} 
+                        timestamp={order.order.timestamp}
+                        coin={order.order.coin}
+                        reduceOnly={order.order.reduceOnly}
+                        side={order.order.side}
+                        isPositionTpsl={order.order.isPositionTpsl}
+                        limitPx={order.order.limitPx}
+                        triggerPx={order.order.triggerPx}
+                        orderType={order.order.orderType}
+                        sz={order.order.sz}
+                        origSz={order.order.origSz || order.order.sz}
+                        oid={order.order.oid}
+                        status={order.status}
+                      />
+                    ))}
+                  </div>
+                ) : (
+                  <EmptyState message="No order history" />
+                )}
             </div>
             {/* View All Link - Sticky at bottom */}
             {userAddress && (

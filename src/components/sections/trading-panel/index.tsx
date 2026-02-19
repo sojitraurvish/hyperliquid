@@ -54,7 +54,7 @@ const Button = ({
   const sizes = {
     sm: "h-7 px-2 text-xs",
     md: "h-8 px-3 text-xs sm:text-sm",
-    lg: "h-10 px-4 text-sm",
+    lg: "h-9 sm:h-10 px-3 sm:px-4 text-xs sm:text-sm",
   };
   
   return (
@@ -240,27 +240,27 @@ const MarginModeDialog = ({ isOpen, onClose, selectedMode, onConfirm, symbol }: 
         {/* Cross Mode Option */}
         <button
           onClick={() => setTempMode("cross")}
-          className={`w-full text-left p-4 rounded-xl border transition-all cursor-pointer ${
+          className={`w-full text-left p-3 sm:p-4 rounded-xl border transition-all cursor-pointer ${
             tempMode === "cross"
               ? "bg-green-500/8 border-green-500/30 ring-1 ring-green-500/20"
               : "bg-gray-800/30 border-gray-800/60 hover:border-gray-700/60 hover:bg-gray-800/50"
           }`}
         >
-          <div className="flex items-start gap-3">
-            <div className={`mt-0.5 w-5 h-5 rounded-full border-2 flex items-center justify-center shrink-0 transition-colors ${
+          <div className="flex items-start gap-2.5 sm:gap-3">
+            <div className={`mt-0.5 w-4 h-4 sm:w-5 sm:h-5 rounded-full border-2 flex items-center justify-center shrink-0 transition-colors ${
               tempMode === "cross" ? "border-green-400 bg-green-400" : "border-gray-600"
             }`}>
               {tempMode === "cross" && (
-                <svg className="w-3 h-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
+                <svg className="w-2.5 h-2.5 sm:w-3 sm:h-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
                   <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
                 </svg>
               )}
             </div>
-            <div className="flex-1">
-              <span className={`text-sm font-semibold ${tempMode === "cross" ? "text-white" : "text-gray-300"}`}>
+            <div className="flex-1 min-w-0">
+              <span className={`text-[13px] sm:text-sm font-semibold ${tempMode === "cross" ? "text-white" : "text-gray-300"}`}>
                 Cross
               </span>
-              <p className="text-xs text-gray-500 mt-1 leading-relaxed">
+              <p className="text-[11px] sm:text-xs text-gray-500 mt-1 leading-relaxed">
                 All cross positions share the same cross margin as collateral. In the event of liquidation, your cross margin balance and any remaining open positions under assets in this mode may be forfeited.
               </p>
             </div>
@@ -270,27 +270,27 @@ const MarginModeDialog = ({ isOpen, onClose, selectedMode, onConfirm, symbol }: 
         {/* Isolated Mode Option */}
         <button
           onClick={() => setTempMode("isolated")}
-          className={`w-full text-left p-4 rounded-xl border transition-all cursor-pointer ${
+          className={`w-full text-left p-3 sm:p-4 rounded-xl border transition-all cursor-pointer ${
             tempMode === "isolated"
               ? "bg-green-500/8 border-green-500/30 ring-1 ring-green-500/20"
               : "bg-gray-800/30 border-gray-800/60 hover:border-gray-700/60 hover:bg-gray-800/50"
           }`}
         >
-          <div className="flex items-start gap-3">
-            <div className={`mt-0.5 w-5 h-5 rounded-full border-2 flex items-center justify-center shrink-0 transition-colors ${
+          <div className="flex items-start gap-2.5 sm:gap-3">
+            <div className={`mt-0.5 w-4 h-4 sm:w-5 sm:h-5 rounded-full border-2 flex items-center justify-center shrink-0 transition-colors ${
               tempMode === "isolated" ? "border-green-400 bg-green-400" : "border-gray-600"
             }`}>
               {tempMode === "isolated" && (
-                <svg className="w-3 h-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
+                <svg className="w-2.5 h-2.5 sm:w-3 sm:h-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
                   <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
                 </svg>
               )}
             </div>
-            <div className="flex-1">
-              <span className={`text-sm font-semibold ${tempMode === "isolated" ? "text-white" : "text-gray-300"}`}>
+            <div className="flex-1 min-w-0">
+              <span className={`text-[13px] sm:text-sm font-semibold ${tempMode === "isolated" ? "text-white" : "text-gray-300"}`}>
                 Isolated
               </span>
-              <p className="text-xs text-gray-500 mt-1 leading-relaxed">
+              <p className="text-[11px] sm:text-xs text-gray-500 mt-1 leading-relaxed">
                 Manage your risk on individual positions by restricting the amount of margin allocated to each. If the margin ratio of an isolated position reaches 100%, the position will be liquidated. Margin can be added or removed to individual positions in this mode.
               </p>
             </div>
@@ -370,7 +370,7 @@ const LeverageDialog = ({
 
       {/* Leverage Slider */}
       <div className="space-y-3">
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2 sm:gap-3">
           <Slider
             value={[tempLeverage]}
             onChange={(vals) => setTempLeverage(vals[0])}
@@ -378,7 +378,7 @@ const LeverageDialog = ({
             step={1}
             className="flex-1 py-2"
           />
-          <div className="flex items-center gap-1">
+          <div className="flex items-center gap-1 shrink-0">
             <Input
               type="number"
               value={tempLeverage}
@@ -386,18 +386,18 @@ const LeverageDialog = ({
               min={0}
               max={maxLeverage}
               step={1}
-              className="w-16 h-9 text-center px-2 rounded-lg"
+              className="w-14 sm:w-16 h-8 sm:h-9 text-center px-1.5 sm:px-2 rounded-lg text-xs sm:text-sm"
             />
-            <span className="text-gray-400 text-sm">x</span>
+            <span className="text-gray-400 text-xs sm:text-sm">x</span>
           </div>
         </div>
         {/* Quick select buttons */}
-        <div className="flex gap-2">
+        <div className="flex gap-1.5 sm:gap-2">
           {[1, 5, 10, 25, maxLeverage].filter((v) => v <= maxLeverage).filter((v, i, a) => a.indexOf(v) === i).map((val) => (
             <button
               key={val}
               onClick={() => setTempLeverage(val)}
-              className={`flex-1 py-1.5 text-xs font-medium rounded-lg transition-colors cursor-pointer ${
+              className={`flex-1 py-1.5 text-[10px] sm:text-xs font-medium rounded-lg transition-colors cursor-pointer ${
                 tempLeverage === val
                   ? "bg-green-500/15 text-green-400 border border-green-500/25"
                   : "bg-gray-800/50 text-gray-400 hover:text-white border border-gray-800/60 hover:border-gray-700"
@@ -517,17 +517,17 @@ const TradingModeTabs = ({
   onLeverageClick,
 }: TradingModeTabsProps) => {
   return (
-    <div className="p-2 sm:p-3 border-b border-gray-800/30">
+    <div className="px-2 py-1.5 sm:p-3 border-b border-gray-800/30">
       <div className="grid grid-cols-2 gap-1.5">
         <button
           onClick={onMarginModeClick}
-          className="h-8 text-[11px] font-semibold rounded-lg transition-all bg-gray-800/50 text-gray-300 hover:bg-gray-800/80 hover:text-white border border-gray-700/30 hover:border-gray-600/40"
+          className="h-7 sm:h-8 text-[11px] font-semibold rounded-lg transition-all bg-gray-800/50 text-gray-300 hover:bg-gray-800/80 hover:text-white border border-gray-700/30 hover:border-gray-600/40"
         >
           {marginMode.charAt(0).toUpperCase() + marginMode.slice(1)}
         </button>
         <button
           onClick={onLeverageClick}
-          className="h-8 text-[11px] font-semibold rounded-lg transition-all bg-green-500/10 text-green-400 hover:bg-green-500/15 border border-green-500/20 hover:border-green-500/30"
+          className="h-7 sm:h-8 text-[11px] font-semibold rounded-lg transition-all bg-green-500/10 text-green-400 hover:bg-green-500/15 border border-green-500/20 hover:border-green-500/30"
         >
           {leverage}x
         </button>
@@ -546,13 +546,13 @@ const OrderTypeTabs = ({ activeType, onTypeChange }: OrderTypeTabsProps) => {
   const types = ["Market", "Limit"];
   
   return (
-    <div className="px-2 sm:px-3 py-2 border-b border-gray-800/30">
+    <div className="px-2 sm:px-3 py-1.5 sm:py-2 border-b border-gray-800/30">
       <div className="grid grid-cols-2 gap-1 bg-gray-900/50 p-0.5 rounded-lg border border-gray-800/20">
         {types.map((type) => (
           <button
             key={type}
             onClick={() => onTypeChange(type)}
-            className={`h-7 text-[11px] font-semibold rounded-md transition-all ${
+            className={`h-6 sm:h-7 text-[11px] font-semibold rounded-md transition-all ${
               activeType === type
                 ? "bg-gray-800/70 text-white shadow-sm"
                 : "text-gray-500 hover:text-gray-300 hover:bg-gray-800/20"
@@ -574,11 +574,11 @@ interface BuySellButtonsProps {
 
 const BuySellButtons = ({ activeSide, onSideChange }: BuySellButtonsProps) => {
   return (
-    <div className="p-2 sm:p-3 border-b border-gray-800/30">
-      <div className="grid grid-cols-2 gap-2">
+    <div className="px-2 py-1.5 sm:p-3 border-b border-gray-800/30">
+      <div className="grid grid-cols-2 gap-1.5 sm:gap-2">
         <button
           onClick={() => onSideChange("buy")}
-          className={`h-9 text-xs sm:text-[13px] font-bold rounded-lg transition-all ${
+          className={`h-8 sm:h-9 text-xs sm:text-[13px] font-bold rounded-lg transition-all ${
             activeSide === "buy"
               ? "bg-green-500 text-white hover:bg-green-400 shadow-md shadow-green-500/25"
               : "bg-gray-800/40 text-gray-500 hover:bg-gray-800/60 hover:text-gray-300 border border-gray-700/30"
@@ -588,7 +588,7 @@ const BuySellButtons = ({ activeSide, onSideChange }: BuySellButtonsProps) => {
         </button>
         <button
           onClick={() => onSideChange("sell")}
-          className={`h-9 text-xs sm:text-[13px] font-bold rounded-lg transition-all ${
+          className={`h-8 sm:h-9 text-xs sm:text-[13px] font-bold rounded-lg transition-all ${
             activeSide === "sell"
               ? "bg-red-500 text-white hover:bg-red-400 shadow-md shadow-red-500/25"
               : "bg-gray-800/40 text-gray-500 hover:bg-gray-800/60 hover:text-gray-300 border border-gray-700/30"
@@ -618,14 +618,14 @@ const TradingInfo = ({ availableToTrade, currentPosition }: TradingInfoProps) =>
   const displayPosition = `${displayValue} ${parts[1] || ''}`.trim();
   
   return (
-    <div className="p-2 sm:p-3 space-y-2 border-b border-gray-800/30">
+    <div className="px-2 py-1 sm:p-3 sm:space-y-1 border-b border-gray-800/30">
       <div className="flex justify-between items-center py-0.5">
-        <span className="text-[11px] text-gray-500 font-medium">Available to Trade</span>
-        <span className="text-[11px] text-gray-200 font-mono tabular-nums font-semibold">{availableToTrade}</span>
+        <span className="text-[10px] sm:text-[11px] text-gray-500 font-medium">Available to Trade</span>
+        <span className="text-[10px] sm:text-[11px] text-gray-200 font-mono tabular-nums font-semibold">{availableToTrade}</span>
       </div>
       <div className="flex justify-between items-center py-0.5">
-        <span className="text-[11px] text-gray-500 font-medium">Current Position</span>
-        <span className={`text-[11px] font-mono tabular-nums font-semibold ${positionColor}`}>{displayPosition}</span>
+        <span className="text-[10px] sm:text-[11px] text-gray-500 font-medium">Current Position</span>
+        <span className={`text-[10px] sm:text-[11px] font-mono tabular-nums font-semibold ${positionColor}`}>{displayPosition}</span>
       </div>
     </div>
   );
@@ -677,7 +677,7 @@ const SizeInput = ({ size, currency, onCurrencyChange, onChange, hasError, maxDe
           value={size}
           onChange={handleChange}
           placeholder="0.00"
-          className={`h-9 text-right font-mono text-sm pr-20 sm:pr-24 rounded-lg bg-gray-800/30 border-gray-700/40 focus:border-green-500/40 focus:ring-1 focus:ring-green-500/20 transition-all ${hasError ? 'ring-2 ring-red-500/60 border-red-500/40 focus:ring-red-500/40' : ''}`}
+          className={`h-8 sm:h-9 text-right font-mono text-xs sm:text-sm pr-18 sm:pr-24 rounded-lg bg-gray-800/30 border-gray-700/40 focus:border-green-500/40 focus:ring-1 focus:ring-green-500/20 transition-all ${hasError ? 'ring-2 ring-red-500/60 border-red-500/40 focus:ring-red-500/40' : ''}`}
         />
         <button
           onClick={onCurrencyChange}
@@ -740,7 +740,7 @@ const PriceInput = ({ price, onPriceChange, onMidClick, disabled = false, maxDec
           onChange={handleChange}
           placeholder="0.00"
           disabled={disabled}
-          className="h-9 text-right font-mono text-sm pr-16 sm:pr-20 rounded-lg bg-gray-800/30 border-gray-700/40 focus:border-green-500/40 focus:ring-1 focus:ring-green-500/20 transition-all"
+          className="h-8 sm:h-9 text-right font-mono text-xs sm:text-sm pr-14 sm:pr-20 rounded-lg bg-gray-800/30 border-gray-700/40 focus:border-green-500/40 focus:ring-1 focus:ring-green-500/20 transition-all"
         />
         <button
           onClick={onMidClick}
@@ -1001,22 +1001,22 @@ const PositionInfo = ({
   onMaxSlippageClick,
 }: PositionInfoProps) => {
   return (
-    <div className="p-2 sm:p-3 space-y-1 border-b border-gray-800/30">
-      <div className="flex justify-between items-center py-0.5">
+    <div className="px-2 py-1 sm:p-3 border-b border-gray-800/30">
+      <div className="flex justify-between items-center py-px sm:py-0.5">
         <span className="text-[10px] text-gray-500 font-medium">Liquidation Price</span>
-        <span className="text-[11px] text-gray-200 tabular-nums font-mono">{liquidationPrice}</span>
+        <span className="text-[10px] sm:text-[11px] text-gray-200 tabular-nums font-mono">{liquidationPrice}</span>
       </div>
-      <div className="flex justify-between items-center py-0.5">
+      <div className="flex justify-between items-center py-px sm:py-0.5">
         <span className="text-[10px] text-gray-500 font-medium">Order Value</span>
-        <span className="text-[11px] text-gray-200 tabular-nums font-mono">{orderValue}</span>
+        <span className="text-[10px] sm:text-[11px] text-gray-200 tabular-nums font-mono">{orderValue}</span>
       </div>
-      <div className="flex justify-between items-center py-0.5">
+      <div className="flex justify-between items-center py-px sm:py-0.5">
         <span className="text-[10px] text-gray-500 font-medium">Margin Required</span>
-        <span className="text-[11px] text-gray-200 tabular-nums font-mono">{marginRequired}</span>
+        <span className="text-[10px] sm:text-[11px] text-gray-200 tabular-nums font-mono">{marginRequired}</span>
       </div>
-      <div className="flex justify-between items-center py-0.5">
+      <div className="flex justify-between items-center py-px sm:py-0.5">
         <span className="text-[10px] text-gray-500 font-medium">Slippage</span>
-        <span className="text-[11px] text-gray-200 tabular-nums font-mono">
+        <span className="text-[10px] sm:text-[11px] text-gray-200 tabular-nums font-mono">
           MAX: <button onClick={onMaxSlippageClick} className="text-green-400 hover:text-green-300 cursor-pointer font-semibold">{maxSlippage.toFixed(2)}%</button>
         </span>
       </div>
@@ -1047,31 +1047,31 @@ const AccountEquityOverview = ({
   const unrealizedPnlValue = parseFloat(unrealizedPnl.replace(/[^0-9.-]/g, '')) || 0;
   
   return (
-    <div className="p-2 sm:p-3 space-y-3 border-b border-gray-800/30">
-      <div className="space-y-1.5">
+    <div className="px-2 py-1.5 sm:p-3 space-y-2 sm:space-y-3 border-b border-gray-800/30">
+      <div className="space-y-0.5 sm:space-y-1.5">
         <div className="flex items-center gap-1.5">
-          <div className="w-1 h-3 rounded-full bg-green-500/60" />
-          <span className="text-[10px] text-gray-400 uppercase tracking-wider font-semibold">Account Equity</span>
+          <div className="w-1 h-2.5 sm:h-3 rounded-full bg-green-500/60" />
+          <span className="text-[9px] sm:text-[10px] text-gray-400 uppercase tracking-wider font-semibold">Account Equity</span>
         </div>
-        <div className="flex justify-between items-center py-0.5">
+        <div className="flex justify-between items-center py-px sm:py-0.5">
           <span className="text-[10px] text-gray-500 font-medium">Perps</span>
-          <span className="text-[11px] text-gray-200 font-mono tabular-nums font-semibold">{perps}</span>
+          <span className="text-[10px] sm:text-[11px] text-gray-200 font-mono tabular-nums font-semibold">{perps}</span>
         </div>
       </div>
 
-      <div className="space-y-1.5 pt-2 border-t border-gray-800/20">
+      <div className="space-y-0.5 sm:space-y-1.5 pt-1.5 sm:pt-2 border-t border-gray-800/20">
         <div className="flex items-center gap-1.5">
-          <div className="w-1 h-3 rounded-full bg-green-500/60" />
-          <span className="text-[10px] text-gray-400 uppercase tracking-wider font-semibold">Perps Overview</span>
+          <div className="w-1 h-2.5 sm:h-3 rounded-full bg-green-500/60" />
+          <span className="text-[9px] sm:text-[10px] text-gray-400 uppercase tracking-wider font-semibold">Perps Overview</span>
         </div>
-        <div className="space-y-0.5">
-          <div className="flex justify-between items-center py-0.5">
+        <div>
+          <div className="flex justify-between items-center py-px sm:py-0.5">
             <span className="text-[10px] text-gray-500 font-medium">Balance</span>
-            <span className="text-[11px] text-gray-200 font-mono tabular-nums">{balance}</span>
+            <span className="text-[10px] sm:text-[11px] text-gray-200 font-mono tabular-nums">{balance}</span>
           </div>
-          <div className="flex justify-between items-center py-0.5">
+          <div className="flex justify-between items-center py-px sm:py-0.5">
             <span className="text-[10px] text-gray-500 font-medium">Unrealized PNL</span>
-            <span className={`text-[11px] font-mono tabular-nums font-semibold ${
+            <span className={`text-[10px] sm:text-[11px] font-mono tabular-nums font-semibold ${
               unrealizedPnlValue >= 0 
                 ? 'text-green-400' 
                 : 'text-red-400'
@@ -1079,9 +1079,9 @@ const AccountEquityOverview = ({
               {unrealizedPnl}
             </span>
           </div>
-          <div className="flex justify-between items-center py-0.5">
+          <div className="flex justify-between items-center py-px sm:py-0.5">
             <span className="text-[10px] text-gray-500 font-medium">Cross Account Leverage</span>
-            <span className="text-[11px] text-gray-200 font-mono tabular-nums">{crossAccountLeverage}</span>
+            <span className="text-[10px] sm:text-[11px] text-gray-200 font-mono tabular-nums">{crossAccountLeverage}</span>
           </div>
         </div>
       </div>
@@ -1453,7 +1453,7 @@ export const TradingPanel = ({currentCurrency, currentLeverage}: {currentCurrenc
   // Calculate market price (p) for market orders
   // Formula: markPrice ± (slippage percentage of markPrice), then format according to Hyperliquid rules
   let marketPrice = null;
-  if (sliderValue > 0 && markPrice !== null && markPrice > 0 && currentCurrency && szDecimals > 0) {
+  if (sliderValue > 0 && markPrice !== null && markPrice > 0 && currentCurrency && szDecimals >= 0) {
     try {
       const isBuy = activeSide === "buy";
       
@@ -1553,7 +1553,7 @@ export const TradingPanel = ({currentCurrency, currentLeverage}: {currentCurrenc
   }, [currentLeverage]);
 
   return (
-    <div className="w-full sm:w-80 lg:w-full bg-gray-950 flex flex-col text-xs h-full overflow-hidden relative">
+    <div className="w-full bg-gray-950 flex flex-col text-xs h-full overflow-hidden relative">
       {isLoadingInitialData && (
         <div className="absolute inset-0 bg-gray-950/90 backdrop-blur-sm z-10 flex items-center justify-center">
           <div className="flex flex-col items-center gap-3">
@@ -1661,7 +1661,7 @@ export const TradingPanel = ({currentCurrency, currentLeverage}: {currentCurrenc
         currentPosition={`${addDecimals(currentPosition, szDecimals)} ${currentCurrency}`} 
       />
 
-      <div className="p-2 sm:p-3 space-y-3 border-b border-gray-800/30">
+      <div className="px-2 py-1.5 sm:p-3 space-y-2 sm:space-y-3 border-b border-gray-800/30">
         {orderType === "Limit" && (
           <PriceInput
             price={limitOrderPrice}
@@ -1670,7 +1670,6 @@ export const TradingPanel = ({currentCurrency, currentLeverage}: {currentCurrenc
             disabled={midPrice === 0 || isLoadingInitialData}
           />
         )}
-
 
         <SizeInput
           size={sizeInputValue}
@@ -1746,13 +1745,13 @@ export const TradingPanel = ({currentCurrency, currentLeverage}: {currentCurrenc
           )}
       </div>
 
-      <div className="p-2 sm:p-3 border-b border-gray-800/30">
+      <div className="px-2 py-1.5 sm:p-3 border-b border-gray-800/30">
         {!mounted ? (
-          <div className="text-center text-[11px] text-gray-500 py-4 bg-gray-900/30 rounded-lg border border-gray-800/20">
+          <div className="text-center text-[11px] text-gray-500 py-3 sm:py-4 bg-gray-900/30 rounded-lg border border-gray-800/20">
             Please connect your wallet to enable trading
           </div>
         ) : !isConnected ? (
-          <div className="text-center text-[11px] text-gray-500 py-4 bg-gray-900/30 rounded-lg border border-gray-800/20">
+          <div className="text-center text-[11px] text-gray-500 py-3 sm:py-4 bg-gray-900/30 rounded-lg border border-gray-800/20">
             Please connect your wallet to enable trading
           </div>
         ) 
@@ -1816,6 +1815,12 @@ export const TradingPanel = ({currentCurrency, currentLeverage}: {currentCurrenc
               // Validate limit order price is provided
               if (orderType === "Limit" && !limitOrderPrice) {
                 appToast.error({ message: "Please enter a limit price" });
+                return;
+              }
+
+              // Validate price is not empty
+              if (!p || p === "") {
+                appToast.error({ message: "Unable to calculate price. Please wait for market data and try again." });
                 return;
               }
 

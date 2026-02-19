@@ -303,30 +303,19 @@ export const MarketHeader = ({ currency }: { currency: string }) => {
     setTimeout(checkScrollability, 0);
   }, [viewMode, markets]);
 
-  // Close dropdown when clicking outside
+  // Close dropdown on Escape key
   useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      const buttonRef = marketButtonRefDesktop.current || marketButtonRefMobile.current;
-      const target = event.target as Node;
-      
-      // Check if click is inside dropdown or button
-      if (
-        dropdownRef.current && 
-        !dropdownRef.current.contains(target) &&
-        buttonRef &&
-        !buttonRef.contains(target)
-      ) {
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
         setIsDropdownOpen(false);
         setSearchQuery("");
       }
     };
 
     if (isDropdownOpen) {
-      // Use click event (not mousedown) to allow button onClick handlers to execute first
-      document.addEventListener("click", handleClickOutside);
-
+      document.addEventListener("keydown", handleKeyDown);
       return () => {
-        document.removeEventListener("click", handleClickOutside);
+        document.removeEventListener("keydown", handleKeyDown);
       };
     }
   }, [isDropdownOpen]);
@@ -662,10 +651,10 @@ export const MarketHeader = ({ currency }: { currency: string }) => {
   
   return (
     <div className="border-b border-gray-800/20 bg-gray-950">
-      <div className="border-b border-gray-800/15 bg-gray-950/80">
-        <div className="px-4 py-2 flex items-center gap-3">
+      <div className="hidden sm:block border-b border-gray-800/15 bg-gray-950/80">
+        <div className="px-2 sm:px-4 py-1.5 sm:py-2 flex items-center gap-2 sm:gap-3">
           <button className="text-gray-500 hover:text-yellow-400 transition-colors shrink-0 cursor-pointer">
-            <Star fill={favoriteMarkets.length > 0 ? "yellow" : "none"} className="h-3.5 w-3.5" />
+            <Star fill={favoriteMarkets.length > 0 ? "yellow" : "none"} className="h-3 w-3 sm:h-3.5 sm:w-3.5" />
           </button>
 
           <div className="flex items-center bg-gray-900/40 rounded-lg p-0.5 shrink-0 border border-gray-800/15">
@@ -746,8 +735,8 @@ export const MarketHeader = ({ currency }: { currency: string }) => {
       </div>
       {/* Desktop & Tablet View */}
       <div className="hidden md:flex">
-        <div className="w-full px-4 py-3 flex items-center justify-between relative min-h-[52px]">
-          <div className="flex items-center gap-4 lg:gap-6 flex-1 min-w-0">
+        <div className="w-full px-3 lg:px-4 py-2.5 flex items-center justify-between relative min-h-[48px]">
+          <div className="flex items-center gap-3 lg:gap-5 flex-1 min-w-0">
             <div className="relative shrink-0">
               {selectedMarketData && (
                 <button 
@@ -770,120 +759,7 @@ export const MarketHeader = ({ currency }: { currency: string }) => {
                 </button>
               )}
 
-              {/* Dropdown Menu */}
-              {isDropdownOpen && (
-                <div 
-                  ref={dropdownRef}
-                  className="absolute top-full left-0 mt-2 bg-gray-900/95 backdrop-blur-xl border border-gray-700/50 rounded-xl shadow-2xl shadow-black/40 z-100 w-[800px] max-h-[600px] flex flex-col"
-                >
-                  <div className="p-3 border-b border-gray-800/40">
-                    <div className="relative mb-2">
-                      <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-500" />
-                      <input
-                        type="text"
-                        placeholder="Search markets..."
-                        value={searchQuery}
-                        onChange={(e) => setSearchQuery(e.target.value)}
-                        className="w-full pl-9 pr-9 py-2 bg-gray-800/40 border border-gray-700/40 rounded-xl text-sm text-white placeholder-gray-500 focus:outline-none focus:ring-1 focus:ring-green-500/40 focus:border-green-500/30 transition-colors"
-                        autoFocus
-                      />
-                      {searchQuery && (
-                        <button
-                          onClick={() => setSearchQuery("")}
-                          className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-white cursor-pointer"
-                        >
-                          <X className="h-4 w-4" />
-                        </button>
-                      )}
-                    </div>
-                  </div>
-
-                  <div className="overflow-y-auto flex-1 max-h-[400px] [scrollbar-width:thin] [scrollbar-color:gray-700_transparent] [&::-webkit-scrollbar]:w-2 [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:bg-gray-700/60 [&::-webkit-scrollbar-thumb]:rounded">
-                    {filteredMarkets.length === 0 ? (
-                      <div className="p-4 text-center text-gray-500 text-sm">
-                        No markets found
-                      </div>
-                    ) : (
-                      <div className="min-w-full">
-                        <div className="sticky top-0 bg-gray-900/95 backdrop-blur-sm border-b border-gray-800/30 px-4 py-2 grid grid-cols-[minmax(0,2fr)_minmax(0,1fr)_minmax(0,1.5fr)_minmax(0,0.8fr)_minmax(0,1.2fr)_minmax(0,1.5fr)] gap-4 text-[11px] font-medium text-gray-500 uppercase tracking-wider">
-                          <div>Symbol</div>
-                          <div className="text-right">Last Price</div>
-                          <div className="text-right">24H Change</div>
-                          <div className="text-right">8H Funding</div>
-                          <div className="text-right">Volume</div>
-                          <div className="text-right">Open Interest</div>
-                        </div>
-                        
-                        {filteredMarkets.map((market) => {
-                          const isPositive = (market.change24hPer ?? 0) >= 0;
-                          const isFavorite = market.isFavorite;
-                          const isSelected = market.isSelected;
-                          const funding8hValue = market.fundingPer != null ? market.fundingPer * 8 : null;
-                          const funding8hDisplay = funding8hValue != null ? `${funding8hValue >= 0 ? "+" : ""}${funding8hValue.toFixed(4)}%` : "—";
-                          
-                          return (
-                            <button
-                              key={market.symbol}
-                              type="button"
-                              onClick={(e) => handleMarketSelect(market.symbol, e)}
-                              className={`w-full cursor-pointer px-4 py-2.5 grid grid-cols-[minmax(0,2fr)_minmax(0,1fr)_minmax(0,1.5fr)_minmax(0,0.8fr)_minmax(0,1.2fr)_minmax(0,1.5fr)] gap-4 items-center hover:bg-gray-800/40 transition-colors border-b border-gray-800/20 last:border-b-0 text-xs ${
-                                isSelected ? 'bg-green-500/5' : ''
-                              }`}
-                            >
-                              <div className="flex items-center gap-2 min-w-0">
-                                <button
-                                  type="button"
-                                  onClick={(e) => handleToggleFavorite(market.symbol, e)}
-                                  className="shrink-0 hover:scale-110 transition-transform cursor-pointer"
-                                >
-                                  <Star
-                                    fill={isFavorite ? "yellow" : "none"}
-                                    className={`h-3 w-3 ${isFavorite ? "text-yellow-400" : "text-gray-600"}`}
-                                  />
-                                </button>
-                                <img 
-                                  src={getCoinIconUrl(market.symbol)} 
-                                  alt={market.coin} 
-                                  className="w-4 h-4 rounded-full shrink-0"
-                                  onError={(e) => {
-                                    (e.target as HTMLImageElement).src = DEFAULT_COIN_ICON_URL;
-                                  }}
-                                />
-                                <span className={`font-medium truncate ${isSelected ? 'text-green-400' : 'text-white'}`}>
-                                  {market.symbol}
-                                </span>
-                                {market.leverage && (
-                                  <span className="text-[10px] font-medium bg-green-500/15 text-green-400 px-1.5 py-0.5 rounded-md shrink-0">
-                                    {market.leverage}
-                                  </span>
-                                )}
-                                {isSelected && (
-                                  <div className="w-1.5 h-1.5 rounded-full bg-green-400 shrink-0"></div>
-                                )}
-                              </div>
-                              <div className="text-right font-medium tabular-nums text-gray-200 whitespace-nowrap overflow-hidden text-ellipsis">
-                                {market.lastPrice != null ? market.lastPrice.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : "—"}
-                              </div>
-                              <div className={`text-right font-medium tabular-nums whitespace-nowrap overflow-hidden text-ellipsis ${isPositive ? "text-green-400" : "text-red-400"}`}>
-                                {market.change24h != null ? `${isPositive ? "+" : ""}${market.change24h.toFixed(2)}` : "—"} / {market.change24hPer != null ? `${isPositive ? "+" : ""}${market.change24hPer.toFixed(2)}%` : "—"}
-                              </div>
-                              <div className={`text-right font-medium tabular-nums whitespace-nowrap overflow-hidden text-ellipsis ${(funding8hValue ?? 0) >= 0 ? "text-gray-200" : "text-red-400"}`}>
-                                {funding8hDisplay}
-                              </div>
-                              <div className="text-right font-medium tabular-nums text-gray-200 whitespace-nowrap overflow-hidden text-ellipsis">
-                                {market.volume24h != null ? `$${market.volume24h.toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 0 })}` : "—"}
-                              </div>
-                              <div className="text-right font-medium tabular-nums text-gray-200 whitespace-nowrap overflow-hidden text-ellipsis">
-                                {market.openInterest != null ? `$${market.openInterest.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` : "—"}
-                              </div>
-                            </button>
-                          );
-                        })}
-                      </div>
-                    )}
-                  </div>
-                </div>
-              )}
+              {/* Dropdown renders as a shared overlay at the bottom of the component */}
             </div>
 
             {selectedMarketData?.leverage && (
@@ -951,153 +827,61 @@ export const MarketHeader = ({ currency }: { currency: string }) => {
 
       {/* Mobile View */}
       <div className="md:hidden">
-        <div className="px-3 py-2.5 flex items-center justify-between relative">
-          <div className="flex items-center gap-2 flex-1 min-w-0">
-            <div className="relative">
+        <div className="px-2 py-2 flex items-center justify-between relative">
+          <div className="flex items-center gap-1.5 flex-1 min-w-0">
+            <div>
               {selectedMarketData && (
                 <button 
                   ref={marketButtonRefMobile}
                   onClick={handleDropdownToggle}
-                  className="text-white hover:bg-gray-800/40 px-2 py-1.5 h-auto rounded-lg transition-colors cursor-pointer"
+                  className="text-white hover:bg-gray-800/30 px-1.5 py-1 h-auto rounded-lg transition-colors cursor-pointer"
                 >
-                  <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-1.5">
                     <img 
                       src={getCoinIconUrl(selectedMarketData.symbol)} 
                       alt={selectedMarketData.coin} 
-                      className="w-5 h-5 rounded-full"
+                      className="w-4 h-4 rounded-full"
                       onError={(e) => {
                         (e.target as HTMLImageElement).src = DEFAULT_COIN_ICON_URL;
                       }}
                     />
-                    <span className="font-semibold text-sm text-white">{selectedMarketData.symbol}</span>
-                    <ChevronDown className={`h-3 w-3 text-gray-500 transition-transform ${isDropdownOpen ? 'rotate-180' : ''}`} />
+                    <span className="font-bold text-[13px] text-white">{selectedMarketData.symbol}</span>
+                    <ChevronDown className={`h-2.5 w-2.5 text-gray-500 transition-transform ${isDropdownOpen ? 'rotate-180' : ''}`} />
                   </div>
                 </button>
               )}
 
-              {isDropdownOpen && (
-                <div 
-                  ref={dropdownRef}
-                  className="absolute top-full left-0 mt-2 bg-gray-900/95 backdrop-blur-xl border border-gray-700/50 rounded-xl shadow-2xl shadow-black/40 z-100 w-[calc(100vw-2rem)] max-h-[600px] flex flex-col"
-                >
-                  <div className="p-3 border-b border-gray-800/30">
-                    <div className="relative mb-2">
-                      <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-500" />
-                      <input
-                        type="text"
-                        placeholder="Search markets..."
-                        value={searchQuery}
-                        onChange={(e) => setSearchQuery(e.target.value)}
-                        className="w-full pl-9 pr-9 py-2 bg-gray-800/40 border border-gray-700/40 rounded-xl text-sm text-white placeholder-gray-500 focus:outline-none focus:ring-1 focus:ring-green-500/40 focus:border-green-500/30 transition-colors"
-                        autoFocus
-                      />
-                      {searchQuery && (
-                        <button
-                          onClick={() => setSearchQuery("")}
-                          className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-white cursor-pointer"
-                        >
-                          <X className="h-4 w-4" />
-                        </button>
-                      )}
-                    </div>
-                  </div>
-
-                  <div className="overflow-y-auto flex-1 max-h-[400px] [scrollbar-width:thin] [scrollbar-color:gray-700_transparent] [&::-webkit-scrollbar]:w-2 [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:bg-gray-700/60 [&::-webkit-scrollbar-thumb]:rounded">
-                    {filteredMarkets.length === 0 ? (
-                      <div className="p-4 text-center text-gray-500 text-sm">
-                        No markets found
-                      </div>
-                    ) : (
-                      filteredMarkets.map((market) => {
-                        const isPositive = (market.change24hPer ?? 0) >= 0;
-                        const isFavorite = market.isFavorite;
-                        const isSelected = market.isSelected;
-                        
-                        return (
-                          <button
-                            key={market.symbol}
-                            type="button"
-                            onClick={(e) => handleMarketSelect(market.symbol, e)}
-                            className={`w-full px-4 py-3 flex items-center justify-between hover:bg-gray-800/40 transition-colors border-b border-gray-800/20 last:border-b-0 cursor-pointer ${
-                              isSelected ? 'bg-green-500/5' : ''
-                            }`}
-                          >
-                            <div className="flex items-center gap-3 flex-1 min-w-0">
-                              <img 
-                                src={getCoinIconUrl(market.symbol)} 
-                                alt={market.coin} 
-                                className="w-5 h-5 rounded-full shrink-0"
-                                onError={(e) => {
-                                  (e.target as HTMLImageElement).src = DEFAULT_COIN_ICON_URL;
-                                }}
-                              />
-                              <div className="flex items-center gap-2 flex-1 min-w-0">
-                                <button
-                                  type="button"
-                                  onClick={(e) => handleToggleFavorite(market.symbol, e)}
-                                  className="shrink-0 hover:scale-110 transition-transform cursor-pointer"
-                                >
-                                  <Star
-                                    fill={isFavorite ? "yellow" : "none"}
-                                    className={`h-3 w-3 ${isFavorite ? "text-yellow-400" : "text-gray-600"}`}
-                                  />
-                                </button>
-                                <span className={`text-sm font-medium truncate ${isSelected ? 'text-green-400' : 'text-white'}`}>
-                                  {market.symbol}
-                                </span>
-                                {market.leverage && (
-                                  <span className="text-[10px] font-medium bg-green-500/15 text-green-400 px-1.5 py-0.5 rounded-md shrink-0">
-                                    {market.leverage}
-                                  </span>
-                                )}
-                              </div>
-                            </div>
-                            <div className="flex items-center gap-2 shrink-0">
-                              <span className={`text-xs font-medium ${isPositive ? "text-green-400" : "text-red-400"}`}>
-                                {market.change24hPer != null ? `${isPositive ? "+" : ""}${market.change24hPer.toFixed(2)}%` : "—"}
-                              </span>
-                              {isSelected && (
-                                <div className="w-1.5 h-1.5 rounded-full bg-green-400"></div>
-                              )}
-                            </div>
-                          </button>
-                        );
-                      })
-                    )}
-                  </div>
-                </div>
-              )}
             </div>
             {selectedMarketData?.leverage && (
-              <span className="text-[11px] font-medium bg-green-500/15 text-green-400 px-2 py-0.5 rounded-md">{selectedMarketData.leverage}</span>
+              <span className="text-[9px] font-semibold bg-green-500/15 text-green-400 px-1.5 py-0.5 rounded-md">{selectedMarketData.leverage}</span>
             )}
             {selectedMarketData && (
-              <div className="ml-auto text-right">
+              <div className="ml-auto flex items-center gap-2 text-right shrink-0">
                 {selectedMarketData.mark != null && (
-                  <div className="text-xs font-medium tabular-nums text-gray-200">{selectedMarketData.mark.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</div>
+                  <span className="text-[12px] font-semibold tabular-nums text-gray-100 font-mono">{selectedMarketData.mark.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
                 )}
-                <div className={`text-xs font-medium tabular-nums ${(selectedMarketData.change24hPer ?? 0) >= 0 ? 'text-green-400' : 'text-red-400'}`}>
-                  {selectedMarketData.change24h != null ? `${(selectedMarketData.change24hPer ?? 0) >= 0 ? '+' : ''}${selectedMarketData.change24h.toFixed(2)}` : '—'} / {selectedMarketData.change24hPer != null ? `${(selectedMarketData.change24hPer ?? 0) >= 0 ? '+' : ''}${selectedMarketData.change24hPer.toFixed(2)}%` : '—'}
-                </div>
+                <span className={`text-[10px] font-medium tabular-nums px-1.5 py-0.5 rounded ${(selectedMarketData.change24hPer ?? 0) >= 0 ? 'text-green-400 bg-green-500/10' : 'text-red-400 bg-red-500/10'}`}>
+                  {selectedMarketData.change24hPer != null ? `${(selectedMarketData.change24hPer ?? 0) >= 0 ? '+' : ''}${selectedMarketData.change24hPer.toFixed(2)}%` : '—'}
+                </span>
               </div>
             )}
           </div>
           <button
             onClick={() => setIsExpanded(!isExpanded)}
-            className="ml-2 p-2 hover:bg-gray-800/40 rounded-lg transition-colors cursor-pointer"
+            className="ml-1 p-1.5 hover:bg-gray-800/30 rounded-lg transition-colors cursor-pointer shrink-0"
           >
             {isExpanded ? (
-              <ChevronUp className="h-4 w-4 text-gray-500" />
+              <ChevronUp className="h-3.5 w-3.5 text-gray-500" />
             ) : (
-              <ChevronDown className="h-4 w-4 text-gray-500" />
+              <ChevronDown className="h-3.5 w-3.5 text-gray-500" />
             )}
           </button>
         </div>
 
         {/* Expanded Mobile Details */}
         {isExpanded && selectedMarketData && (
-          <div className="px-3 pb-3 space-y-3 border-t border-gray-800/15 pt-3">
-            <div className="grid grid-cols-2 gap-3 text-xs bg-gray-900/20 rounded-xl p-3 border border-gray-800/10">
+          <div className="px-2 pb-2 space-y-2 border-t border-gray-800/15 pt-2">
+            <div className="grid grid-cols-3 gap-2 text-xs bg-gray-900/20 rounded-lg p-2.5 border border-gray-800/10">
               {selectedMarketData.mark != null && (
                 <div>
                   <div className="text-[10px] text-gray-500 mb-0.5 font-medium">Mark</div>
@@ -1123,7 +907,7 @@ export const MarketHeader = ({ currency }: { currency: string }) => {
                 </div>
               )}
               {selectedMarketData.fundingDisplay != null && (
-                <div className="col-span-2">
+                <div className="col-span-3">
                   <div className="text-[10px] text-gray-500 mb-0.5 font-medium">Funding / Countdown</div>
                   <div className="text-[11px] font-semibold tabular-nums text-green-400 font-mono">
                     {selectedMarketData.fundingDisplay} <span className="text-gray-300">{selectedMarketData.countdown || '—'}</span>
@@ -1134,6 +918,119 @@ export const MarketHeader = ({ currency }: { currency: string }) => {
           </div>
         )}
       </div>
+
+      {/* Market Selector Overlay - works on ALL screen sizes */}
+      {isDropdownOpen && (
+        <div 
+          ref={dropdownRef}
+          className="fixed inset-0 z-200 flex flex-col bg-gray-950/98 backdrop-blur-xl"
+        >
+          {/* Header bar */}
+          <div className="shrink-0 flex items-center justify-between px-4 py-3 border-b border-gray-800/30">
+            <span className="text-sm font-semibold text-white">Select Market</span>
+            <button
+              onClick={() => { setIsDropdownOpen(false); setSearchQuery(""); }}
+              className="p-1.5 rounded-lg hover:bg-gray-800/40 cursor-pointer text-gray-400 hover:text-white transition-colors"
+            >
+              <X className="h-5 w-5" />
+            </button>
+          </div>
+
+          {/* Search */}
+          <div className="shrink-0 px-3 md:px-4 py-2.5 border-b border-gray-800/30">
+            <div className="relative max-w-2xl">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-500" />
+              <input
+                type="text"
+                placeholder="Search markets..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="w-full pl-9 pr-9 py-2.5 bg-gray-800/40 border border-gray-700/40 rounded-xl text-sm text-white placeholder-gray-500 focus:outline-none focus:ring-1 focus:ring-green-500/40 focus:border-green-500/30 transition-colors"
+                autoFocus
+              />
+              {searchQuery && (
+                <button
+                  onClick={() => setSearchQuery("")}
+                  className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-white cursor-pointer"
+                >
+                  <X className="h-4 w-4" />
+                </button>
+              )}
+            </div>
+          </div>
+
+          {/* Desktop table header - hidden on mobile */}
+          <div className="hidden md:grid shrink-0 grid-cols-[minmax(0,2fr)_minmax(0,1fr)_minmax(0,1.2fr)_minmax(0,0.8fr)_minmax(0,1fr)_minmax(0,1.2fr)] gap-4 px-4 py-2 border-b border-gray-800/30 text-[11px] font-medium text-gray-500 uppercase tracking-wider">
+            <div>Symbol</div>
+            <div className="text-right">Last Price</div>
+            <div className="text-right">24H Change</div>
+            <div className="text-right">8H Funding</div>
+            <div className="text-right">Volume</div>
+            <div className="text-right">Open Interest</div>
+          </div>
+
+          {/* Market List */}
+          <div className="flex-1 min-h-0 overflow-y-auto">
+            {filteredMarkets.length === 0 ? (
+              <div className="p-6 text-center text-gray-500 text-sm">No markets found</div>
+            ) : (
+              filteredMarkets.map((market) => {
+                const isPositive = (market.change24hPer ?? 0) >= 0;
+                const isFavorite = market.isFavorite;
+                const isSelected = market.isSelected;
+                const funding8hValue = market.fundingPer != null ? market.fundingPer * 8 : null;
+                const funding8hDisplay = funding8hValue != null ? `${(funding8hValue >= 0 ? "+" : "")}${funding8hValue.toFixed(4)}%` : "—";
+                
+                return (
+                  <button
+                    key={market.symbol}
+                    type="button"
+                    onClick={(e) => handleMarketSelect(market.symbol, e)}
+                    className={`w-full cursor-pointer hover:bg-gray-800/40 active:bg-gray-800/60 transition-colors border-b border-gray-800/15 ${
+                      isSelected ? 'bg-green-500/5' : ''
+                    }`}
+                  >
+                    {/* Mobile row */}
+                    <div className="md:hidden px-4 py-3.5 flex items-center justify-between">
+                      <div className="flex items-center gap-3 flex-1 min-w-0">
+                        <button type="button" onClick={(e) => handleToggleFavorite(market.symbol, e)} className="shrink-0 p-1 -m-1 cursor-pointer">
+                          <Star fill={isFavorite ? "yellow" : "none"} className={`h-4 w-4 ${isFavorite ? "text-yellow-400" : "text-gray-600"}`} />
+                        </button>
+                        <img src={getCoinIconUrl(market.symbol)} alt={market.coin} className="w-6 h-6 rounded-full shrink-0" onError={(e) => { (e.target as HTMLImageElement).src = DEFAULT_COIN_ICON_URL; }} />
+                        <div className="flex flex-col items-start min-w-0">
+                          <span className={`text-sm font-semibold ${isSelected ? 'text-green-400' : 'text-white'}`}>{market.symbol}</span>
+                          {market.leverage && <span className="text-[10px] font-medium text-green-400/70">{market.leverage}</span>}
+                        </div>
+                      </div>
+                      <div className="flex flex-col items-end shrink-0 gap-0.5">
+                        <span className="text-xs text-gray-300 font-mono tabular-nums">{market.lastPrice != null ? market.lastPrice.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : "—"}</span>
+                        <span className={`text-[11px] font-medium tabular-nums ${isPositive ? "text-green-400" : "text-red-400"}`}>{market.change24hPer != null ? `${isPositive ? "+" : ""}${market.change24hPer.toFixed(2)}%` : "—"}</span>
+                      </div>
+                    </div>
+                    {/* Desktop row */}
+                    <div className="hidden md:grid grid-cols-[minmax(0,2fr)_minmax(0,1fr)_minmax(0,1.2fr)_minmax(0,0.8fr)_minmax(0,1fr)_minmax(0,1.2fr)] gap-4 px-4 py-2.5 items-center text-xs">
+                      <div className="flex items-center gap-2 min-w-0">
+                        <button type="button" onClick={(e) => handleToggleFavorite(market.symbol, e)} className="shrink-0 hover:scale-110 transition-transform cursor-pointer">
+                          <Star fill={isFavorite ? "yellow" : "none"} className={`h-3 w-3 ${isFavorite ? "text-yellow-400" : "text-gray-600"}`} />
+                        </button>
+                        <img src={getCoinIconUrl(market.symbol)} alt={market.coin} className="w-4 h-4 rounded-full shrink-0" onError={(e) => { (e.target as HTMLImageElement).src = DEFAULT_COIN_ICON_URL; }} />
+                        <span className={`font-medium truncate ${isSelected ? 'text-green-400' : 'text-white'}`}>{market.symbol}</span>
+                        {market.leverage && <span className="text-[10px] font-medium bg-green-500/15 text-green-400 px-1.5 py-0.5 rounded-md shrink-0">{market.leverage}</span>}
+                        {isSelected && <div className="w-1.5 h-1.5 rounded-full bg-green-400 shrink-0" />}
+                      </div>
+                      <div className="text-right font-medium tabular-nums text-gray-200 truncate">{market.lastPrice != null ? market.lastPrice.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : "—"}</div>
+                      <div className={`text-right font-medium tabular-nums truncate ${isPositive ? "text-green-400" : "text-red-400"}`}>{market.change24h != null ? `${isPositive ? "+" : ""}${market.change24h.toFixed(2)}` : "—"} / {market.change24hPer != null ? `${isPositive ? "+" : ""}${market.change24hPer.toFixed(2)}%` : "—"}</div>
+                      <div className={`text-right font-medium tabular-nums truncate ${(funding8hValue ?? 0) >= 0 ? "text-gray-200" : "text-red-400"}`}>{funding8hDisplay}</div>
+                      <div className="text-right font-medium tabular-nums text-gray-200 truncate">{market.volume24h != null ? `$${market.volume24h.toLocaleString(undefined, { maximumFractionDigits: 0 })}` : "—"}</div>
+                      <div className="text-right font-medium tabular-nums text-gray-200 truncate">{market.openInterest != null ? `$${market.openInterest.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` : "—"}</div>
+                    </div>
+                  </button>
+                );
+              })
+            )}
+          </div>
+        </div>
+      )}
     </div>
   );
 };

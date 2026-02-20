@@ -36,6 +36,58 @@ const NETWORKS: NetworkOption[] = [
 
 // ==================== NetworkSwitcher ====================
 
+export const NetworkSwitcherInline = () => {
+  const [currentNetwork, setCurrentNetwork] = useState<NetworkMode>("mainnet");
+  const { disconnect } = useDisconnect();
+
+  useEffect(() => {
+    setCurrentNetwork(getNetworkPreference());
+  }, []);
+
+  const handleSelect = (network: NetworkOption) => {
+    if (network.mode === currentNetwork) return;
+    setNetworkPreference(network.mode);
+    disconnect();
+    window.location.reload();
+  };
+
+  return (
+    <div className="w-full">
+      <div className="text-[10px] text-gray-500 font-medium uppercase tracking-wider mb-2">Network</div>
+      <div className="flex gap-2">
+        {NETWORKS.map((network) => {
+          const isActive = network.mode === currentNetwork;
+          return (
+            <button
+              key={network.mode}
+              onClick={() => handleSelect(network)}
+              className={`
+                flex-1 flex items-center gap-2 px-3 py-2.5 rounded-xl text-left
+                transition-all cursor-pointer text-sm border
+                ${isActive
+                  ? "bg-gray-800/80 text-white border-gray-700/50"
+                  : "text-gray-400 hover:bg-gray-800/50 hover:text-white border-gray-800/30"
+                }
+              `}
+            >
+              <span className={`w-2 h-2 rounded-full shrink-0 ${network.dotColor}`} />
+              <div className="min-w-0">
+                <div className="font-medium text-[12px]">{network.label}</div>
+                <div className="text-[9px] text-gray-500">{network.chainLabel}</div>
+              </div>
+              {isActive && (
+                <svg className="w-3.5 h-3.5 text-green-400 shrink-0 ml-auto" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                </svg>
+              )}
+            </button>
+          );
+        })}
+      </div>
+    </div>
+  );
+};
+
 export const NetworkSwitcher = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [currentNetwork, setCurrentNetwork] = useState<NetworkMode>("mainnet");
@@ -108,7 +160,7 @@ export const NetworkSwitcher = () => {
 
       {/* Dropdown */}
       {isOpen && (
-        <div className="absolute right-0 mt-1.5 w-52 rounded-xl bg-gray-900/95 backdrop-blur-xl border border-gray-700/50 shadow-2xl shadow-black/40 z-50 overflow-hidden">
+        <div className="absolute left-0 bottom-full mb-1.5 sm:left-auto sm:right-0 sm:bottom-auto sm:top-full sm:mb-0 sm:mt-1.5 w-52 rounded-xl bg-gray-900/95 backdrop-blur-xl border border-gray-700/50 shadow-2xl shadow-black/40 z-200 overflow-hidden">
           <div className="px-3 py-2 border-b border-gray-800/50">
             <span className="text-[10px] text-gray-500 font-medium uppercase tracking-wider">
               Network

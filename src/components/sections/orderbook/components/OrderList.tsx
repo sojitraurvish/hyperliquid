@@ -10,9 +10,10 @@ interface OrderListProps {
   currency: string;
   hideScrollbar?: boolean;
   highlightedPrices?: Set<string>;
+  compact?: boolean;
 }
 
-export const OrderList = ({ orders, isAsk, maxTotal, currency, hideScrollbar = true, highlightedPrices }: OrderListProps) => {
+export const OrderList = ({ orders, isAsk, maxTotal, currency, hideScrollbar = true, highlightedPrices, compact = false }: OrderListProps) => {
   return (
     <div className={`flex-1 overflow-auto gap-1 ${isAsk ? "flex flex-col-reverse" : "flex flex-col"} ${hideScrollbar ? "scrollbar-hide" : ""}`}>
       {orders.map((order, i) => (
@@ -23,6 +24,7 @@ export const OrderList = ({ orders, isAsk, maxTotal, currency, hideScrollbar = t
           maxTotal={maxTotal}
           currency={currency}
           isHighlighted={highlightedPrices?.has(order.price)}
+          compact={compact}
         />
       ))}
     </div>

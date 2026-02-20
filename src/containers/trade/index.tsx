@@ -93,27 +93,32 @@ console.log("selectedMarket", selectedMarket)
         </div>
         
         {/* Mobile: scrollable page with stacked sections. Desktop: fixed 2-column grid. */}
-        <div className="flex-1 min-h-0 flex flex-col lg:grid lg:grid-cols-[1fr_320px] xl:grid-cols-[1fr_384px] lg:grid-rows-[minmax(0,2fr)_minmax(0,1fr)]">
+        <div className="flex-1 min-h-0 flex flex-col lg:grid lg:grid-cols-[1fr_320px] xl:grid-cols-[1fr_384px] lg:grid-rows-[minmax(0,3fr)_minmax(0,1fr)]">
           {/* Chart + Desktop OrderBook */}
           <div className="order-1 lg:col-start-1 lg:row-start-1 lg:min-h-0 overflow-hidden">
-            <div className="flex h-[300px] sm:h-[380px] md:h-[480px] lg:h-full">
+            <div className="flex h-[380px] sm:h-[420px] md:h-[480px] lg:h-full">
               <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
                 <TradingChart currency={selectedCoin} />
               </div>
-              <div className="hidden md:flex shrink-0 flex-col overflow-hidden border-l border-gray-800/20 w-60 lg:w-64 xl:w-80">
+              <div className="hidden md:flex shrink-0 flex-col overflow-hidden border-l border-gray-800/20 w-72 lg:w-80 xl:w-96">
                 <OrderBook currency={selectedCoin} />
               </div>
             </div>
           </div>
-          
-          {/* Trading Panel - right after chart on mobile, sidebar on desktop */}
-          <div className="order-2 lg:col-start-2 lg:row-start-1 lg:row-span-2 border-t lg:border-t-0 lg:border-l border-gray-800/20 lg:overflow-y-auto lg:min-h-0">
-            <TradingPanel currentCurrency={selectedCoin} currentLeverage={selectedLeverage} />
+
+          {/* Mobile OrderBook - visible only on small screens */}
+          <div className="order-2 md:hidden h-[350px] border-t border-gray-800/20 flex flex-col overflow-hidden">
+            <OrderBook currency={selectedCoin} />
           </div>
           
-          {/* Bottom Panel (Positions/Orders) - last on mobile, below chart on desktop */}
-          <div className="order-3 lg:col-start-1 lg:row-start-2 border-t border-gray-800/20 h-[280px] sm:h-[320px] md:h-[350px] lg:h-auto lg:min-h-0 flex flex-col overflow-hidden">
+          {/* Bottom Panel (Positions/Orders) - after orderbook on mobile, below chart on desktop */}
+          <div className="order-3 lg:order-3 lg:col-start-1 lg:row-start-2 border-t border-gray-800/20 h-[280px] sm:h-[320px] md:h-[350px] lg:h-auto lg:min-h-0 flex flex-col overflow-hidden">
             <BottomPanel />
+          </div>
+
+          {/* Trading Panel - after positions on mobile, sidebar on desktop */}
+          <div className="order-4 lg:order-2 lg:col-start-2 lg:row-start-1 lg:row-span-2 border-t lg:border-t-0 lg:border-l border-gray-800/20 lg:overflow-y-auto lg:min-h-0">
+            <TradingPanel currentCurrency={selectedCoin} currentLeverage={selectedLeverage} />
           </div>
         </div>
       </div>

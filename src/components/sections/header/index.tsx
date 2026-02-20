@@ -2,7 +2,7 @@
 
 import { Globe, Bell, Mail, Menu, X, HelpCircle, Headphones, FileText, Shield, ChevronDown } from "lucide-react";
 import { ThemePickerButton, ThemePickerModal } from "@/components/ui/theme-picker";
-import NetworkSwitcher from "@/components/ui/network-switcher";
+import NetworkSwitcher, { NetworkSwitcherInline } from "@/components/ui/network-switcher";
 import AppButton, { AppButton as Button } from "@/components/ui/button";
 import AppDropdown, { DropdownOption } from "@/components/ui/dropdown";
 import { VARIANT_TYPES } from "@/lib/constants";
@@ -412,9 +412,12 @@ export const Header = () => {
                 </div>
               </>
             )}
-            <div className="flex items-center gap-2 mx-3 mt-2 pt-3 border-t border-gray-800/40 sm:hidden">
-              <NetworkSwitcher />
-              <ThemePickerButton onClick={() => { setIsThemePickerOpen(true); setIsMobileMenuOpen(false); }} />
+            <div className="mx-3 mt-2 pt-3 border-t border-gray-800/40 space-y-3 pb-2 sm:hidden">
+              <NetworkSwitcherInline />
+              <div className="flex items-center justify-between px-1">
+                <span className="text-[10px] text-gray-500 font-medium uppercase tracking-wider">Theme</span>
+                <ThemePickerButton onClick={() => { setIsThemePickerOpen(true); setIsMobileMenuOpen(false); }} />
+              </div>
             </div>
           </nav>
         </div>

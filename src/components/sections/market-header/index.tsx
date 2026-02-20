@@ -303,8 +303,10 @@ export const MarketHeader = ({ currency }: { currency: string }) => {
     setTimeout(checkScrollability, 0);
   }, [viewMode, markets]);
 
-  // Close dropdown on Escape key
+  // Close dropdown on Escape key or click outside (desktop only)
   useEffect(() => {
+    if (!isDropdownOpen) return;
+
     const handleKeyDown = (event: KeyboardEvent) => {
       if (event.key === "Escape") {
         setIsDropdownOpen(false);
@@ -312,12 +314,24 @@ export const MarketHeader = ({ currency }: { currency: string }) => {
       }
     };
 
-    if (isDropdownOpen) {
-      document.addEventListener("keydown", handleKeyDown);
-      return () => {
-        document.removeEventListener("keydown", handleKeyDown);
-      };
-    }
+    const handleClickOutside = (event: MouseEvent) => {
+      if (
+        dropdownRef.current &&
+        !dropdownRef.current.contains(event.target as Node) &&
+        !marketButtonRefDesktop.current?.contains(event.target as Node) &&
+        !marketButtonRefMobile.current?.contains(event.target as Node)
+      ) {
+        setIsDropdownOpen(false);
+        setSearchQuery("");
+      }
+    };
+
+    document.addEventListener("keydown", handleKeyDown);
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => {
+      document.removeEventListener("keydown", handleKeyDown);
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
   }, [isDropdownOpen]);
 
   const scrollLeft = () => {
@@ -919,33 +933,22 @@ export const MarketHeader = ({ currency }: { currency: string }) => {
         )}
       </div>
 
-      {/* Market Selector Overlay - works on ALL screen sizes */}
+      {/* Desktop Dropdown - positioned below the market button */}
       {isDropdownOpen && (
         <div 
           ref={dropdownRef}
-          className="fixed inset-0 z-200 flex flex-col bg-gray-950/98 backdrop-blur-xl"
+          className="hidden md:flex fixed left-0 top-[105px] z-200 flex-col bg-gray-950 border border-gray-800/40 rounded-b-xl shadow-2xl shadow-black/50 w-[720px] lg:w-[800px] xl:w-[900px] max-h-[70vh]"
         >
-          {/* Header bar */}
-          <div className="shrink-0 flex items-center justify-between px-4 py-3 border-b border-gray-800/30">
-            <span className="text-sm font-semibold text-white">Select Market</span>
-            <button
-              onClick={() => { setIsDropdownOpen(false); setSearchQuery(""); }}
-              className="p-1.5 rounded-lg hover:bg-gray-800/40 cursor-pointer text-gray-400 hover:text-white transition-colors"
-            >
-              <X className="h-5 w-5" />
-            </button>
-          </div>
-
           {/* Search */}
-          <div className="shrink-0 px-3 md:px-4 py-2.5 border-b border-gray-800/30">
-            <div className="relative max-w-2xl">
+          <div className="shrink-0 px-4 py-2.5 border-b border-gray-800/30">
+            <div className="relative">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-500" />
               <input
                 type="text"
                 placeholder="Search markets..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full pl-9 pr-9 py-2.5 bg-gray-800/40 border border-gray-700/40 rounded-xl text-sm text-white placeholder-gray-500 focus:outline-none focus:ring-1 focus:ring-green-500/40 focus:border-green-500/30 transition-colors"
+                className="w-full pl-9 pr-9 py-2 bg-gray-800/40 border border-gray-700/40 rounded-lg text-sm text-white placeholder-gray-500 focus:outline-none focus:ring-1 focus:ring-green-500/40 focus:border-green-500/30 transition-colors"
                 autoFocus
               />
               {searchQuery && (
@@ -959,8 +962,8 @@ export const MarketHeader = ({ currency }: { currency: string }) => {
             </div>
           </div>
 
-          {/* Desktop table header - hidden on mobile */}
-          <div className="hidden md:grid shrink-0 grid-cols-[minmax(0,2fr)_minmax(0,1fr)_minmax(0,1.2fr)_minmax(0,0.8fr)_minmax(0,1fr)_minmax(0,1.2fr)] gap-4 px-4 py-2 border-b border-gray-800/30 text-[11px] font-medium text-gray-500 uppercase tracking-wider">
+          {/* Table header */}
+          <div className="shrink-0 grid grid-cols-[minmax(0,2fr)_minmax(0,1fr)_minmax(0,1.2fr)_minmax(0,0.8fr)_minmax(0,1fr)_minmax(0,1.2fr)] gap-4 px-4 py-2 border-b border-gray-800/30 text-[11px] font-medium text-gray-500 uppercase tracking-wider">
             <div>Symbol</div>
             <div className="text-right">Last Price</div>
             <div className="text-right">24H Change</div>
@@ -990,25 +993,7 @@ export const MarketHeader = ({ currency }: { currency: string }) => {
                       isSelected ? 'bg-green-500/5' : ''
                     }`}
                   >
-                    {/* Mobile row */}
-                    <div className="md:hidden px-4 py-3.5 flex items-center justify-between">
-                      <div className="flex items-center gap-3 flex-1 min-w-0">
-                        <button type="button" onClick={(e) => handleToggleFavorite(market.symbol, e)} className="shrink-0 p-1 -m-1 cursor-pointer">
-                          <Star fill={isFavorite ? "yellow" : "none"} className={`h-4 w-4 ${isFavorite ? "text-yellow-400" : "text-gray-600"}`} />
-                        </button>
-                        <img src={getCoinIconUrl(market.symbol)} alt={market.coin} className="w-6 h-6 rounded-full shrink-0" onError={(e) => { (e.target as HTMLImageElement).src = DEFAULT_COIN_ICON_URL; }} />
-                        <div className="flex flex-col items-start min-w-0">
-                          <span className={`text-sm font-semibold ${isSelected ? 'text-green-400' : 'text-white'}`}>{market.symbol}</span>
-                          {market.leverage && <span className="text-[10px] font-medium text-green-400/70">{market.leverage}</span>}
-                        </div>
-                      </div>
-                      <div className="flex flex-col items-end shrink-0 gap-0.5">
-                        <span className="text-xs text-gray-300 font-mono tabular-nums">{market.lastPrice != null ? market.lastPrice.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : "—"}</span>
-                        <span className={`text-[11px] font-medium tabular-nums ${isPositive ? "text-green-400" : "text-red-400"}`}>{market.change24hPer != null ? `${isPositive ? "+" : ""}${market.change24hPer.toFixed(2)}%` : "—"}</span>
-                      </div>
-                    </div>
-                    {/* Desktop row */}
-                    <div className="hidden md:grid grid-cols-[minmax(0,2fr)_minmax(0,1fr)_minmax(0,1.2fr)_minmax(0,0.8fr)_minmax(0,1fr)_minmax(0,1.2fr)] gap-4 px-4 py-2.5 items-center text-xs">
+                    <div className="grid grid-cols-[minmax(0,2fr)_minmax(0,1fr)_minmax(0,1.2fr)_minmax(0,0.8fr)_minmax(0,1fr)_minmax(0,1.2fr)] gap-4 px-4 py-2.5 items-center text-xs">
                       <div className="flex items-center gap-2 min-w-0">
                         <button type="button" onClick={(e) => handleToggleFavorite(market.symbol, e)} className="shrink-0 hover:scale-110 transition-transform cursor-pointer">
                           <Star fill={isFavorite ? "yellow" : "none"} className={`h-3 w-3 ${isFavorite ? "text-yellow-400" : "text-gray-600"}`} />
@@ -1023,6 +1008,86 @@ export const MarketHeader = ({ currency }: { currency: string }) => {
                       <div className={`text-right font-medium tabular-nums truncate ${(funding8hValue ?? 0) >= 0 ? "text-gray-200" : "text-red-400"}`}>{funding8hDisplay}</div>
                       <div className="text-right font-medium tabular-nums text-gray-200 truncate">{market.volume24h != null ? `$${market.volume24h.toLocaleString(undefined, { maximumFractionDigits: 0 })}` : "—"}</div>
                       <div className="text-right font-medium tabular-nums text-gray-200 truncate">{market.openInterest != null ? `$${market.openInterest.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` : "—"}</div>
+                    </div>
+                  </button>
+                );
+              })
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* Mobile Full-Screen Overlay */}
+      {isDropdownOpen && (
+        <div className="md:hidden fixed inset-0 z-200 flex flex-col bg-gray-950/98 backdrop-blur-xl">
+          {/* Header bar */}
+          <div className="shrink-0 flex items-center justify-between px-4 py-3 border-b border-gray-800/30">
+            <span className="text-sm font-semibold text-white">Select Market</span>
+            <button
+              onClick={() => { setIsDropdownOpen(false); setSearchQuery(""); }}
+              className="p-1.5 rounded-lg hover:bg-gray-800/40 cursor-pointer text-gray-400 hover:text-white transition-colors"
+            >
+              <X className="h-5 w-5" />
+            </button>
+          </div>
+
+          {/* Search */}
+          <div className="shrink-0 px-3 py-2.5 border-b border-gray-800/30">
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-500" />
+              <input
+                type="text"
+                placeholder="Search markets..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="w-full pl-9 pr-9 py-2.5 bg-gray-800/40 border border-gray-700/40 rounded-xl text-sm text-white placeholder-gray-500 focus:outline-none focus:ring-1 focus:ring-green-500/40 focus:border-green-500/30 transition-colors"
+                autoFocus
+              />
+              {searchQuery && (
+                <button
+                  onClick={() => setSearchQuery("")}
+                  className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-white cursor-pointer"
+                >
+                  <X className="h-4 w-4" />
+                </button>
+              )}
+            </div>
+          </div>
+
+          {/* Market List */}
+          <div className="flex-1 min-h-0 overflow-y-auto">
+            {filteredMarkets.length === 0 ? (
+              <div className="p-6 text-center text-gray-500 text-sm">No markets found</div>
+            ) : (
+              filteredMarkets.map((market) => {
+                const isPositive = (market.change24hPer ?? 0) >= 0;
+                const isFavorite = market.isFavorite;
+                const isSelected = market.isSelected;
+                
+                return (
+                  <button
+                    key={market.symbol}
+                    type="button"
+                    onClick={(e) => handleMarketSelect(market.symbol, e)}
+                    className={`w-full cursor-pointer hover:bg-gray-800/40 active:bg-gray-800/60 transition-colors border-b border-gray-800/15 ${
+                      isSelected ? 'bg-green-500/5' : ''
+                    }`}
+                  >
+                    <div className="px-4 py-3.5 flex items-center justify-between">
+                      <div className="flex items-center gap-3 flex-1 min-w-0">
+                        <button type="button" onClick={(e) => handleToggleFavorite(market.symbol, e)} className="shrink-0 p-1 -m-1 cursor-pointer">
+                          <Star fill={isFavorite ? "yellow" : "none"} className={`h-4 w-4 ${isFavorite ? "text-yellow-400" : "text-gray-600"}`} />
+                        </button>
+                        <img src={getCoinIconUrl(market.symbol)} alt={market.coin} className="w-6 h-6 rounded-full shrink-0" onError={(e) => { (e.target as HTMLImageElement).src = DEFAULT_COIN_ICON_URL; }} />
+                        <div className="flex flex-col items-start min-w-0">
+                          <span className={`text-sm font-semibold ${isSelected ? 'text-green-400' : 'text-white'}`}>{market.symbol}</span>
+                          {market.leverage && <span className="text-[10px] font-medium text-green-400/70">{market.leverage}</span>}
+                        </div>
+                      </div>
+                      <div className="flex flex-col items-end shrink-0 gap-0.5">
+                        <span className="text-xs text-gray-300 font-mono tabular-nums">{market.lastPrice != null ? market.lastPrice.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : "—"}</span>
+                        <span className={`text-[11px] font-medium tabular-nums ${isPositive ? "text-green-400" : "text-red-400"}`}>{market.change24hPer != null ? `${isPositive ? "+" : ""}${market.change24hPer.toFixed(2)}%` : "—"}</span>
+                      </div>
                     </div>
                   </button>
                 );

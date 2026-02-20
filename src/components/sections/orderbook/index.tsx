@@ -363,7 +363,7 @@ export const OrderBook = ({ currency }: { currency: string }) => {
     <div className="w-full bg-gray-950 flex flex-col h-full">
       <div className="flex-1 flex flex-col min-h-0">
         {/* Header with Tabs */}
-        <div className="flex items-center justify-between px-2 sm:px-3 py-1.5 border-b border-gray-800/20 shrink-0">
+        <div className="flex items-center px-1.5 sm:px-2 py-1.5 border-b border-gray-800/20 shrink-0">
           <div className="flex items-center bg-gray-900/40 rounded-lg p-0.5 h-auto w-full border border-gray-800/15">
             {tabs.map((tab) => (
               <button
@@ -457,38 +457,85 @@ export const OrderBook = ({ currency }: { currency: string }) => {
                 />
               </div>
 
-              {/* Column Headers */}
-              <div className="px-2 sm:px-3 py-1 flex justify-between text-[10px] text-gray-500 border-b border-gray-800/20 shrink-0 font-medium uppercase tracking-wider">
-                <span className="flex-1 text-left">Price</span>
-                <span className="flex-1 text-center">Size ({currencyName})</span>
-                <span className="flex-1 text-right">Total ({currencyName})</span>
-              </div>
-
-              {/* Order Book Data */}
-              <div className="flex-1 overflow-hidden grid grid-rows-[1fr_auto_1fr] min-h-0">
-                <div className="min-h-0 flex flex-col">
-                  <OrderList 
-                    orders={asks} 
-                    isAsk={true} 
-                    maxTotal={maxTotal} 
-                    currency={currencyName} 
-                    hideScrollbar={true} 
-                    highlightedPrices={highlightedAskPrices} 
-                  />
+              {/* Mobile: Side-by-side asks & bids */}
+              <div className="md:hidden flex-1 flex flex-col min-h-0">
+                <div className="shrink-0 grid grid-cols-2 border-b border-gray-800/20">
+                  <div className="px-2 py-1 flex justify-between text-[10px] text-gray-500 font-medium uppercase tracking-wider border-r border-gray-800/20">
+                    <span>Price</span>
+                    <span>Size</span>
+                    <span>Total</span>
+                  </div>
+                  <div className="px-2 py-1 flex justify-between text-[10px] text-gray-500 font-medium uppercase tracking-wider">
+                    <span>Price</span>
+                    <span>Size</span>
+                    <span>Total</span>
+                  </div>
+                </div>
+                <div className="flex-1 min-h-0 grid grid-cols-2">
+                  <div className="min-h-0 flex flex-col overflow-hidden border-r border-gray-800/20">
+                    <OrderList 
+                      orders={asks} 
+                      isAsk={true} 
+                      maxTotal={maxTotal} 
+                      currency={currencyName} 
+                      hideScrollbar={true} 
+                      highlightedPrices={highlightedAskPrices}
+                      compact={true}
+                    />
+                  </div>
+                  <div className="min-h-0 flex flex-col overflow-hidden">
+                    <OrderList 
+                      orders={bids} 
+                      isAsk={false} 
+                      maxTotal={maxTotal} 
+                      currency={currencyName} 
+                      hideScrollbar={true} 
+                      highlightedPrices={highlightedBidPrices}
+                      compact={true}
+                    />
+                  </div>
                 </div>
                 <SpreadIndicator 
                   spread={spread} 
                   spreadPercent={spreadPercent} 
                 />
-                <div className="min-h-0 flex flex-col">
-                  <OrderList 
-                    orders={bids} 
-                    isAsk={false} 
-                    maxTotal={maxTotal} 
-                    currency={currencyName} 
-                    hideScrollbar={true} 
-                    highlightedPrices={highlightedBidPrices} 
+              </div>
+
+              {/* Desktop: Stacked asks / spread / bids */}
+              <div className="hidden md:flex flex-1 flex-col min-h-0">
+                {/* Column Headers */}
+                <div className="px-2 sm:px-3 py-1 flex justify-between text-[10px] text-gray-500 border-b border-gray-800/20 shrink-0 font-medium uppercase tracking-wider">
+                  <span className="flex-1 text-left">Price</span>
+                  <span className="flex-1 text-center">Size ({currencyName})</span>
+                  <span className="flex-1 text-right">Total ({currencyName})</span>
+                </div>
+
+                {/* Order Book Data */}
+                <div className="flex-1 overflow-hidden grid grid-rows-[1fr_auto_1fr] min-h-0">
+                  <div className="min-h-0 flex flex-col">
+                    <OrderList 
+                      orders={asks} 
+                      isAsk={true} 
+                      maxTotal={maxTotal} 
+                      currency={currencyName} 
+                      hideScrollbar={true} 
+                      highlightedPrices={highlightedAskPrices} 
+                    />
+                  </div>
+                  <SpreadIndicator 
+                    spread={spread} 
+                    spreadPercent={spreadPercent} 
                   />
+                  <div className="min-h-0 flex flex-col">
+                    <OrderList 
+                      orders={bids} 
+                      isAsk={false} 
+                      maxTotal={maxTotal} 
+                      currency={currencyName} 
+                      hideScrollbar={true} 
+                      highlightedPrices={highlightedBidPrices} 
+                    />
+                  </div>
                 </div>
               </div>
             </div>
